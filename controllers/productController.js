@@ -13,24 +13,41 @@ const getProducts = async (req, res) => {
       sort,
       page = 1,
       limit = 12,
+      tag,
+      search
     } = req.query;
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(50, parseInt(limit, 10) || 12); // cap limit
     const skip = (pageNum - 1) * limitNum;
 
-    let query = {};
+   let query = { $and: [] };
 
     // 🔥 FILTERS
-    if (category) query.category = category;
-    if (subcategory) query.subcategory = subcategory; // 🔥 IMPORTANT
-    if (gender) query.gender = gender;
+ if (category) query.$and.push({ category });
+if (subcategory) query.$and.push({ subcategory });
+if (gender) query.$and.push({ gender });
 
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
+
+
+
+// 🔥 TAG FILTER
+const allowedTags = ["trending", "new"];
+
+if (tag && allowedTags.includes(tag)) {
+  if (tag === "trending") {
+    query.isBestSeller = true;
+  } else if (tag === "new") {
+    query.isNewProduct = true;
+  }
+}
+
+
 
 
        // 🔥 SEARCH
@@ -64,17 +81,16 @@ if (typeof search === "string" && search.trim().length > 0) {
     if (sort === "newest") sortOption = { createdAt: -1, _id: -1 };
 
     // 🔥 QUERY
-    const [products, total] = await Promise.all([
-      Product.find(query)
-        .sort(sortOption)
-        .skip(skip)
-        .limit(limitNum)
-        .lean(), // slight perf gain
-      Product.countDocuments(query),
+ const [products, total] = await Promise.all([
+  Product.find(query)
+    .select("name price originalPrice images slug isBestSeller isNewProduct")
+    .sort(sortOption)
+    .skip(skip)
+    .limit(limitNum)
+    .lean(),
 
-
-
-    ]);
+  Product.countDocuments(query),
+]);
 
     res.json({
       products,
@@ -169,6 +185,9 @@ const deleteProduct = async (req, res) => {
 };
 
 
+ 
+
+
 export {
   getProducts,
   getProductBySlug,
@@ -176,3 +195,5 @@ export {
   updateProduct,
   deleteProduct,
 };
+
+

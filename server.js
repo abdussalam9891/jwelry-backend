@@ -6,6 +6,7 @@ import dbConnection from "./config/db.js";
 import passport from "./config/passport.js";
 import authRoutes from "./routes/auth.js";
 import productRoutes from "./routes/productRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.get("/", (req, res) => {
 app.use("/api/products", productRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 const PORT = process.env.PORT || 5000;
 

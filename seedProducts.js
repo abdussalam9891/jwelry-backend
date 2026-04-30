@@ -64,7 +64,7 @@ const generateProducts = () => {
   description: `Premium ${material} ${subcategory} crafted for everyday elegance.`,
 
   isBestSeller: id % 6 === 0,
-  isNew: id % 8 === 0,
+  isNewProduct: id % 8 === 0,
 
   stock: Math.floor(Math.random() * 20) + 1,
 });

@@ -55,11 +55,13 @@ const productSchema = new mongoose.Schema(
     isBestSeller: {
       type: Boolean,
       default: false,
+      index: true,
     },
 
    isNewProduct: {
   type: Boolean,
   default: false,
+  index: true,
 },
 
     stock: {
