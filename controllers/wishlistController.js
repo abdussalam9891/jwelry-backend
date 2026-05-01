@@ -1,16 +1,22 @@
 // controllers/wishlistController.js
+import mongoose from "mongoose";
 import Wishlist from "../models/wishlistModel.js";
-import Product from "../models/productModel.js";
 
 // GET wishlist
 export const getWishlist = async (req, res) => {
   try {
     const items = await Wishlist.find({ user: req.user._id })
-      .select("product");
+      .populate({
+        path: "product",
+        select: "name price images slug",
+      })
+      .lean();
 
-    res.json({
-      items: items.map(i => i.product.toString())
-    });
+    // filter out nulls (product was deleted from DB)
+    const products = items.map(item => item.product).filter(Boolean);
+
+    res.json(products);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -21,11 +27,10 @@ export const getWishlist = async (req, res) => {
 // ADD to wishlist
 export const addToWishlist = async (req, res) => {
   try {
-    const productId = req.params.productId;
+    const { productId } = req.params;
 
-    const exists = await Product.findById(productId);
-    if (!exists) {
-      return res.status(404).json({ message: "Product not found" });
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "Invalid product ID" });
     }
 
     await Wishlist.create({
@@ -37,6 +42,7 @@ export const addToWishlist = async (req, res) => {
 
   } catch (err) {
     if (err.code === 11000) {
+      // already exists — idempotent, treat as success
       return res.status(200).json({ message: "Already in wishlist" });
     }
 
@@ -49,15 +55,19 @@ export const addToWishlist = async (req, res) => {
 // REMOVE from wishlist
 export const removeFromWishlist = async (req, res) => {
   try {
-    const removed = await Wishlist.findOneAndDelete({
-      user: req.user._id,
-      product: req.params.productId,
-    });
+    const { productId } = req.params;
 
-    if (!removed) {
-      return res.status(404).json({ message: "Item not in wishlist" });
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "Invalid product ID" });
     }
 
+    await Wishlist.findOneAndDelete({
+      user: req.user._id,
+      product: productId,
+    });
+
+    // always 200 — idempotent delete
+    // frontend uses optimistic UI, 404 here triggers rollback incorrectly
     res.json({ message: "Removed from wishlist" });
 
   } catch (err) {

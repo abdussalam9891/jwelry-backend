@@ -1,12 +1,12 @@
 import Product from "../models/productModel.js";
 
 
-// 🔥 GET PRODUCTS (FILTER + PAGINATION + SORT)
+// GET PRODUCTS (FILTER + PAGINATION + SORT)
 const getProducts = async (req, res) => {
   try {
     const {
       category,
-      subcategory,   // 🔥 NEW
+      subcategory,
       gender,
       minPrice,
       maxPrice,
@@ -18,15 +18,14 @@ const getProducts = async (req, res) => {
     } = req.query;
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.min(50, parseInt(limit, 10) || 12); // cap limit
+    const limitNum = Math.min(50, parseInt(limit, 10) || 12);
     const skip = (pageNum - 1) * limitNum;
 
-   let query = { $and: [] };
+    let query = { $and: [] };
 
-    // 🔥 FILTERS
- if (category) query.$and.push({ category });
-if (subcategory) query.$and.push({ subcategory });
-if (gender) query.$and.push({ gender });
+    if (category) query.$and.push({ category });
+    if (subcategory) query.$and.push({ subcategory });
+    if (gender) query.$and.push({ gender });
 
     if (minPrice || maxPrice) {
       query.price = {};
@@ -34,63 +33,41 @@ if (gender) query.$and.push({ gender });
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
 
-
-
-// 🔥 TAG FILTER
-const allowedTags = ["trending", "new"];
-
-if (tag && allowedTags.includes(tag)) {
-  if (tag === "trending") {
-    query.isBestSeller = true;
-  } else if (tag === "new") {
-    query.isNewProduct = true;
-  }
-}
-
-
-
-
-       // 🔥 SEARCH
-// 🔥 SEARCH (safe)
-if (typeof search === "string" && search.trim().length > 0) {
-  const keywords = search.trim().split(/\s+/).filter(Boolean);
-
-  if (keywords.length > 0) {
-    const andConditions = keywords.map(word => ({
-      $or: [
-        { name: { $regex: word, $options: "i" } },
-        { description: { $regex: word, $options: "i" } },
-        { subcategory: { $regex: word, $options: "i" } },
-        { category: { $regex: word, $options: "i" } },
-      ],
-    }));
-
-    // if you already have other $and conditions, merge instead of overwrite
-    if (query.$and) {
-      query.$and = query.$and.concat(andConditions);
-    } else {
-      query.$and = andConditions;
+    const allowedTags = ["trending", "new"];
+    if (tag && allowedTags.includes(tag)) {
+      if (tag === "trending") query.isBestSeller = true;
+      else if (tag === "new") query.isNewProduct = true;
     }
-  }
-}
 
-    // 🔥 SORT (with fallback for stability)
-    let sortOption = { createdAt: -1 }; // default newest
+    if (typeof search === "string" && search.trim().length > 0) {
+      const keywords = search.trim().split(/\s+/).filter(Boolean);
+      if (keywords.length > 0) {
+        const andConditions = keywords.map(word => ({
+          $or: [
+            { name: { $regex: word, $options: "i" } },
+            { description: { $regex: word, $options: "i" } },
+            { subcategory: { $regex: word, $options: "i" } },
+            { category: { $regex: word, $options: "i" } },
+          ],
+        }));
+        query.$and = query.$and.concat(andConditions);
+      }
+    }
+
+    let sortOption = { createdAt: -1 };
     if (sort === "price_asc") sortOption = { price: 1, _id: 1 };
     if (sort === "price_desc") sortOption = { price: -1, _id: -1 };
     if (sort === "newest") sortOption = { createdAt: -1, _id: -1 };
 
-    // 🔥 QUERY
- const [products, total] = await Promise.all([
-  Product.find(query)
-    .select("name price originalPrice images slug isBestSeller isNewProduct")
-    .sort(sortOption)
-    .skip(skip)
-    .limit(limitNum)
-    .lean(),
-
-  Product.countDocuments(query),
-]);
+    const [products, total] = await Promise.all([
+      Product.find(query)
+        .select("name price originalPrice images slug isBestSeller isNewProduct")
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Product.countDocuments(query),
+    ]);
 
     res.json({
       products,
@@ -100,17 +77,16 @@ if (typeof search === "string" && search.trim().length > 0) {
     });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 
-// 🔥 GET SINGLE PRODUCT (SLUG BASED)
+// GET SINGLE PRODUCT (SLUG BASED)
 const getProductBySlug = async (req, res) => {
   try {
-    const product = await Product.findOne({
-      slug: req.params.slug,
-    });
+    const product = await Product.findOne({ slug: req.params.slug }).lean();
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -119,39 +95,100 @@ const getProductBySlug = async (req, res) => {
     res.json(product);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 
-// 🔥 CREATE PRODUCT
+// CREATE PRODUCT
 const createProduct = async (req, res) => {
   try {
-    if (!req.body.images || !req.body.images.length) {
+    const {
+      name,
+      price,
+      originalPrice,
+      category,
+      subcategory,
+      gender,
+      images,
+      description,
+      stock,
+      slug,
+      isBestSeller,
+      isNewProduct,
+    } = req.body;
+
+    if (!images || !images.length) {
       return res.status(400).json({ message: "Images required" });
     }
 
-    const product = new Product(req.body);
-    const createdProduct = await product.save();
+    const product = new Product({
+      name,
+      price,
+      originalPrice,
+      category,
+      subcategory,
+      gender,
+      images,
+      description,
+      stock,
+      slug,
+      isBestSeller,
+      isNewProduct,
+    });
 
-    res.status(201).json(createdProduct);
+    const created = await product.save();
+    res.status(201).json(created);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 
-// 🔥 UPDATE PRODUCT (SMART UPDATE)
+// UPDATE PRODUCT
 const updateProduct = async (req, res) => {
   try {
+    const {
+      name,
+      price,
+      originalPrice,
+      category,
+      subcategory,
+      gender,
+      images,
+      description,
+      stock,
+      slug,
+      isBestSeller,
+      isNewProduct,
+    } = req.body;
+
+    const allowedFields = {
+      name,
+      price,
+      originalPrice,
+      category,
+      subcategory,
+      gender,
+      images,
+      description,
+      stock,
+      slug,
+      isBestSeller,
+      isNewProduct,
+    };
+
+    const updateData = Object.fromEntries(
+      Object.entries(allowedFields).filter(([_, v]) => v !== undefined)
+    );
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      }
+      updateData,
+      { new: true, runValidators: true }
     ).lean();
 
     if (!updatedProduct) {
@@ -161,12 +198,13 @@ const updateProduct = async (req, res) => {
     res.json(updatedProduct);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 
-// 🔥 DELETE PRODUCT
+// DELETE PRODUCT
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -176,16 +214,13 @@ const deleteProduct = async (req, res) => {
     }
 
     await product.deleteOne();
-
     res.json({ message: "Product deleted" });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
-
-
- 
 
 
 export {
@@ -195,5 +230,3 @@ export {
   updateProduct,
   deleteProduct,
 };
-
-
