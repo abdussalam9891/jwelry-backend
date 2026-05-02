@@ -8,12 +8,13 @@ export const getWishlist = async (req, res) => {
     const items = await Wishlist.find({ user: req.user._id })
       .populate({
         path: "product",
-        select: "name price images slug",
+        select: "name price originalPrice images slug stock",
       })
       .lean();
 
-    // filter out nulls (product was deleted from DB)
-    const products = items.map(item => item.product).filter(Boolean);
+    const products = items
+      .map(item => item.product)
+      .filter(Boolean);
 
     res.json(products);
 
@@ -22,7 +23,6 @@ export const getWishlist = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 // ADD to wishlist
 export const addToWishlist = async (req, res) => {

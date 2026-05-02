@@ -1,5 +1,32 @@
 import mongoose from "mongoose";
 
+const variantSchema = new mongoose.Schema(
+  {
+    size: {
+      type: String, // e.g. "6", "7", "8"
+    },
+
+    material: {
+      type: String, // e.g. "18k", "22k"
+    },
+
+    price: {
+      type: Number,
+      required: true,
+    },
+
+    stock: {
+      type: Number,
+      default: 0,
+    },
+
+    sku: {
+      type: String,
+    },
+  },
+  { _id: true } // important for cart reference
+);
+
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -14,6 +41,7 @@ const productSchema = new mongoose.Schema(
       unique: true,
     },
 
+    // 🔥 BASE PRICE (for listing)
     price: {
       type: Number,
       required: true,
@@ -23,7 +51,6 @@ const productSchema = new mongoose.Schema(
       type: Number,
     },
 
-    // 🔥 MATERIAL / COLLECTION
     category: {
       type: String,
       required: true,
@@ -31,7 +58,6 @@ const productSchema = new mongoose.Schema(
       enum: ["gold", "diamond", "gemstone", "silver"],
     },
 
-    // 🔥 PRODUCT TYPE
     subcategory: {
       type: String,
       required: true,
@@ -47,7 +73,7 @@ const productSchema = new mongoose.Schema(
 
     images: {
       type: [String],
-      validate: v => v.length > 0,
+      validate: (v) => v.length > 0,
     },
 
     description: String,
@@ -58,12 +84,16 @@ const productSchema = new mongoose.Schema(
       index: true,
     },
 
-   isNewProduct: {
-  type: Boolean,
-  default: false,
-  index: true,
-},
+    isNewProduct: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
 
+    // 🔥 VARIANTS (REAL SOURCE OF TRUTH)
+    variants: [variantSchema],
+
+    // 🔥 FALLBACK STOCK (only if no variants)
     stock: {
       type: Number,
       default: 0,

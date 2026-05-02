@@ -4,21 +4,53 @@ import {
   addToCart,
   removeFromCart,
   updateQuantity,
-  moveToCart,
   clearCart,
+  moveToCart,
 } from "../controllers/cartController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
-// all cart routes require auth
+// 🔐 protect all routes
 router.use(protect);
 
+// 🔍 VALIDATION HELPERS
+
+const validateProductId = (req, res, next) => {
+  const id = req.params.productId;
+  if (id && !mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid product ID" });
+  }
+  next();
+};
+
+const validateItemId = (req, res, next) => {
+  const id = req.params.itemId;
+  if (id && !mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid item ID" });
+  }
+  next();
+};
+
+// 🚀 ROUTES
+
+// Get full cart
 router.get("/", getCart);
-router.post("/:productId", addToCart);
-router.delete("/clear", clearCart);          // before /:productId or it matches as productId
-router.delete("/:productId", removeFromCart);
-router.patch("/:productId", updateQuantity);
-router.post("/:productId/move-from-wishlist", moveToCart);
+
+// Add item (still uses productId)
+router.post("/:productId", validateProductId, addToCart);
+
+// 🔥 Remove by ITEM ID (not product)
+router.delete("/item/:itemId", validateItemId, removeFromCart);
+
+// 🔥 Update quantity by ITEM ID
+router.patch("/item/:itemId", validateItemId, updateQuantity);
+
+// Clear cart
+router.delete("/clear", clearCart);
+
+// Move from wishlist → cart
+router.post("/:productId/move", validateProductId, moveToCart);
 
 export default router;

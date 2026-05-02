@@ -8,6 +8,8 @@ import authRoutes from "./routes/auth.js";
 import productRoutes from "./routes/productRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import path from "path";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 
 const app = express();
@@ -31,11 +33,21 @@ app.get("/", (req, res) => {
   res.send("API running...");
 });
 
-app.use("/api/products", productRoutes);
-app.use("/uploads", express.static("uploads"));
-app.use("/api/auth", authRoutes);
-app.use("/api/wishlist", wishlistRoutes);
-app.use("/api/cart", cartRoutes);
+
+
+
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "uploads"), {
+    maxAge: "7d", // cache
+  })
+);
+
+app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/wishlist", wishlistRoutes);
+app.use("/api/v1/cart", cartRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
 
 const PORT = process.env.PORT || 5000;
 

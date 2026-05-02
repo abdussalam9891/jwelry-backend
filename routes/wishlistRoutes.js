@@ -1,4 +1,3 @@
-// routes/wishlistRoutes.js
 import express from "express";
 import {
   getWishlist,
@@ -9,8 +8,16 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", protect, getWishlist);
-router.post("/:productId", protect, addToWishlist);
-router.delete("/:productId", protect, removeFromWishlist);
+// apply auth to all routes
+router.use(protect);
+
+// GET wishlist (should support pagination later)
+router.get("/", getWishlist);
+
+//  Add product to wishlist
+router.post("/:productId", addToWishlist);
+
+//  Remove product from wishlist
+router.delete("/:productId", removeFromWishlist);
 
 export default router;
