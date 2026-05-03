@@ -58,7 +58,7 @@ router.get(
 );
 
 
-// 👤 GET CURRENT USER
+//  GET CURRENT USER
 
 router.get("/me", protect, (req, res) => {
   res.json({
