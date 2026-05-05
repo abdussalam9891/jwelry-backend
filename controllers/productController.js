@@ -21,44 +21,57 @@ const getProducts = async (req, res) => {
     const limitNum = Math.min(50, parseInt(limit, 10) || 12);
     const skip = (pageNum - 1) * limitNum;
 
-    let query = { $and: [] };
+    // 🔥 BUILD CONDITIONS CLEANLY
+    const conditions = [];
 
-    if (category) query.$and.push({ category });
-    if (subcategory) query.$and.push({ subcategory });
-    if (gender) query.$and.push({ gender });
+    // basic filters
+    if (category) conditions.push({ category });
+    if (subcategory) conditions.push({ subcategory });
+    if (gender) conditions.push({ gender });
 
+    // price filter
     if (minPrice || maxPrice) {
-      query.price = {};
-      if (minPrice) query.price.$gte = Number(minPrice);
-      if (maxPrice) query.price.$lte = Number(maxPrice);
+      const priceQuery = {};
+      if (minPrice) priceQuery.$gte = Number(minPrice);
+      if (maxPrice) priceQuery.$lte = Number(maxPrice);
+      conditions.push({ price: priceQuery });
     }
 
-    const allowedTags = ["trending", "new"];
-    if (tag && allowedTags.includes(tag)) {
-      if (tag === "trending") query.isBestSeller = true;
-      else if (tag === "new") query.isNewProduct = true;
+    // 🔥 TAG FILTER (FIXED)
+    if (tag === "trending") {
+      conditions.push({ isBestSeller: true });
     }
 
-    if (typeof search === "string" && search.trim().length > 0) {
-      const keywords = search.trim().split(/\s+/).filter(Boolean);
-      if (keywords.length > 0) {
-        const andConditions = keywords.map(word => ({
+    if (tag === "new") {
+      conditions.push({ isNewProduct: true });
+    }
+
+    // 🔥 SEARCH
+    if (typeof search === "string" && search.trim()) {
+      const keywords = search.trim().split(/\s+/);
+
+      keywords.forEach((word) => {
+        conditions.push({
           $or: [
             { name: { $regex: word, $options: "i" } },
             { description: { $regex: word, $options: "i" } },
             { subcategory: { $regex: word, $options: "i" } },
             { category: { $regex: word, $options: "i" } },
           ],
-        }));
-        query.$and = query.$and.concat(andConditions);
-      }
+        });
+      });
     }
 
+    // 🔥 FINAL QUERY
+    const query = conditions.length ? { $and: conditions } : {};
+
+    // 🔥 SORTING
     let sortOption = { createdAt: -1 };
     if (sort === "price_asc") sortOption = { price: 1, _id: 1 };
     if (sort === "price_desc") sortOption = { price: -1, _id: -1 };
     if (sort === "newest") sortOption = { createdAt: -1, _id: -1 };
 
+    // 🔥 EXECUTE
     const [products, total] = await Promise.all([
       Product.find(query)
         .select("name price originalPrice images slug isBestSeller isNewProduct")
@@ -66,6 +79,7 @@ const getProducts = async (req, res) => {
         .skip(skip)
         .limit(limitNum)
         .lean(),
+
       Product.countDocuments(query),
     ]);
 
@@ -77,7 +91,7 @@ const getProducts = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("GET PRODUCTS ERROR:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

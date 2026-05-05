@@ -1,101 +1,218 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import Product from "./models/productModel.js";
 
-dotenv.config();
+const MONGO_URI = "mongodb+srv://abdussalam9891:abdussalam9891@cluster0.vzftnuf.mongodb.net/ecommerce";
 
-const categories = ["rings", "earrings", "necklaces", "bracelets"];
-
-// helper → generate price based on material
-const getPrice = (material) => {
-  if (material === "diamond") return Math.floor(Math.random() * 6000) + 6000;
-  if (material === "gold") return Math.floor(Math.random() * 4000) + 3000;
-  return Math.floor(Math.random() * 2000) + 1000; // silver
+const connectDB = async () => {
+  console.log("🔌 Connecting to DB...");
+  await mongoose.connect(MONGO_URI);
+  console.log("✅ MongoDB Connected");
 };
 
-const getOriginalPrice = (price) => {
-  return price + Math.floor(Math.random() * 2000) + 1000;
+
+
+
+const getImages = (type, category, index) => [
+  `/uploads/products/${type}/${category}/${index}.webp`,
+  `/uploads/products/${type}/${category}/${index}-2.webp`,
+];
+
+// 🔥 dynamic materials based on category
+const getMaterials = (category) => {
+  if (category === "gemstone") {
+    return ["ruby", "emerald", "sapphire"];
+  }
+  return ["18k", "22k"];
 };
 
-// helper → generate gender
-const getGender = (i) => {
-  if (i % 5 === 0) return "him";
-  if (i % 7 === 0) return "kids";
-  return "her";
-};
+const generateVariantsWithSize = ({ sizes, category, basePrice, type }) => {
+  const materials = getMaterials(category);
+  const variants = [];
 
-const getImages = (subcategory, material, id) => {
-  const base = (id % 5) + 1; // 1–5 loop
+  sizes.forEach((size) => {
+    materials.forEach((material) => {
+      const extra =
+        material === "22k" ? 3000 :
+        material === "emerald" ? 2000 :
+        material === "ruby" ? 2500 :
+        material === "sapphire" ? 3000 : 0;
 
-  return [
-    `http://localhost:5000/uploads/products/${subcategory}/${material}/${base}.webp`,
-    `http://localhost:5000/uploads/products/${subcategory}/${material}/${base}-2.webp`,
-  ];
-};
-
-const generateProducts = () => {
-  const products = [];
-  let id = 1;
-
-  categories.forEach((subcategory) => {
-    for (let i = 0; i < 10; i++) {
-      let material;
-
-      // 4 gold, 3 diamond, 3 silver
-      if (i < 4) material = "gold";
-      else if (i < 7) material = "diamond";
-      else material = "silver";
-
-      const price = getPrice(material);
-
-     products.push({
-  name: `${material} ${subcategory} ${id}`,
-  slug: `${material}-${subcategory}-${id}`,
-
-  price: price,
-  originalPrice: getOriginalPrice(price),
-
-  category: material,
-  subcategory: subcategory,
-  gender: getGender(i),
-
-  images: getImages(subcategory, material, id), // ✅ FIXED
-
-  description: `Premium ${material} ${subcategory} crafted for everyday elegance.`,
-
-  isBestSeller: id % 6 === 0,
-  isNewProduct: id % 8 === 0,
-
-  stock: Math.floor(Math.random() * 20) + 1,
-});
-
-      id++;
-    }
+      variants.push({
+        size,
+        material,
+        price: basePrice + extra + Math.floor(Math.random() * 1000),
+        stock: Math.floor(Math.random() * 5) + 1,
+        sku: `${type}-${size}-${material.toUpperCase()}`,
+      });
+    });
   });
 
-  return products;
+  return variants;
 };
+
+const generateVariantsNoSize = ({ category, basePrice, type }) => {
+  const materials = getMaterials(category);
+
+  return materials.map((material) => ({
+    size: null,
+    material,
+    price: basePrice + (material === "22k" ? 3000 : 0),
+    stock: Math.floor(Math.random() * 5) + 1,
+    sku: `${type}-${material.toUpperCase()}`,
+  }));
+};
+
+
+
+
+
+const products = [];
+const metalCategories = ["gold", "silver", "diamond"];
+const allCategories = ["gold", "silver", "diamond", "gemstone"];
+
+
+
+
+
+
+ for (let i = 1; i <= 10; i++) {
+  const category = allCategories[i % allCategories.length];
+
+  products.push({
+    name: `${category} Ring ${i}`,
+    slug: `${category}-ring-${i}`,
+    price: 25000 + i * 1000,
+    originalPrice: 28000 + i * 1000,
+
+    category,
+    subcategory: "rings",
+   gender: i % 3 === 0 ? "kids" : i % 2 === 0 ? "her" : "him",
+isBestSeller: i % 4 === 0,
+isNewProduct: i % 5 === 0,
+
+    images: getImages("rings", category, (i % 2) + 1),
+    description: "Premium handcrafted ring",
+
+    variants: generateVariantsWithSize({
+      sizes: ["6", "7", "8"],
+      category,
+      basePrice: 25000 + i * 1000,
+      type: `RING${i}`,
+    }),
+
+    stock: 0,
+  });
+}
+for (let i = 1; i <= 10; i++) {
+  const category = metalCategories[i % metalCategories.length];
+
+  products.push({
+    name: `${category} Bracelet ${i}`,
+    slug: `${category}-bracelet-${i}`,
+    price: 12000 + i * 800,
+    originalPrice: 15000 + i * 800,
+
+    category,
+    subcategory: "bracelets",
+   gender: i % 3 === 0 ? "kids" : "her",
+isBestSeller: i % 3 === 0,
+isNewProduct: i % 4 === 0,
+
+    images: getImages("bracelets", category, (i % 2) + 1),
+    description: "Elegant bracelet",
+
+    variants: generateVariantsWithSize({
+      sizes: ["S", "M", "L"],
+      category,
+      basePrice: 12000 + i * 800,
+      type: `BRACELET${i}`,
+    }),
+
+    stock: 0,
+  });
+}
+
+
+
+for (let i = 1; i <= 10; i++) {
+  const category = allCategories[i % allCategories.length];
+
+  products.push({
+    name: `${category} Earrings ${i}`,
+    slug: `${category}-earrings-${i}`,
+    price: 8000 + i * 500,
+    originalPrice: 10000 + i * 500,
+
+    category,
+    subcategory: "earrings",
+    gender: i % 4 === 0 ? "kids" : "her",
+isBestSeller: i % 2 === 0,
+isNewProduct: i % 3 === 0,
+
+    images: getImages("earrings", category, (i % 2) + 1),
+    description: "Stylish earrings",
+
+    variants: generateVariantsNoSize({
+      category,
+      basePrice: 8000 + i * 500,
+      type: `EARRING${i}`,
+    }),
+
+    stock: 0,
+  });
+}
+
+
+
+
+for (let i = 1; i <= 10; i++) {
+  const category = allCategories[i % allCategories.length];
+
+  products.push({
+    name: `${category} Necklace ${i}`,
+    slug: `${category}-necklace-${i}`,
+    price: 30000 + i * 1500,
+    originalPrice: 35000 + i * 1500,
+
+    category,
+    subcategory: "necklaces",
+   gender: i % 5 === 0 ? "kids" : "her",
+isBestSeller: i % 2 === 0,
+isNewProduct: i % 3 === 0,
+
+    images: getImages("necklaces", category, (i % 2) + 1),
+    description: "Luxury necklace",
+
+    variants: generateVariantsNoSize({
+      category,
+      basePrice: 30000 + i * 1500,
+      type: `NECKLACE${i}`,
+    }),
+
+    stock: 0,
+  });
+}
+
 
 const seedProducts = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await connectDB();
 
-    console.log("Connected to DB");
-
+    console.log("🧹 Clearing products...");
     await Product.deleteMany();
-    console.log("Old products removed");
 
-    const products = generateProducts();
-
+    console.log("📦 Inserting products...");
     await Product.insertMany(products);
 
-    console.log("🔥 40 structured products seeded successfully");
+    console.log(`🔥 ${products.length} Products Seeded`);
 
     process.exit();
-  } catch (error) {
-    console.error("Seed error:", error.message);
+  } catch (err) {
+    console.error("❌ ERROR:", err);
     process.exit(1);
   }
 };
 
 seedProducts();
+
+

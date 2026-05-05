@@ -10,6 +10,7 @@ import wishlistRoutes from "./routes/wishlistRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import path from "path";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import deliveryRoutes from "./routes/deliveryRoutes.js";
 
 
 const app = express();
@@ -48,6 +49,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/wishlist", wishlistRoutes);
 app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
+app.use("/api/v1/delivery", deliveryRoutes);
 
 const PORT = process.env.PORT || 5000;
 
