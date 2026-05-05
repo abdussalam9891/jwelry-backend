@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Product from "./models/productModel.js";
 
-const MONGO_URI = "mongodb+srv://abdussalam9891:abdussalam9891@cluster0.vzftnuf.mongodb.net/ecommerce";
+const MONGO_URI = "";
 
 const connectDB = async () => {
   console.log("🔌 Connecting to DB...");
