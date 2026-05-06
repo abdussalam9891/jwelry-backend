@@ -1,7 +1,5 @@
-import mongoose from "mongoose";
 import Cart from "../models/cartModel.js";
 import Product from "../models/productModel.js";
-import Wishlist from "../models/wishlistModel.js";
 
 const MAX_CART_ITEMS = 20;
 
@@ -12,7 +10,7 @@ export const getCart = async (req, res) => {
     const cart = await Cart.findOne({ user: req.user._id })
       .populate({
         path: "items.product",
-        select: "slug stock isActive"
+        select: "slug stock isActive",
       })
       .lean();
 
@@ -45,22 +43,22 @@ export const getCart = async (req, res) => {
     }
 
     // FORMAT DATA FOR FRONTEND
-const formattedItems = items.map((item) => ({
-  _id: item._id,
+    const formattedItems = items.map((item) => ({
+      _id: item._id,
 
-  productId: item.product?._id,
-  name: item.name,
-  image: item.image,
+      productId: item.product?._id,
+      name: item.name,
+      image: item.image,
 
-  price: item.price,
-  originalPrice: item.originalPrice,
+      price: item.price,
+      originalPrice: item.originalPrice,
 
-  quantity: item.quantity,
-  slug: item.product?.slug,
+      quantity: item.quantity,
+      slug: item.product?.slug,
 
-  variantId: item.variantId || null,
-  variantDetails: item.variantDetails || null,
-}));
+      variantId: item.variantId || null,
+      variantDetails: item.variantDetails || null,
+    }));
 
     // 🔥 FINAL RESPONSE
     res.json({
@@ -71,7 +69,6 @@ const formattedItems = items.map((item) => ({
         itemCount,
       },
     });
-
   } catch (err) {
     console.error("GET CART ERROR:", err);
     res.status(500).json({ message: "Server error" });
@@ -79,7 +76,6 @@ const formattedItems = items.map((item) => ({
 };
 
 // ADD to cart
-
 
 export const addToCart = async (req, res) => {
   try {
@@ -110,7 +106,6 @@ export const addToCart = async (req, res) => {
       if (selectedVariant.stock < 1) {
         return res.status(400).json({ message: "Variant out of stock" });
       }
-
     } else {
       // 🔥 NON-VARIANT PRODUCT
       if (product.stock < 1) {
@@ -128,7 +123,7 @@ export const addToCart = async (req, res) => {
     const existingItem = cart.items.find(
       (item) =>
         item.product.toString() === productId &&
-        String(item.variantId || "") === String(variantId || "")
+        String(item.variantId || "") === String(variantId || ""),
     );
 
     const price = selectedVariant ? selectedVariant.price : product.price;
@@ -144,17 +139,12 @@ export const addToCart = async (req, res) => {
       }
 
       existingItem.quantity += 1;
-
     } else {
-
-
-       if (cart.items.length >= MAX_CART_ITEMS) {
-    return res.status(400).json({
-      message: "Cart is full (max 20 items)",
-    });
-  }
-
-
+      if (cart.items.length >= MAX_CART_ITEMS) {
+        return res.status(400).json({
+          message: "Cart is full (max 20 items)",
+        });
+      }
 
       cart.items.push({
         product: product._id,
@@ -185,7 +175,6 @@ export const addToCart = async (req, res) => {
       message: "Added to cart",
       cart,
     });
-
   } catch (err) {
     console.error("ADD TO CART ERROR:", err);
     res.status(500).json({ message: "Server error" });
@@ -199,7 +188,7 @@ export const removeFromCart = async (req, res) => {
 
     await Cart.findOneAndUpdate(
       { user: req.user._id },
-      { $pull: { items: { _id: itemId } } }
+      { $pull: { items: { _id: itemId } } },
     );
 
     res.json({ message: "Removed from cart" });
@@ -219,9 +208,11 @@ export const updateQuantity = async (req, res) => {
     const qty = parseInt(quantity, 10);
 
     // 🔥 validation
-    if (isNaN(qty) || qty < 1 || qty > 10) {
+    const MAX_CART_QTY = 3;
+
+    if (isNaN(qty) || qty < 1 || qty > MAX_CART_QTY) {
       return res.status(400).json({
-        message: "Quantity must be between 1 and 10",
+        message: `Maximum ${MAX_CART_QTY} quantity allowed per item`,
       });
     }
 
@@ -286,7 +277,6 @@ export const updateQuantity = async (req, res) => {
         quantity: item.quantity,
       },
     });
-
   } catch (err) {
     console.error("UPDATE QUANTITY ERROR:", err);
 
@@ -296,18 +286,13 @@ export const updateQuantity = async (req, res) => {
   }
 };
 
-
-
-
-
-
 // CLEAR cart
 export const clearCart = async (req, res) => {
   try {
     const cart = await Cart.findOneAndUpdate(
       { user: req.user._id },
       { $set: { items: [] } },
-      { new: true }
+      { new: true },
     ).lean();
 
     if (!cart) {
@@ -318,19 +303,17 @@ export const clearCart = async (req, res) => {
       message: "Cart cleared",
       items: [],
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
 export const cleanCart = async (userId) => {
   await Cart.updateOne(
     { user: userId },
     {
-      $pull: { items: { product: null } }
-    }
+      $pull: { items: { product: null } },
+    },
   );
 };
