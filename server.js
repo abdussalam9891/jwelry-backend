@@ -11,6 +11,8 @@ import cartRoutes from "./routes/cartRoutes.js";
 import path from "path";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import deliveryRoutes from "./routes/deliveryRoutes.js";
+import cookieParser from "cookie-parser";
+
 
 
 const app = express();
@@ -28,6 +30,7 @@ app.use(
 dbConnection();
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(passport.initialize());
 
 app.get("/", (req, res) => {

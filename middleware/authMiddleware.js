@@ -1,66 +1,102 @@
 import jwt from "jsonwebtoken";
-import User from "../models/userModel.js";
+import User from "../models/UserModel.js";
 
-
-// 🔐 PROTECT (authenticate user)
-
+// 🔐 PROTECT
 export const protect = async (req, res, next) => {
+
   try {
-    const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Not authorized, no token" });
+    let token =
+      req.cookies?.token ||
+      (
+        req.headers.authorization?.startsWith("Bearer ")
+          ? req.headers.authorization.split(" ")[1]
+          : null
+      );
+
+    // ❌ No token
+    if (!token) {
+
+      return res.status(401).json({
+        message: "Not authorized",
+      });
+
     }
 
-    const token = authHeader.split(" ")[1];
+    // 🔥 Verify token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
 
-    // verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // 🔥 Get user
+    const user = await User.findById(decoded.id)
+      .select("-password -__v");
 
-    // get user (safe select)
-    const user = await User.findById(decoded.id).select("-__v");
-
+    // ❌ User not found
     if (!user) {
-      return res.status(401).json({ message: "User not found" });
+
+      return res.status(401).json({
+        message: "User not found",
+      });
+
     }
 
-    // block inactive users
+    // 🚫 Disabled account
     if (!user.isActive) {
-      return res.status(403).json({ message: "Account is disabled" });
+
+      return res.status(403).json({
+        message: "Account disabled",
+      });
+
     }
 
-    // attach minimal user
+    // ✅ Attach safe user
     req.user = {
       _id: user._id,
-      role: user.role,
+      name: user.name,
       email: user.email,
+      avatar: user.avatar,
+      role: user.role,
     };
 
     next();
-  } catch (err) {
-    console.error("Auth error:", err.message);
 
-    return res.status(401).json({ message: "Invalid or expired token" });
+  } catch (err) {
+
+    return res.status(401).json({
+      message: "Invalid or expired token",
+    });
+
   }
+
 };
 
-
-
-
-//  AUTHORIZE (role-based access)
-
+// 🔐 AUTHORIZE
 export const authorize = (...roles) => {
+
   return (req, res, next) => {
+
+    // ❌ Not logged in
     if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
+
+      return res.status(401).json({
+        message: "Not authenticated",
+      });
+
     }
 
+    // ❌ Role not allowed
     if (!roles.includes(req.user.role)) {
+
       return res.status(403).json({
-        message: `Access denied: ${req.user.role} cannot access this route`,
+        message: "Access denied",
       });
+
     }
 
     next();
+
   };
+
 };

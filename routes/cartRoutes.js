@@ -5,7 +5,7 @@ import {
   removeFromCart,
   updateQuantity,
   clearCart,
-  moveToCart,
+
 } from "../controllers/cartController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
@@ -50,7 +50,5 @@ router.patch("/item/:itemId", validateItemId, updateQuantity);
 // Clear cart
 router.delete("/clear", clearCart);
 
-// Move from wishlist → cart
-router.post("/:productId/move", validateProductId, moveToCart);
 
 export default router;

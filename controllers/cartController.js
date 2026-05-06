@@ -12,7 +12,7 @@ export const getCart = async (req, res) => {
     const cart = await Cart.findOne({ user: req.user._id })
       .populate({
         path: "items.product",
-        select: "slug stock", // keep it minimal
+        select: "slug stock isActive"
       })
       .lean();
 
@@ -46,6 +46,8 @@ export const getCart = async (req, res) => {
 
     // FORMAT DATA FOR FRONTEND
 const formattedItems = items.map((item) => ({
+  _id: item._id,
+
   productId: item.product?._id,
   name: item.name,
   image: item.image,
@@ -56,7 +58,6 @@ const formattedItems = items.map((item) => ({
   quantity: item.quantity,
   slug: item.product?.slug,
 
-  // ADD THIS (Fix)
   variantId: item.variantId || null,
   variantDetails: item.variantDetails || null,
 }));
@@ -145,6 +146,16 @@ export const addToCart = async (req, res) => {
       existingItem.quantity += 1;
 
     } else {
+
+
+       if (cart.items.length >= MAX_CART_ITEMS) {
+    return res.status(400).json({
+      message: "Cart is full (max 20 items)",
+    });
+  }
+
+
+
       cart.items.push({
         product: product._id,
         variantId: selectedVariant?._id || null,
@@ -207,159 +218,88 @@ export const updateQuantity = async (req, res) => {
 
     const qty = parseInt(quantity, 10);
 
-    if (!qty || qty < 1 || qty > 10) {
+    // 🔥 validation
+    if (isNaN(qty) || qty < 1 || qty > 10) {
       return res.status(400).json({
         message: "Quantity must be between 1 and 10",
       });
     }
 
+    // 🔥 find cart
     const cart = await Cart.findOne({ user: req.user._id });
 
     if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
-    }
-
-    const item = cart.items.id(itemId);
-
-    if (!item) {
-      return res.status(404).json({ message: "Item not found" });
-    }
-
-    // 🔥 stock check
-    const product = await Product.findById(item.product).select("stock");
-
-    if (!product || product.stock < qty) {
-      return res.status(400).json({
-        message: "Not enough stock",
+      return res.status(404).json({
+        message: "Cart not found",
       });
     }
 
+    // 🔥 find cart item
+    const item = cart.items.id(itemId);
+
+    if (!item) {
+      return res.status(404).json({
+        message: "Item not found",
+      });
+    }
+
+    // 🔥 fetch full product
+    const product = await Product.findById(item.product);
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    let availableStock = product.stock;
+
+    // 🔥 variant stock handling
+    if (item.variantId) {
+      const variant = product.variants.id(item.variantId);
+
+      if (!variant) {
+        return res.status(400).json({
+          message: "Variant not found",
+        });
+      }
+
+      availableStock = variant.stock;
+    }
+
+    // 🔥 stock validation
+    if (availableStock < qty) {
+      return res.status(400).json({
+        message: `Only ${availableStock} item(s) available`,
+      });
+    }
+
+    // 🔥 update quantity
     item.quantity = qty;
 
     await cart.save();
 
     res.json({
       message: "Quantity updated",
-      cart,
+      item: {
+        _id: item._id,
+        quantity: item.quantity,
+      },
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-
-
-
-export const moveToCart = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const { productId } = req.params;
-    const userId = req.user._id;
-
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      throw new Error("Invalid product ID");
-    }
-
-    // 🔥 fetch FULL product (not just stock)
-    const product = await Product.findById(productId)
-      .select("name price originalPrice images stock")
-      .session(session);
-
-    if (!product || product.stock < 1) {
-      throw new Error("Product out of stock");
-    }
-
-    let cart = await Cart.findOne({ user: userId }).session(session);
-
-    // 🔥 common item object (avoid duplication)
-    const newItem = {
-      product: product._id,
-      quantity: 1,
-      price: product.price,
-      originalPrice: product.originalPrice || product.price,
-      name: product.name,
-      image: product.images?.[0] || null,
-    };
-
-    if (!cart) {
-      // ✅ create cart with FULL item
-      cart = await Cart.create(
-        [
-          {
-            user: userId,
-            items: [newItem],
-          },
-        ],
-        { session }
-      );
-    } else {
-      if (cart.items.length >= MAX_CART_ITEMS) {
-        throw new Error("Cart is full (max 20 items)");
-      }
-
-      const existingItem = cart.items.find(
-        (item) => item.product.toString() === productId
-      );
-
-      if (existingItem) {
-        if (existingItem.quantity >= 10) {
-          throw new Error("Max quantity reached");
-        }
-
-        if (existingItem.quantity + 1 > product.stock) {
-          throw new Error("Not enough stock");
-        }
-
-        existingItem.quantity += 1;
-
-        // 💣 self-heal old broken data
-        if (!existingItem.price) {
-          existingItem.price = product.price;
-        }
-        if (!existingItem.originalPrice) {
-          existingItem.originalPrice =
-            product.originalPrice || product.price;
-        }
-        if (!existingItem.name) {
-          existingItem.name = product.name;
-        }
-        if (!existingItem.image) {
-          existingItem.image = product.images?.[0] || null;
-        }
-
-      } else {
-        // ✅ push FULL item
-        cart.items.push(newItem);
-      }
-
-      await cart.save({ session });
-    }
-
-    // 🔥 remove from wishlist after success
-    await Wishlist.findOneAndDelete(
-      { user: userId, product: productId },
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
-
-    res.json({ message: "Moved to cart" });
 
   } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
+    console.error("UPDATE QUANTITY ERROR:", err);
 
-    console.error("MOVE TO CART ERROR:", err);
-
-    res.status(400).json({
-      message: err.message || "Failed to move item to cart",
+    res.status(500).json({
+      message: "Server error",
     });
   }
 };
+
+
+
+
+
 
 // CLEAR cart
 export const clearCart = async (req, res) => {

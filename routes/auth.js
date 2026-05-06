@@ -5,8 +5,14 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
 
-//  GOOGLE LOGIN
+// 🔐 GOOGLE LOGIN
 router.get(
   "/google",
   passport.authenticate("google", {
@@ -15,19 +21,21 @@ router.get(
   })
 );
 
-
-//  GOOGLE CALLBACK
-
+// 🔐 GOOGLE CALLBACK
 router.get(
   "/google/callback",
+
   passport.authenticate("google", {
     session: false,
-    failureRedirect: `${process.env.CLIENT_URL}/pages/auth.html?error=google_failed`,
+    failureRedirect:
+      `${process.env.CLIENT_URL}/front/pages/auth.html?error=google_failed`
   }),
+
   (req, res) => {
+
     const user = req.user;
 
-    // include role in token
+    // 🔥 JWT
     const token = jwt.sign(
       {
         id: user._id,
@@ -35,36 +43,59 @@ router.get(
         role: user.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      {
+        expiresIn: "7d",
+      }
     );
 
-    // safer minimal payload
-    const safeUser = {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      avatar: user.avatar,
-      role: user.role,
-    };
-
-    //  still URL-based (ok for now)
-    const params = new URLSearchParams({
+    // 🔥 Store token in HttpOnly cookie
+    res.cookie(
+      "token",
       token,
-      user: encodeURIComponent(JSON.stringify(safeUser)),
-    });
+      COOKIE_OPTIONS
+    );
 
-    res.redirect(`${process.env.CLIENT_URL}/pages/auth.html?${params}`);
+    // 🔥 Redirect frontend
+ res.redirect(
+  `${process.env.CLIENT_URL}/front/pages/auth.html`
+);
   }
 );
 
+// 🔐 CURRENT USER
+router.get(
+  "/me",
+  protect,
+  (req, res) => {
 
-//  GET CURRENT USER
+    res.json({
+      loggedIn: true,
 
-router.get("/me", protect, (req, res) => {
-  res.json({
-    loggedIn: true,
-    user: req.user,
-  });
-});
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        avatar: req.user.avatar,
+        role: req.user.role,
+      },
+    });
+  }
+);
+
+// 🔓 LOGOUT
+router.post(
+  "/logout",
+  (req, res) => {
+
+    res.clearCookie(
+      "token",
+      COOKIE_OPTIONS
+    );
+
+    res.json({
+      message: "Logged out successfully",
+    });
+  }
+);
 
 export default router;

@@ -15,6 +15,12 @@ const cartItemSchema = new mongoose.Schema(
       default: null,
     },
 
+      variantDetails: {
+      size: String,
+      material: String,
+      sku: String,
+    },
+
     quantity: {
       type: Number,
       default: 1,
