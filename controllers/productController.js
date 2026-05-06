@@ -97,6 +97,35 @@ const getProducts = async (req, res) => {
 };
 
 
+
+const getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).lean();
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(product);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 // GET SINGLE PRODUCT (SLUG BASED)
 const getProductBySlug = async (req, res) => {
   try {
@@ -239,6 +268,7 @@ const deleteProduct = async (req, res) => {
 
 export {
   getProducts,
+  getProductById,
   getProductBySlug,
   createProduct,
   updateProduct,

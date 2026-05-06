@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Product from "./models/productModel.js";
 
-const MONGO_URI = "";
+const MONGO_URI = "mongodb+srv://abdussalam9891:abdussalam9891@cluster0.vzftnuf.mongodb.net/ecommerce";
 
 const connectDB = async () => {
   console.log("🔌 Connecting to DB...");
@@ -91,7 +91,17 @@ isBestSeller: i % 4 === 0,
 isNewProduct: i % 5 === 0,
 
     images: getImages("rings", category, (i % 2) + 1),
-    description: "Premium handcrafted ring",
+    description: {
+  short: "A timeless ring crafted for modern elegance.",
+  design: "Features precision-set stones with a refined finish.",
+  details: [
+    `${category === "gold" ? "18k Gold" : category === "silver" ? "925 Silver" : "Premium Alloy"}`,
+    "High polish finish",
+    "Available in sizes 6, 7, 8",
+    "Certified quality"
+  ],
+  styling: "Perfect for daily wear and special occasions."
+},
 
     variants: generateVariantsWithSize({
       sizes: ["6", "7", "8"],
@@ -119,7 +129,17 @@ isBestSeller: i % 3 === 0,
 isNewProduct: i % 4 === 0,
 
     images: getImages("bracelets", category, (i % 2) + 1),
-    description: "Elegant bracelet",
+   description: {
+  short: "An elegant bracelet designed for everyday luxury.",
+  design: "Crafted with smooth edges and premium finishing.",
+  details: [
+    `${category === "gold" ? "18k Gold" : category === "silver" ? "925 Silver" : "Premium Alloy"}`,
+    "Comfort fit design",
+    "Available in S, M, L sizes",
+    "Durable and lightweight"
+  ],
+  styling: "Pairs beautifully with both ethnic and western outfits."
+},
 
     variants: generateVariantsWithSize({
       sizes: ["S", "M", "L"],
@@ -150,7 +170,17 @@ isBestSeller: i % 2 === 0,
 isNewProduct: i % 3 === 0,
 
     images: getImages("earrings", category, (i % 2) + 1),
-    description: "Stylish earrings",
+    description: {
+  short: "Stylish earrings to elevate your everyday look.",
+  design: "Minimal yet elegant design with premium detailing.",
+  details: [
+    `${category === "gold" ? "18k Gold" : category === "silver" ? "925 Silver" : "Premium Alloy"}`,
+    "Lightweight and comfortable",
+    "Secure push-back closure",
+    "High shine finish"
+  ],
+  styling: "Perfect for office wear and casual outings."
+},
 
     variants: generateVariantsNoSize({
       category,
@@ -181,7 +211,17 @@ isBestSeller: i % 2 === 0,
 isNewProduct: i % 3 === 0,
 
     images: getImages("necklaces", category, (i % 2) + 1),
-    description: "Luxury necklace",
+   description: {
+  short: "A luxurious necklace crafted to make a statement.",
+  design: "Intricate craftsmanship with a modern aesthetic.",
+  details: [
+    `${category === "gold" ? "18k Gold" : category === "silver" ? "925 Silver" : "Premium Alloy"}`,
+    "Adjustable chain length",
+    "Fine polished finish",
+    "Skin-friendly material"
+  ],
+  styling: "Ideal for weddings, parties, and festive occasions."
+},
 
     variants: generateVariantsNoSize({
       category,

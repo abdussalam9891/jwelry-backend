@@ -24,7 +24,7 @@ const variantSchema = new mongoose.Schema(
       type: String,
     },
   },
-  { _id: true } // important for cart reference
+  { _id: true }, // important for cart reference
 );
 
 const productSchema = new mongoose.Schema(
@@ -76,7 +76,12 @@ const productSchema = new mongoose.Schema(
       validate: (v) => v.length > 0,
     },
 
-    description: String,
+    description: {
+      short: String,
+      design: String,
+      details: [String],
+      styling: String,
+    },
 
     isBestSeller: {
       type: Boolean,
@@ -99,7 +104,7 @@ const productSchema = new mongoose.Schema(
       default: 0,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // 🔥 INDEXES
