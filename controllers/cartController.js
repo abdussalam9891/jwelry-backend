@@ -200,6 +200,7 @@ export const removeFromCart = async (req, res) => {
 
 // UPDATE quantity
 
+
 export const updateQuantity = async (req, res) => {
   try {
     const { itemId } = req.params;
