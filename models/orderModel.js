@@ -8,8 +8,9 @@ const orderItemSchema =
       ref: "Product",
       required: true,
     },
+    slug: String,
 
-    // 🔥 snapshot data
+    //  snapshot data
     name: {
       type: String,
       required: true,
@@ -24,6 +25,7 @@ const orderItemSchema =
       type: Number,
       required: true,
     },
+
 
     quantity: {
       type: Number,
@@ -96,6 +98,7 @@ const orderSchema =
       required: true,
 
     },
+
 
 
 

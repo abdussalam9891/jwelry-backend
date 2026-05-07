@@ -6,7 +6,7 @@ export const createOrder = async (req, res) => {
   try {
     const { addressId, paymentMethod } = req.body;
 
-    // 🔥 validate address
+    //  validate address
     const address = await Address.findOne({
       _id: addressId,
 
@@ -21,7 +21,7 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // 🔥 get cart
+    //  get cart
     const cart = await Cart.findOne({
       user: req.user._id,
     }).populate("items.product");
@@ -38,7 +38,7 @@ export const createOrder = async (req, res) => {
 
     let itemsPrice = 0;
 
-    // 🔥 validate products + stock
+    //  validate products + stock
     for (const item of cart.items) {
       const product = item.product;
 
@@ -50,7 +50,7 @@ export const createOrder = async (req, res) => {
         });
       }
 
-      // 🔥 stock check
+      //  stock check
       let availableStock = product.stock;
 
       if (item.variantId) {
@@ -76,27 +76,29 @@ export const createOrder = async (req, res) => {
       }
 
 
-      // 🔥 snapshot item
-      orderItems.push({
-        product: product._id,
+      //  snapshot item
+    orderItems.push({
+  product: product._id,
 
-        name: item.name,
-        image: item.image,
-        price: item.price,
+  slug: product.slug,
 
-        quantity: item.quantity,
-      });
+  name: item.name,
+  image: item.image,
+  price: item.price,
+
+  quantity: item.quantity,
+});
 
       itemsPrice += item.price * item.quantity;
     }
 
-    // 🔥 shipping
+    //  shipping
     const shippingPrice = 0;
 
-    // 🔥 total
+    //  total
     const totalPrice = itemsPrice + shippingPrice;
 
-    // 🔥 create order
+    //  create order
     const order = await Order.create({
       user: req.user._id,
 
@@ -148,4 +150,84 @@ export const createOrder = async (req, res) => {
       message: "Server error",
     });
   }
+};
+
+export const getMyOrders = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const orders =
+      await Order.find({
+        user: req.user._id,
+      })
+      .sort({
+        createdAt: -1,
+      });
+
+    res.status(200).json({
+      success: true,
+
+      orders,
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+
+      message: "Server error",
+    });
+
+  }
+
+};
+
+
+export const getOrderById = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const order =
+      await Order.findOne({
+        _id: req.params.id,
+
+        user: req.user._id,
+      });
+
+    if (!order) {
+
+      return res.status(404).json({
+        success: false,
+
+        message: "Order not found",
+      });
+
+    }
+
+    res.status(200).json({
+      success: true,
+
+      order,
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+
+      message: "Server error",
+    });
+
+  }
+
 };
