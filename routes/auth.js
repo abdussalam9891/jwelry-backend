@@ -12,6 +12,52 @@ const COOKIE_OPTIONS = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
+
+
+
+function handleAuthSuccess(
+  req,
+  res,
+  redirectUrl
+) {
+
+  const user =
+    req.user;
+
+  //  create JWT
+  const token =
+    jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+      },
+
+      process.env.JWT_SECRET,
+
+      {
+        expiresIn: "7d",
+      }
+    );
+
+  //  store cookie
+  res.cookie(
+    "token",
+    token,
+    COOKIE_OPTIONS
+  );
+
+  //  redirect
+  res.redirect(
+    redirectUrl
+  );
+
+}
+
+
+
+
+
 // 🔐 GOOGLE LOGIN
 router.get(
   "/google",
@@ -31,36 +77,103 @@ router.get(
       `${process.env.CLIENT_URL}/front/pages/auth.html?error=google_failed`
   }),
 
+ (req, res) => {
+
+  handleAuthSuccess(
+
+    req,
+
+    res,
+
+    `${process.env.CLIENT_URL}/front/pages/auth.html`
+
+  );
+
+}
+);
+
+
+
+
+
+// 🔐 ADMIN GOOGLE LOGIN
+router.get(
+
+  "/google/admin",
+
+  passport.authenticate(
+    "google-admin",
+    {
+      scope: [
+        "profile",
+        "email",
+      ],
+
+      session: false,
+    }
+  )
+
+);
+
+
+// 🔐 ADMIN GOOGLE CALLBACK
+router.get(
+
+  "/google/admin/callback",
+
+  passport.authenticate(
+    "google-admin",
+    {
+      session: false,
+
+      failureRedirect:
+        `${process.env.ADMIN_URL}/login`,
+    }
+  ),
+
   (req, res) => {
 
-    const user = req.user;
+    //  block non-admins
+    if (
+      req.user.role !==
+      "admin"
+    ) {
 
-    // 🔥 JWT
-    const token = jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      return res.redirect(
+        `${process.env.ADMIN_URL}/login`
+      );
+
+    }
+
+    handleAuthSuccess(
+
+      req,
+
+      res,
+
+      `${process.env.ADMIN_URL}/admin`
+
     );
 
-    // 🔥 Store token in HttpOnly cookie
-    res.cookie(
-      "token",
-      token,
-      COOKIE_OPTIONS
-    );
-
-    // 🔥 Redirect frontend
- res.redirect(
-  `${process.env.CLIENT_URL}/front/pages/auth.html`
-);
   }
+
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // 🔐 CURRENT USER
 router.get(

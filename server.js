@@ -20,12 +20,82 @@ const app = express();
 const clientUrl = new URL(process.env.CLIENT_URL);
 const clientOrigin = `${clientUrl.protocol}//${clientUrl.host}`;
 
+
+
+
+
+
+
+
+
+
+
+// cors 
+
+const allowedOrigins = [
+
+  process.env.CLIENT_URL,
+
+  process.env.ADMIN_URL,
+
+];
+
 app.use(
+
   cors({
-    origin: clientOrigin,
+
+    origin: function (
+      origin,
+      callback
+    ) {
+
+      // allow server-to-server
+      // or postman
+      if (!origin) {
+
+        return callback(
+          null,
+          true
+        );
+
+      }
+
+      if (
+        allowedOrigins.includes(
+          origin
+        )
+      ) {
+
+        return callback(
+          null,
+          true
+        );
+
+      }
+
+      return callback(
+        new Error(
+          "Not allowed by CORS"
+        )
+      );
+
+    },
+
     credentials: true,
-  }),
+
+  })
+
 );
+
+
+
+
+
+
+
+
+
+
 
 dbConnection();
 
