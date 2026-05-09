@@ -41,7 +41,7 @@ const productSchema = new mongoose.Schema(
       unique: true,
     },
 
-    // 🔥 BASE PRICE (for listing)
+    //  BASE PRICE (for listing)
     price: {
       type: Number,
       required: true,
@@ -49,6 +49,12 @@ const productSchema = new mongoose.Schema(
 
     originalPrice: {
       type: Number,
+    },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "DRAFT", "ARCHIVED"],
+      default: "ACTIVE",
+      index: true,
     },
 
     category: {
@@ -88,6 +94,10 @@ const productSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    lowStockThreshold: {
+  type: Number,
+  default: 5,
+},
 
     isNewProduct: {
       type: Boolean,
@@ -95,19 +105,24 @@ const productSchema = new mongoose.Schema(
       index: true,
     },
 
-    // 🔥 VARIANTS (REAL SOURCE OF TRUTH)
+    //  VARIANTS (REAL SOURCE OF TRUTH)
     variants: [variantSchema],
 
-    // 🔥 FALLBACK STOCK (only if no variants)
+    //  FALLBACK STOCK (only if no variants)
     stock: {
       type: Number,
       default: 0,
     },
+    sku: {
+  type: String,
+  unique: true,
+  sparse: true,
+},
   },
   { timestamps: true },
 );
 
-// 🔥 INDEXES
+//  INDEXES
 productSchema.index({ price: 1 });
 productSchema.index({ createdAt: -1 });
 

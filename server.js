@@ -14,6 +14,7 @@ import orderRoutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
+import adminProductsRoutes from "./routes/admin/products.routes.js";
 
 const app = express();
 
@@ -30,7 +31,7 @@ const clientOrigin = `${clientUrl.protocol}//${clientUrl.host}`;
 
 
 
-// cors 
+// cors
 
 const allowedOrigins = [
 
@@ -122,6 +123,13 @@ app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/delivery", deliveryRoutes);
 app.use("/api/v1/addresses", addressRoutes);
 app.use("/api/v1/orders", orderRoutes);
+
+
+
+app.use(
+  "/api/v1/admin/products",
+  adminProductsRoutes
+);
 
 const PORT = process.env.PORT || 5000;
 

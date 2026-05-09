@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    phone: String,
 
     avatar: {
       type: String,
@@ -40,6 +41,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isBlocked: {
+   type: Boolean,
+   default: false,
+},
 
     // AUTH PROVIDER (scalable)
     provider: {
@@ -47,6 +52,8 @@ const userSchema = new mongoose.Schema(
       enum: ["google", "local"],
       default: "google",
     },
+    lastLoginAt: Date,
+
   },
   { timestamps: true }
 );

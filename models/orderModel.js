@@ -1,16 +1,22 @@
 import mongoose from "mongoose";
 
-const orderItemSchema =
-  new mongoose.Schema({
 
+
+const orderItemSchema = new mongoose.Schema(
+  {
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
       required: true,
     },
-    slug: String,
 
-    //  snapshot data
+    slug: {
+      type: String,
+    },
+
+    // SNAPSHOT DATA
+    // important because products can change later
+
     name: {
       type: String,
       required: true,
@@ -26,24 +32,29 @@ const orderItemSchema =
       required: true,
     },
 
-
     quantity: {
       type: Number,
       required: true,
       min: 1,
     },
 
-  });
+    // VARIANT SNAPSHOT
+    variant: {
+      size: String,
+      material: String,
+    },
+  },
+  { _id: false }
+);
 
 
 
-
-const shippingAddressSchema =
-  new mongoose.Schema({
-
+const shippingAddressSchema = new mongoose.Schema(
+  {
     fullName: {
       type: String,
       required: true,
+      trim: true,
     },
 
     phone: {
@@ -80,148 +91,139 @@ const shippingAddressSchema =
       type: String,
       default: "",
     },
+  },
+  { _id: false }
+);
 
-  });
 
 
-
-
-const orderSchema =
-  new mongoose.Schema({
+const orderSchema = new mongoose.Schema(
+  {
+    // HUMAN READABLE ORDER ID
+    orderNumber: {
+      type: String,
+      unique: true,
+      index: true,
+    },
 
     user: {
-
       type: mongoose.Schema.Types.ObjectId,
-
       ref: "User",
-
       required: true,
-
+      index: true,
     },
-
-
-
 
     items: {
-
       type: [orderItemSchema],
-
       required: true,
-
     },
-
-
 
     shippingAddress: {
-
       type: shippingAddressSchema,
-
       required: true,
-
     },
-
-
 
     paymentMethod: {
-
       type: String,
-
-      enum: [
-        "COD",
-        "RAZORPAY",
-      ],
-
+      enum: ["COD", "RAZORPAY"],
       default: "COD",
-
     },
 
 
+      //  PRICE BREAKDOWN
 
     itemsPrice: {
-
       type: Number,
-
       required: true,
-
       default: 0,
-
     },
-
-
 
     shippingPrice: {
-
       type: Number,
-
       default: 0,
-
     },
 
-
+    taxPrice: {
+      type: Number,
+      default: 0,
+    },
 
     totalPrice: {
-
       type: Number,
-
       required: true,
-
       default: 0,
-
     },
 
+    /*BUSINESS STATUS*/
 
+   orderStatus: {
+  type: String,
+  enum: [
+    "PLACED",
+    "CONFIRMED",
+    "SHIPPED",
+    "DELIVERED",
+    "CANCELLED",
+  ],
+  default: "PLACED",
+  index: true,
+},
 
-    orderStatus: {
+    /*PAYMENT STATUS*/
 
+    paymentStatus: {
       type: String,
-
-      enum: [
-
-        "PLACED",
-        "CONFIRMED",
-        "SHIPPED",
-        "DELIVERED",
-        "CANCELLED",
-
-      ],
-
-      default: "PLACED",
-
+      enum: ["PENDING", "PAID", "FAILED", "REFUNDED"],
+      default: "PENDING",
+      index: true,
     },
 
 
 
-    isPaid: {
+    /*SHIPPING*/
 
-      type: Boolean,
-
-      default: false,
-
+    trackingNumber: {
+      type: String,
+      default: "",
     },
 
+    shippingCarrier: {
+      type: String,
+      default: "",
+    },
 
+    /*ADMIN NOTES*/
+
+    adminNotes: {
+      type: String,
+      default: "",
+    },
+
+    cancelReason: {
+      type: String,
+      default: "",
+    },
+
+    /*DATES*/
 
     paidAt: Date,
 
-
-
     deliveredAt: Date,
-
   },
-
   {
-
     timestamps: true,
+  }
+);
 
-  });
+/*iNDEXES*/
 
+orderSchema.index({ createdAt: -1 });
+ 
 
-
+/*MODEl*/
 
 const Order =
-  mongoose.model(
-    "Order",
-    orderSchema
-  );
+  mongoose.models.Order ||
+  mongoose.model("Order", orderSchema);
 
 export default Order;
