@@ -5,6 +5,7 @@ import {
   updateProduct,
   deleteProduct,
   getAdminProducts,
+  getProductStats,
 } from "../../controllers/admin/products.controller.js";
 
 import {
@@ -22,6 +23,11 @@ const router = express.Router();
 
 // GET ALL PRODUCTS
 router.get("/", getAdminProducts);
+
+router.get(
+  "/stats",
+  getProductStats
+);
 
 // CREATE PRODUCT
 router.post("/", createProduct);

@@ -106,11 +106,31 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
+    /* USER REFERENCE */
+
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
       index: true,
+    },
+
+    /* CUSTOMER SNAPSHOT */
+
+    customerName: {
+      type: String,
+      required: true,
+    },
+
+    customerEmail: {
+      type: String,
+      required: true,
+      lowercase: true,
+    },
+
+    customerPhone: {
+      type: String,
+      required: true,
     },
 
     items: {
@@ -129,8 +149,7 @@ const orderSchema = new mongoose.Schema(
       default: "COD",
     },
 
-
-      //  PRICE BREAKDOWN
+    /* PRICE BREAKDOWN */
 
     itemsPrice: {
       type: Number,
@@ -154,33 +173,36 @@ const orderSchema = new mongoose.Schema(
       default: 0,
     },
 
-    /*BUSINESS STATUS*/
+    /* BUSINESS STATUS */
 
-   orderStatus: {
-  type: String,
-  enum: [
-    "PLACED",
-    "CONFIRMED",
-    "SHIPPED",
-    "DELIVERED",
-    "CANCELLED",
-  ],
-  default: "PLACED",
-  index: true,
-},
+    orderStatus: {
+      type: String,
+      enum: [
+        "PLACED",
+        "CONFIRMED",
+        "SHIPPED",
+        "DELIVERED",
+        "CANCELLED",
+      ],
+      default: "PLACED",
+      index: true,
+    },
 
-    /*PAYMENT STATUS*/
+    /* PAYMENT STATUS */
 
     paymentStatus: {
       type: String,
-      enum: ["PENDING", "PAID", "FAILED", "REFUNDED"],
+      enum: [
+        "PENDING",
+        "PAID",
+        "FAILED",
+        "REFUNDED",
+      ],
       default: "PENDING",
       index: true,
     },
 
-
-
-    /*SHIPPING*/
+    /* SHIPPING */
 
     trackingNumber: {
       type: String,
@@ -192,7 +214,7 @@ const orderSchema = new mongoose.Schema(
       default: "",
     },
 
-    /*ADMIN NOTES*/
+    /* ADMIN NOTES */
 
     adminNotes: {
       type: String,
@@ -204,7 +226,7 @@ const orderSchema = new mongoose.Schema(
       default: "",
     },
 
-    /*DATES*/
+    /* DATES */
 
     paidAt: Date,
 
@@ -218,7 +240,7 @@ const orderSchema = new mongoose.Schema(
 /*iNDEXES*/
 
 orderSchema.index({ createdAt: -1 });
- 
+
 
 /*MODEl*/
 

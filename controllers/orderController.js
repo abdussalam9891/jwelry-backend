@@ -2,154 +2,261 @@ import Address from "../models/addressModel.js";
 import Cart from "../models/cartModel.js";
 import Order from "../models/orderModel.js";
 
-export const createOrder = async (req, res) => {
+export const createOrder = async (
+  req,
+  res
+) => {
+
   try {
-    const { addressId, paymentMethod } = req.body;
 
-    //  validate address
-    const address = await Address.findOne({
-      _id: addressId,
+    const {
+      addressId,
+      paymentMethod,
+    } = req.body;
 
-      user: req.user._id,
-    });
+    /* VALIDATE ADDRESS */
+
+    const address =
+      await Address.findOne({
+
+        _id: addressId,
+
+        user: req.user._id,
+
+      });
 
     if (!address) {
+
       return res.status(404).json({
         success: false,
-
-        message: "Address not found",
+        message:
+          "Address not found",
       });
+
     }
 
-    //  get cart
-    const cart = await Cart.findOne({
-      user: req.user._id,
-    }).populate("items.product");
+    /* GET CART */
 
-    if (!cart || !cart.items.length) {
+    const cart =
+      await Cart.findOne({
+        user: req.user._id,
+      })
+
+      .populate("items.product");
+
+    if (
+      !cart ||
+      !cart.items.length
+    ) {
+
       return res.status(400).json({
         success: false,
-
-        message: "Cart is empty",
+        message:
+          "Cart is empty",
       });
+
     }
 
     const orderItems = [];
 
     let itemsPrice = 0;
 
-    //  validate products + stock
+    /* VALIDATE PRODUCTS */
+
     for (const item of cart.items) {
-      const product = item.product;
+
+      const product =
+        item.product;
 
       if (!product) {
+
         return res.status(400).json({
           success: false,
-
-          message: "Product no longer exists",
+          message:
+            "Product no longer exists",
         });
+
       }
 
-      //  stock check
-      let availableStock = product.stock;
+      /* STOCK CHECK */
+
+      let availableStock =
+        product.stock;
 
       if (item.variantId) {
-        const variant = product.variants.id(item.variantId);
+
+        const variant =
+          product.variants.id(
+            item.variantId
+          );
 
         if (!variant) {
+
           return res.status(400).json({
             success: false,
-
-            message: "Variant not found",
+            message:
+              "Variant not found",
           });
+
         }
 
-        availableStock = variant.stock;
+        availableStock =
+          variant.stock;
       }
 
-      if (item.quantity > availableStock) {
+      if (
+        item.quantity >
+        availableStock
+      ) {
+
         return res.status(400).json({
           success: false,
-
-          message: `${item.name} is out of stock`,
+          message:
+            `${item.name} is out of stock`,
         });
+
       }
 
+      /* SNAPSHOT ITEM */
 
-      //  snapshot item
-    orderItems.push({
-  product: product._id,
+      orderItems.push({
 
-  slug: product.slug,
+        product:
+          product._id,
 
-  name: item.name,
-  image: item.image,
-  price: item.price,
+        slug:
+          product.slug,
 
-  quantity: item.quantity,
-});
+        name:
+          item.name,
 
-      itemsPrice += item.price * item.quantity;
+        image:
+          item.image,
+
+        price:
+          item.price,
+
+        quantity:
+          item.quantity,
+
+      });
+
+      itemsPrice +=
+        item.price *
+        item.quantity;
     }
 
-    //  shipping
+    /* SHIPPING */
+
     const shippingPrice = 0;
 
-    //  total
-    const totalPrice = itemsPrice + shippingPrice;
+    /* TOTAL */
 
-    //  create order
-    const order = await Order.create({
-      user: req.user._id,
+    const totalPrice =
+      itemsPrice +
+      shippingPrice;
 
-      items: orderItems,
+    /* CREATE ORDER */
 
-      shippingAddress: {
-        fullName: address.fullName,
+    const order =
+      await Order.create({
 
-        phone: address.phone,
+        /* USER */
 
-        pincode: address.pincode,
+        user:
+          req.user._id,
 
-        state: address.state,
+        /* CUSTOMER SNAPSHOT */
 
-        city: address.city,
+        customerName:
+          req.user.name,
 
-        addressLine1: address.addressLine1,
+        customerEmail:
+          req.user.email,
 
-        addressLine2: address.addressLine2,
+        customerPhone:
+          address.phone,
 
-        landmark: address.landmark,
-      },
+        /* ITEMS */
 
-      paymentMethod,
+        items:
+          orderItems,
 
-      itemsPrice,
+        /* SHIPPING ADDRESS */
 
-      shippingPrice,
+        shippingAddress: {
 
-      totalPrice,
-    });
+          fullName:
+            address.fullName,
 
-    // 🔥 clear cart
+          phone:
+            address.phone,
+
+          pincode:
+            address.pincode,
+
+          state:
+            address.state,
+
+          city:
+            address.city,
+
+          addressLine1:
+            address.addressLine1,
+
+          addressLine2:
+            address.addressLine2,
+
+          landmark:
+            address.landmark,
+
+        },
+
+        /* PAYMENT */
+
+        paymentMethod,
+
+        /* PRICING */
+
+        itemsPrice,
+
+        shippingPrice,
+
+        totalPrice,
+
+      });
+
+    /* CLEAR CART */
+
     cart.items = [];
 
     await cart.save();
 
+    /* RESPONSE */
+
     res.status(201).json({
+
       success: true,
 
       order,
+
     });
+
   } catch (error) {
+
     console.error(error);
 
     res.status(500).json({
+
       success: false,
 
-      message: "Server error",
+      message:
+        "Server error",
+
     });
+
   }
+
 };
 
 export const getMyOrders = async (

@@ -9,6 +9,7 @@ import passport from "./config/passport.js";
 import addressRoutes from "./routes/addressRoutes.js";
 import adminDashboardRoutes from "./routes/admin/dashboard.routes.js";
 import adminProductsRoutes from "./routes/admin/products.routes.js";
+import adminOrdersRoutes from './routes/admin/orders.routes.js';
 import authRoutes from "./routes/auth.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import deliveryRoutes from "./routes/deliveryRoutes.js";
@@ -19,12 +20,15 @@ import wishlistRoutes from "./routes/wishlistRoutes.js";
 
 const app = express();
 
-const clientUrl = new URL(process.env.CLIENT_URL);
-const clientOrigin = `${clientUrl.protocol}//${clientUrl.host}`;
+
 
 // cors
 
-const allowedOrigins = [process.env.CLIENT_URL, process.env.ADMIN_URL];
+const allowedOrigins = [
+  process.env.CLIENT_URL?.trim(),
+  process.env.ADMIN_URL?.trim(),
+];
+
 
 app.use(
   cors({
@@ -76,8 +80,16 @@ app.use("/api/v1/orders", orderRoutes);
 // admin
 app.use("/api/v1/admin/products", adminProductsRoutes);
 app.use("/api/v1/admin/dashboard", adminDashboardRoutes);
+app.use("/api/v1/admin/orders", adminOrdersRoutes);
+
 
 const PORT = process.env.PORT || 5000;
+
+app.use((req, res) => {
+  res.status(404).json({
+    message: "Route not found",
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`server running on ${PORT}`);
