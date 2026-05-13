@@ -31,6 +31,13 @@ export const getAdminProducts =
       const category =
         req.query.category;
 
+        const subcategory =
+  req.query.subcategory;
+
+const material =
+  req.query.material;
+
+
       const query = {};
 
       /* SEARCH */
@@ -55,6 +62,27 @@ export const getAdminProducts =
           category;
 
       }
+
+      /* SUBCATEGORY */
+
+if (subcategory) {
+
+  query.subcategory =
+    subcategory;
+
+}
+
+/* MATERIAL */
+
+if (material) {
+
+  query[
+    "variants.material"
+  ] = material;
+
+}
+
+
 
       /* TOTAL */
 

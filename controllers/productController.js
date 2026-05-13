@@ -1,20 +1,30 @@
 import Product from "../models/productModel.js";
 
-
 // GET PRODUCTS (FILTER + PAGINATION + SORT)
 const getProducts = async (req, res) => {
   try {
     const {
       category,
+
       subcategory,
+
+      material,
+
       gender,
+
       minPrice,
+
       maxPrice,
+
       sort,
+
       page = 1,
+
       limit = 12,
+
       tag,
-      search
+
+      search,
     } = req.query;
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
@@ -27,6 +37,13 @@ const getProducts = async (req, res) => {
     // basic filters
     if (category) conditions.push({ category });
     if (subcategory) conditions.push({ subcategory });
+
+    if (material) {
+      conditions.push({
+        "variants.material": material,
+      });
+    }
+
     if (gender) conditions.push({ gender });
 
     // price filter
@@ -54,9 +71,24 @@ const getProducts = async (req, res) => {
         conditions.push({
           $or: [
             { name: { $regex: word, $options: "i" } },
-            { description: { $regex: word, $options: "i" } },
+            {
+  "description.short": {
+
+    $regex: word,
+
+    $options: "i",
+
+  },
+},
             { subcategory: { $regex: word, $options: "i" } },
             { category: { $regex: word, $options: "i" } },
+            {
+              "variants.material": {
+                $regex: word,
+
+                $options: "i",
+              },
+            },
           ],
         });
       });
@@ -74,7 +106,9 @@ const getProducts = async (req, res) => {
     // 🔥 EXECUTE
     const [products, total] = await Promise.all([
       Product.find(query)
-        .select("name price originalPrice images slug isBestSeller isNewProduct")
+        .select(
+          "name price originalPrice images slug isBestSeller isNewProduct",
+        )
         .sort(sortOption)
         .skip(skip)
         .limit(limitNum)
@@ -89,14 +123,11 @@ const getProducts = async (req, res) => {
       totalPages: Math.ceil(total / limitNum),
       total,
     });
-
   } catch (error) {
     console.error("GET PRODUCTS ERROR:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 const getProductById = async (req, res) => {
   try {
@@ -107,24 +138,11 @@ const getProductById = async (req, res) => {
     }
 
     res.json(product);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
-
-
-
-
-
-
-
-
-
-
 
 // GET SINGLE PRODUCT (SLUG BASED)
 const getProductBySlug = async (req, res) => {
@@ -136,13 +154,11 @@ const getProductBySlug = async (req, res) => {
     }
 
     res.json(product);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 // CREATE PRODUCT
 const createProduct = async (req, res) => {
@@ -183,19 +199,15 @@ const createProduct = async (req, res) => {
 
     const created = await product.save();
     res.status(201).json(created);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
 // UPDATE PRODUCT
 const updateProduct = async (req, res) => {
-
   try {
-
     const {
       name,
       price,
@@ -229,24 +241,15 @@ const updateProduct = async (req, res) => {
     };
 
     const updateData = Object.fromEntries(
-
-      Object.entries(allowedFields).filter(
-        ([_, v]) => v !== undefined
-      )
-
+      Object.entries(allowedFields).filter(([_, v]) => v !== undefined),
     );
 
-    const product =
-      await Product.findById(
-        req.params.id
-      );
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
-
       return res.status(404).json({
         message: "Product not found",
       });
-
     }
 
     Object.assign(product, updateData);
@@ -254,19 +257,14 @@ const updateProduct = async (req, res) => {
     await product.save();
 
     res.json(product);
-
   } catch (error) {
-
     console.error(error);
 
     res.status(500).json({
       message: error.message,
     });
-
   }
-
 };
-
 
 // DELETE PRODUCT
 const deleteProduct = async (req, res) => {
@@ -279,19 +277,17 @@ const deleteProduct = async (req, res) => {
 
     await product.deleteOne();
     res.json({ message: "Product deleted" });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
 export {
-  getProducts,
+  createProduct,
+  deleteProduct,
   getProductById,
   getProductBySlug,
-  createProduct,
+  getProducts,
   updateProduct,
-  deleteProduct,
 };

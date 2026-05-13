@@ -1,34 +1,109 @@
 import mongoose from "mongoose";
 
-const variantSchema = new mongoose.Schema(
-  {
-    size: {
-      type: String, // e.g. "6", "7", "8"
+const variantSchema =
+  new mongoose.Schema(
+
+    {
+
+      /*
+        ONLY USED FOR:
+        rings / bracelets
+      */
+
+      size: {
+        type: String,
+        trim: true,
+      },
+
+      /*
+        MATERIAL TYPE
+      */
+
+      material: {
+
+        type: String,
+
+        required: true,
+
+        enum: [
+
+          "18K Gold",
+
+          "22K Gold",
+
+          "Silver",
+
+          "Diamond",
+
+          "Rose Gold",
+
+          "White Gold",
+
+          "Platinum",
+
+          "Gemstone",
+
+        ],
+
+        trim: true,
+
+      },
+
+      /*
+        VARIANT PRICE
+      */
+
+      price: {
+
+        type: Number,
+
+        required: true,
+
+        min: 0,
+
+      },
+
+      /*
+        INVENTORY
+      */
+
+      stock: {
+
+        type: Number,
+
+        default: 0,
+
+        min: 0,
+
+      },
+
+      /*
+        AUTO GENERATED SKU
+      */
+
+      sku: {
+
+        type: String,
+
+        required: true,
+
+        uppercase: true,
+
+        trim: true,
+
+      },
+
     },
 
-    material: {
-      type: String, // e.g. "18k", "22k"
-    },
+    {
 
-    price: {
-      type: Number,
-      required: true,
-       min: 0,
-    },
+      _id: true,
 
-    stock: {
-      type: Number,
-      default: 0,
-       min: 0,
-    },
+      timestamps: true,
 
-    sku: {
-      type: String,
-    },
-  },
-  { _id: true }, // important for cart reference
-);
+    }
 
+  );
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -61,19 +136,26 @@ const productSchema = new mongoose.Schema(
       index: true,
     },
 
-    category: {
-      type: String,
-      required: true,
-      index: true,
-      enum: ["gold", "diamond", "gemstone", "silver"],
-    },
+   category: {
+  type: String,
+  required: true,
+  index: true,
 
-    subcategory: {
-      type: String,
-      required: true,
-      index: true,
-      enum: ["rings", "earrings", "necklaces", "bracelets"],
-    },
+  enum: [
+    "rings",
+    "earrings",
+    "necklaces",
+    "bracelets",
+  ],
+},
+    subcategory: [
+  "engagement",
+  "wedding",
+  "casual",
+  "luxury",
+  "bridal",
+  "minimal",
+],
 
     gender: {
       type: String,
@@ -84,7 +166,7 @@ const productSchema = new mongoose.Schema(
    images: {
   type: [String],
 
-  
+
 
   validate: {
     validator: function (v) {
