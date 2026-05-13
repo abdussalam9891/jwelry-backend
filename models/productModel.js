@@ -84,6 +84,8 @@ const productSchema = new mongoose.Schema(
    images: {
   type: [String],
 
+  
+
   validate: {
     validator: function (v) {
       return Array.isArray(v) && v.length > 0;

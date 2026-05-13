@@ -252,7 +252,7 @@ export const getProductStats =
 
 
 // CREATE PRODUCT
- 
+
 
 export const createProduct =
   async (req, res) => {
@@ -430,6 +430,88 @@ export const createProduct =
     }
 
   };
+
+
+
+export const archiveProduct =
+  async (req, res) => {
+
+    try {
+
+      const { id } =
+        req.params;
+
+      const product =
+        await Product.findById(id);
+
+      if (!product) {
+
+        return res.status(404).json({
+
+          message:
+            "Product not found",
+
+        });
+
+      }
+
+      /*
+        TOGGLE STATUS
+      */
+
+      product.status =
+
+        product.status ===
+        "ARCHIVED"
+
+          ? "ACTIVE"
+
+          : "ARCHIVED";
+
+      await product.save();
+
+      res.json({
+
+        success: true,
+
+        message:
+
+          product.status ===
+          "ARCHIVED"
+
+            ? "Product archived successfully"
+
+            : "Product restored successfully",
+
+        status:
+          product.status,
+
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      res.status(500).json({
+
+        message:
+          error.message,
+
+      });
+
+    }
+
+  };
+
+
+
+
+
+
+
+
+
+
 
 
 

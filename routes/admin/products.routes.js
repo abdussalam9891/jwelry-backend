@@ -1,18 +1,17 @@
 import express from "express";
 
+import { getProductDetails } from "../../controllers/admin/productDetails.controller.js";
+import { exportProductsReport } from "../../controllers/admin/productExport.controller.js";
 import {
   createProduct,
-  updateProduct,
   deleteProduct,
   getAdminProducts,
   getProductStats,
+  updateProduct,
+  archiveProduct,
 } from "../../controllers/admin/products.controller.js";
-import { exportProductsReport } from "../../controllers/admin/productExport.controller.js";
 
-import {
-  protect,
-  authorize,
-} from "../../middleware/authMiddleware.js";
+import { authorize, protect } from "../../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -25,10 +24,7 @@ const router = express.Router();
 // GET ALL PRODUCTS
 router.get("/", getAdminProducts);
 
-router.get(
-  "/stats",
-  getProductStats
-);
+router.get("/stats", getProductStats);
 
 router.get(
   "/export",
@@ -37,7 +33,28 @@ router.get(
 
   authorize("admin"),
 
-  exportProductsReport
+  exportProductsReport,
+);
+
+router.get(
+  "/:id/details",
+
+  protect,
+
+  authorize("admin"),
+
+  getProductDetails,
+);
+
+
+router.patch(
+  "/:id/archive",
+
+  protect,
+
+  authorize("admin"),
+
+  archiveProduct
 );
 
 // CREATE PRODUCT
