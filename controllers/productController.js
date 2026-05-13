@@ -193,7 +193,9 @@ const createProduct = async (req, res) => {
 
 // UPDATE PRODUCT
 const updateProduct = async (req, res) => {
+
   try {
+
     const {
       name,
       price,
@@ -207,6 +209,7 @@ const updateProduct = async (req, res) => {
       slug,
       isBestSeller,
       isNewProduct,
+      variants,
     } = req.body;
 
     const allowedFields = {
@@ -222,28 +225,46 @@ const updateProduct = async (req, res) => {
       slug,
       isBestSeller,
       isNewProduct,
+      variants,
     };
 
     const updateData = Object.fromEntries(
-      Object.entries(allowedFields).filter(([_, v]) => v !== undefined)
+
+      Object.entries(allowedFields).filter(
+        ([_, v]) => v !== undefined
+      )
+
     );
 
-    const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    ).lean();
+    const product =
+      await Product.findById(
+        req.params.id
+      );
 
-    if (!updatedProduct) {
-      return res.status(404).json({ message: "Product not found" });
+    if (!product) {
+
+      return res.status(404).json({
+        message: "Product not found",
+      });
+
     }
 
-    res.json(updatedProduct);
+    Object.assign(product, updateData);
+
+    await product.save();
+
+    res.json(product);
 
   } catch (error) {
+
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+
+    res.status(500).json({
+      message: error.message,
+    });
+
   }
+
 };
 
 

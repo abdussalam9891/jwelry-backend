@@ -6,64 +6,81 @@ export const getDashboardData = async (req, res) => {
   try {
 
 
-     const range =
-  req.query.range || "12m";
+const { range, from, to } = req.query;
+
+const now = new Date();
+
+let startDate;
+let endDate = now;
+
+if (from && to) {
+  startDate = new Date(from);
+  endDate = new Date(to);
+
+  /* START OF DAY */
+
+startDate.setHours(
+  0,
+  0,
+  0,
+  0
+);
+
+/* END OF DAY */
+
+endDate.setHours(
+  23,
+  59,
+  59,
+  999
+);
+
+} else {
+  startDate = new Date();
+
+  switch (range) {
+    case "7d":
+      startDate.setDate(now.getDate() - 7);
+      break;
+
+    case "15d":
+      startDate.setDate(now.getDate() - 15);
+      break;
+
+    case "1m":
+      startDate.setMonth(now.getMonth() - 1);
+      break;
+
+    case "3m":
+      startDate.setMonth(now.getMonth() - 3);
+      break;
+
+    case "6m":
+      startDate.setMonth(now.getMonth() - 6);
+      break;
+
+    default:
+      startDate.setMonth(now.getMonth() - 12);
+  }
+}
 
 
 
-  const now = new Date();
 
-let startDate =
-  new Date();
+const diffInDays =
+  Math.ceil(
+    (endDate - startDate) /
+      (1000 * 60 * 60 * 24)
+  );
 
-switch (range) {
+let groupFormat;
 
-  case "7d":
-
-    startDate.setDate(
-      now.getDate() - 7
-    );
-
-    break;
-
-  case "15d":
-
-    startDate.setDate(
-      now.getDate() - 15
-    );
-
-    break;
-
-  case "1m":
-
-    startDate.setMonth(
-      now.getMonth() - 1
-    );
-
-    break;
-
-  case "3m":
-
-    startDate.setMonth(
-      now.getMonth() - 3
-    );
-
-    break;
-
-  case "6m":
-
-    startDate.setMonth(
-      now.getMonth() - 6
-    );
-
-    break;
-
-  default:
-
-    startDate.setMonth(
-      now.getMonth() - 12
-    );
-
+if (diffInDays <= 31) {
+  groupFormat = "%d %b";
+} else if (diffInDays <= 365) {
+  groupFormat = "%b";
+} else {
+  groupFormat = "%Y";
 }
 
 
@@ -216,21 +233,30 @@ switch (range) {
 
     /* MONTHLY REVENUE */
 
-const monthlyRevenue =
+const revenueChart =
   await Order.aggregate([
-
     {
       $match: {
         paymentStatus: "PAID",
+
+        createdAt: {
+          $gte: startDate,
+          $lte: endDate,
+        },
       },
     },
 
     {
       $group: {
-
         _id: {
-          month: {
-            $month: "$createdAt",
+          label: {
+            $dateToString: {
+  format: groupFormat,
+
+  date: "$createdAt",
+
+  timezone: "Asia/Kolkata",
+}
           },
         },
 
@@ -238,19 +264,27 @@ const monthlyRevenue =
           $sum: "$totalPrice",
         },
 
+        orders: {
+          $sum: 1,
+        },
       },
     },
 
     {
       $sort: {
-        "_id.month": 1,
+        "_id.label": 1,
       },
     },
-
   ]);
 
+const formattedRevenueChart =
+  revenueChart.map((item) => ({
+    label: item._id.label,
 
+    revenue: item.revenue,
 
+    orders: item.orders,
+  }));
 
 
     /* RESPONSE */
@@ -276,7 +310,7 @@ const monthlyRevenue =
       recentOrders,
 
       recentCustomers,
-       monthlyRevenue,
+       revenueChart: formattedRevenueChart
     });
   } catch (error) {
     console.error(error);

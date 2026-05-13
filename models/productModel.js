@@ -13,11 +13,13 @@ const variantSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: true,
+       min: 0,
     },
 
     stock: {
       type: Number,
       default: 0,
+       min: 0,
     },
 
     sku: {
@@ -45,10 +47,12 @@ const productSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: true,
+       min: 0,
     },
 
     originalPrice: {
       type: Number,
+       min: 0,
     },
     status: {
       type: String,
@@ -77,10 +81,17 @@ const productSchema = new mongoose.Schema(
       index: true,
     },
 
-    images: {
-      type: [String],
-      validate: (v) => v.length > 0,
+   images: {
+  type: [String],
+
+  validate: {
+    validator: function (v) {
+      return Array.isArray(v) && v.length > 0;
     },
+
+    message: "At least one image is required",
+  },
+},
 
     description: {
       short: String,
@@ -97,6 +108,7 @@ const productSchema = new mongoose.Schema(
     lowStockThreshold: {
   type: Number,
   default: 5,
+   min: 0,
 },
 
     isNewProduct: {
@@ -112,6 +124,7 @@ const productSchema = new mongoose.Schema(
     stock: {
       type: Number,
       default: 0,
+       min: 0,
     },
     sku: {
   type: String,
@@ -121,6 +134,44 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+
+
+productSchema.pre("save",  async function (next) {
+
+ if (
+  Array.isArray(this.variants) &&
+  this.variants.length > 0
+) {
+
+    this.stock = this.variants.reduce(
+
+      (total, variant) => {
+
+        return total + variant.stock;
+
+      },
+
+      0
+    );
+
+    this.price = Math.min(
+
+      ...this.variants.map(
+        (variant) => variant.price
+      )
+
+    );
+
+  }
+
+
+
+});
+
+
+
+
 
 //  INDEXES
 productSchema.index({ price: 1 });

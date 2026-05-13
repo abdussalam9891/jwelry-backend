@@ -16,7 +16,14 @@ import {
 
 } from "../../controllers/admin/orders.controller.js";
 
+import {
+  exportOrdersReport,
+} from "../../controllers/admin/orderExport.controller.js";
 
+import {
+  protect,
+  authorize,
+} from "../../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -33,9 +40,21 @@ router.get(
 );
 
 router.get(
+  "/export",
+
+  protect,
+
+  authorize("admin"),
+
+  exportOrdersReport
+);
+
+router.get(
   "/:id",
   getSingleOrder
 );
+
+
 
 router.put(
   "/:id/status",

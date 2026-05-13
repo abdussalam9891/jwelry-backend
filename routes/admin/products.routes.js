@@ -7,6 +7,7 @@ import {
   getAdminProducts,
   getProductStats,
 } from "../../controllers/admin/products.controller.js";
+import { exportProductsReport } from "../../controllers/admin/productExport.controller.js";
 
 import {
   protect,
@@ -27,6 +28,16 @@ router.get("/", getAdminProducts);
 router.get(
   "/stats",
   getProductStats
+);
+
+router.get(
+  "/export",
+
+  protect,
+
+  authorize("admin"),
+
+  exportProductsReport
 );
 
 // CREATE PRODUCT

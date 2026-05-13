@@ -2,59 +2,38 @@ import Address from "../models/addressModel.js";
 import Cart from "../models/cartModel.js";
 import Order from "../models/orderModel.js";
 
-export const createOrder = async (
-  req,
-  res
-) => {
-
+export const createOrder = async (req, res) => {
   try {
-
-    const {
-      addressId,
-      paymentMethod,
-    } = req.body;
+    const { addressId, paymentMethod } = req.body;
 
     /* VALIDATE ADDRESS */
 
-    const address =
-      await Address.findOne({
+    const address = await Address.findOne({
+      _id: addressId,
 
-        _id: addressId,
-
-        user: req.user._id,
-
-      });
+      user: req.user._id,
+    });
 
     if (!address) {
-
       return res.status(404).json({
         success: false,
-        message:
-          "Address not found",
+        message: "Address not found",
       });
-
     }
 
     /* GET CART */
 
-    const cart =
-      await Cart.findOne({
-        user: req.user._id,
-      })
+    const cart = await Cart.findOne({
+      user: req.user._id,
+    })
 
       .populate("items.product");
 
-    if (
-      !cart ||
-      !cart.items.length
-    ) {
-
+    if (!cart || !cart.items.length) {
       return res.status(400).json({
         success: false,
-        message:
-          "Cart is empty",
+        message: "Cart is empty",
       });
-
     }
 
     const orderItems = [];
@@ -64,86 +43,80 @@ export const createOrder = async (
     /* VALIDATE PRODUCTS */
 
     for (const item of cart.items) {
-
-      const product =
-        item.product;
+      const product = item.product;
 
       if (!product) {
-
         return res.status(400).json({
           success: false,
-          message:
-            "Product no longer exists",
+          message: "Product no longer exists",
         });
-
       }
 
       /* STOCK CHECK */
 
-      let availableStock =
-        product.stock;
+      let availableStock = product.stock;
 
       if (item.variantId) {
-
-        const variant =
-          product.variants.id(
-            item.variantId
-          );
+        const variant = product.variants.id(item.variantId);
 
         if (!variant) {
-
           return res.status(400).json({
             success: false,
-            message:
-              "Variant not found",
+            message: "Variant not found",
           });
-
         }
 
-        availableStock =
-          variant.stock;
+        availableStock = variant.stock;
       }
 
-      if (
-        item.quantity >
-        availableStock
-      ) {
-
+      if (item.quantity > availableStock) {
         return res.status(400).json({
           success: false,
-          message:
-            `${item.name} is out of stock`,
+          message: `${item.name} is out of stock`,
         });
-
       }
 
       /* SNAPSHOT ITEM */
 
+      let finalPrice = product.price;
+
+      let variantSnapshot = null;
+
+      if (item.variantId) {
+        const variant = product.variants.id(item.variantId);
+
+        finalPrice = variant.price;
+
+       variantSnapshot = {
+
+  variantId: variant._id,
+
+  sku: variant.sku,
+
+  size: variant.size,
+
+  material: variant.material,
+
+};
+      }
+
       orderItems.push({
+        product: product._id,
 
-        product:
-          product._id,
+        slug: product.slug,
 
-        slug:
-          product.slug,
+        name: product.name,
 
-        name:
-          item.name,
+        image: product.images?.[0] || "",
 
-        image:
-          item.image,
+        price: finalPrice,
 
-        price:
-          item.price,
+        quantity: item.quantity,
 
-        quantity:
-          item.quantity,
-
+        variant: variantSnapshot,
       });
 
-      itemsPrice +=
-        item.price *
-        item.quantity;
+      itemsPrice += finalPrice * item.quantity;
     }
 
     /* SHIPPING */
@@ -152,79 +125,100 @@ export const createOrder = async (
 
     /* TOTAL */
 
-    const totalPrice =
-      itemsPrice +
-      shippingPrice;
+    const totalPrice = itemsPrice + shippingPrice;
 
     /* CREATE ORDER */
 
-    const order =
-      await Order.create({
+    const order = await Order.create({
+      /* USER */
 
-        /* USER */
+      user: req.user._id,
 
-        user:
-          req.user._id,
+      /* CUSTOMER SNAPSHOT */
 
-        /* CUSTOMER SNAPSHOT */
+      customerName: req.user.name,
 
-        customerName:
-          req.user.name,
+      customerEmail: req.user.email,
 
-        customerEmail:
-          req.user.email,
+      customerPhone: address.phone,
 
-        customerPhone:
-          address.phone,
+      /* ITEMS */
 
-        /* ITEMS */
+      items: orderItems,
 
-        items:
-          orderItems,
+      /* SHIPPING ADDRESS */
 
-        /* SHIPPING ADDRESS */
+      shippingAddress: {
+        fullName: address.fullName,
 
-        shippingAddress: {
+        phone: address.phone,
 
-          fullName:
-            address.fullName,
+        pincode: address.pincode,
 
-          phone:
-            address.phone,
+        state: address.state,
 
-          pincode:
-            address.pincode,
+        city: address.city,
 
-          state:
-            address.state,
+        addressLine1: address.addressLine1,
 
-          city:
-            address.city,
+        addressLine2: address.addressLine2,
 
-          addressLine1:
-            address.addressLine1,
+        landmark: address.landmark,
+      },
 
-          addressLine2:
-            address.addressLine2,
+      /* PAYMENT */
 
-          landmark:
-            address.landmark,
+      paymentMethod,
 
-        },
+      /* PRICING */
 
-        /* PAYMENT */
+      itemsPrice,
 
-        paymentMethod,
+      shippingPrice,
 
-        /* PRICING */
+      totalPrice,
+    });
 
-        itemsPrice,
 
-        shippingPrice,
 
-        totalPrice,
 
-      });
+
+    for (const item of cart.items) {
+
+  const product =
+    item.product;
+
+  if (item.variantId) {
+
+    const variant =
+      product.variants.id(
+        item.variantId
+      );
+
+    variant.stock -=
+      item.quantity;
+
+  } else {
+
+    product.stock -=
+      item.quantity;
+
+  }
+
+  await product.save();
+
+}
+
+
+
+
+
+
+
+
+
+
+
 
     /* CLEAR CART */
 
@@ -235,53 +229,11 @@ export const createOrder = async (
     /* RESPONSE */
 
     res.status(201).json({
-
       success: true,
 
       order,
-
     });
-
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-
-      success: false,
-
-      message:
-        "Server error",
-
-    });
-
-  }
-
-};
-
-export const getMyOrders = async (
-  req,
-  res
-) => {
-
-  try {
-
-    const orders =
-      await Order.find({
-        user: req.user._id,
-      })
-      .sort({
-        createdAt: -1,
-      });
-
-    res.status(200).json({
-      success: true,
-
-      orders,
-    });
-
-  } catch (error) {
-
     console.error(error);
 
     res.status(500).json({
@@ -289,34 +241,50 @@ export const getMyOrders = async (
 
       message: "Server error",
     });
-
   }
-
 };
 
 
-export const getOrderById = async (
-  req,
-  res
-) => {
 
+
+export const getMyOrders = async (req, res) => {
   try {
+    const orders = await Order.find({
+      user: req.user._id,
+    }).sort({
+      createdAt: -1,
+    });
 
-    const order =
-      await Order.findOne({
-        _id: req.params.id,
+    res.status(200).json({
+      success: true,
 
-        user: req.user._id,
-      });
+      orders,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+
+      message: "Server error",
+    });
+  }
+};
+
+export const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+
+      user: req.user._id,
+    });
 
     if (!order) {
-
       return res.status(404).json({
         success: false,
 
         message: "Order not found",
       });
-
     }
 
     res.status(200).json({
@@ -324,9 +292,7 @@ export const getOrderById = async (
 
       order,
     });
-
   } catch (error) {
-
     console.error(error);
 
     res.status(500).json({
@@ -334,7 +300,5 @@ export const getOrderById = async (
 
       message: "Server error",
     });
-
   }
-
 };

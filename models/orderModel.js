@@ -39,10 +39,19 @@ const orderItemSchema = new mongoose.Schema(
     },
 
     // VARIANT SNAPSHOT
-    variant: {
-      size: String,
-      material: String,
-    },
+  variant: {
+
+  variantId: {
+    type: mongoose.Schema.Types.ObjectId,
+  },
+
+  sku: String,
+
+  size: String,
+
+  material: String,
+
+},
   },
   { _id: false }
 );
