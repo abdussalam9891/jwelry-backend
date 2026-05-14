@@ -10,7 +10,7 @@ const getProducts = async (req, res) => {
 
       material,
 
-      gender,
+      targetAudience,
 
       minPrice,
 
@@ -31,8 +31,12 @@ const getProducts = async (req, res) => {
     const limitNum = Math.min(50, parseInt(limit, 10) || 12);
     const skip = (pageNum - 1) * limitNum;
 
-    // 🔥 BUILD CONDITIONS CLEANLY
-    const conditions = [];
+    //  BUILD CONDITIONS CLEANLY
+   const conditions = [
+  {
+    status: "ACTIVE",
+  },
+];
 
     // basic filters
     if (category) conditions.push({ category });
@@ -44,7 +48,7 @@ const getProducts = async (req, res) => {
       });
     }
 
-    if (gender) conditions.push({ gender });
+    if (targetAudience) conditions.push({ targetAudience });
 
     // price filter
     if (minPrice || maxPrice) {
@@ -72,14 +76,12 @@ const getProducts = async (req, res) => {
           $or: [
             { name: { $regex: word, $options: "i" } },
             {
-  "description.short": {
+              "description.short": {
+                $regex: word,
 
-    $regex: word,
-
-    $options: "i",
-
-  },
-},
+                $options: "i",
+              },
+            },
             { subcategory: { $regex: word, $options: "i" } },
             { category: { $regex: word, $options: "i" } },
             {
@@ -94,16 +96,16 @@ const getProducts = async (req, res) => {
       });
     }
 
-    // 🔥 FINAL QUERY
+    // FINAL QUERY
     const query = conditions.length ? { $and: conditions } : {};
 
-    // 🔥 SORTING
+    // SORTING
     let sortOption = { createdAt: -1 };
     if (sort === "price_asc") sortOption = { price: 1, _id: 1 };
     if (sort === "price_desc") sortOption = { price: -1, _id: -1 };
     if (sort === "newest") sortOption = { createdAt: -1, _id: -1 };
 
-    // 🔥 EXECUTE
+    // EXECUTE
     const [products, total] = await Promise.all([
       Product.find(query)
         .select(
@@ -131,163 +133,78 @@ const getProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).lean();
+
+    const product = await Product.findOne({
+      _id: req.params.id,
+
+      status: "ACTIVE",
+    }).lean();
+
+
 
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+
+      return res.status(404).json({
+        message: "Product not found",
+      });
+
     }
 
+
+
     res.json(product);
+
   } catch (error) {
+
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+
+    res.status(500).json({
+      message: "Server error",
+    });
+
   }
 };
 
 // GET SINGLE PRODUCT (SLUG BASED)
-const getProductBySlug = async (req, res) => {
+ const getProductBySlug = async (
+  req,
+  res
+) => {
+
   try {
-    const product = await Product.findOne({ slug: req.params.slug }).lean();
+
+    const product =
+      await Product.findOne({
+
+        slug: req.params.slug,
+
+        status: "ACTIVE",
+
+      }).lean();
+
+
 
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
 
-    res.json(product);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// CREATE PRODUCT
-const createProduct = async (req, res) => {
-  try {
-    const {
-      name,
-      price,
-      originalPrice,
-      category,
-      subcategory,
-      gender,
-      images,
-      description,
-      stock,
-      slug,
-      isBestSeller,
-      isNewProduct,
-    } = req.body;
-
-    if (!images || !images.length) {
-      return res.status(400).json({ message: "Images required" });
-    }
-
-    const product = new Product({
-      name,
-      price,
-      originalPrice,
-      category,
-      subcategory,
-      gender,
-      images,
-      description,
-      stock,
-      slug,
-      isBestSeller,
-      isNewProduct,
-    });
-
-    const created = await product.save();
-    res.status(201).json(created);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// UPDATE PRODUCT
-const updateProduct = async (req, res) => {
-  try {
-    const {
-      name,
-      price,
-      originalPrice,
-      category,
-      subcategory,
-      gender,
-      images,
-      description,
-      stock,
-      slug,
-      isBestSeller,
-      isNewProduct,
-      variants,
-    } = req.body;
-
-    const allowedFields = {
-      name,
-      price,
-      originalPrice,
-      category,
-      subcategory,
-      gender,
-      images,
-      description,
-      stock,
-      slug,
-      isBestSeller,
-      isNewProduct,
-      variants,
-    };
-
-    const updateData = Object.fromEntries(
-      Object.entries(allowedFields).filter(([_, v]) => v !== undefined),
-    );
-
-    const product = await Product.findById(req.params.id);
-
-    if (!product) {
       return res.status(404).json({
         message: "Product not found",
       });
+
     }
 
-    Object.assign(product, updateData);
 
-    await product.save();
 
     res.json(product);
+
   } catch (error) {
+
     console.error(error);
 
     res.status(500).json({
-      message: error.message,
+      message: "Server error",
     });
+
   }
 };
 
-// DELETE PRODUCT
-const deleteProduct = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    await product.deleteOne();
-    res.json({ message: "Product deleted" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-export {
-  createProduct,
-  deleteProduct,
-  getProductById,
-  getProductBySlug,
-  getProducts,
-  updateProduct,
-};
+export { getProductById, getProductBySlug, getProducts };

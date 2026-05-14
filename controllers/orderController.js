@@ -87,17 +87,15 @@ export const createOrder = async (req, res) => {
 
         finalPrice = variant.price;
 
-       variantSnapshot = {
+        variantSnapshot = {
+          variantId: variant._id,
 
-  variantId: variant._id,
+          sku: variant.sku,
 
-  sku: variant.sku,
+          size: variant.size,
 
-  size: variant.size,
-
-  material: variant.material,
-
-};
+          material: variant.material,
+        };
       }
 
       orderItems.push({
@@ -107,7 +105,7 @@ export const createOrder = async (req, res) => {
 
         name: product.name,
 
-        image: product.images?.[0] || "",
+        image: product.images?.[0]?.url || "",
 
         price: finalPrice,
 
@@ -179,46 +177,19 @@ export const createOrder = async (req, res) => {
       totalPrice,
     });
 
-
-
-
-
     for (const item of cart.items) {
+      const product = item.product;
 
-  const product =
-    item.product;
+      if (item.variantId) {
+        const variant = product.variants.id(item.variantId);
 
-  if (item.variantId) {
+        variant.stock -= item.quantity;
+      } else {
+        product.stock -= item.quantity;
+      }
 
-    const variant =
-      product.variants.id(
-        item.variantId
-      );
-
-    variant.stock -=
-      item.quantity;
-
-  } else {
-
-    product.stock -=
-      item.quantity;
-
-  }
-
-  await product.save();
-
-}
-
-
-
-
-
-
-
-
-
-
-
+      await product.save();
+    }
 
     /* CLEAR CART */
 
@@ -243,9 +214,6 @@ export const createOrder = async (req, res) => {
     });
   }
 };
-
-
-
 
 export const getMyOrders = async (req, res) => {
   try {

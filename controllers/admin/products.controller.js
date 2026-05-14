@@ -1,7 +1,10 @@
+import mongoose from "mongoose";
+
 import Product from "../../models/productModel.js";
 import {
   getInventoryData,
 } from "../../utils/admin/productInventory.js";
+import cloudinary from "../../config/cloudinary.js";
 
 // GET ADMIN PRODUCTS
 export const getAdminProducts =
@@ -21,87 +24,154 @@ export const getAdminProducts =
       const skip =
         (page - 1) * limit;
 
+
+
       const search =
         req.query.search || "";
+
+
 
       const sort =
         req.query.sort ||
         "-createdAt";
 
+
+
+      const allowedSorts = [
+        "-createdAt",
+        "createdAt",
+        "price",
+        "-price",
+        "name",
+        "-name",
+      ];
+
+
+
+      const sortOption =
+        allowedSorts.includes(sort)
+          ? sort
+          : "-createdAt";
+
+
+
       const category =
         req.query.category;
 
-        const subcategory =
-  req.query.subcategory;
+      const subcategory =
+        req.query.subcategory;
 
-const material =
-  req.query.material;
+      const material =
+        req.query.material;
 
+      const status =
+        req.query.status;
+
+
+
+      // QUERY OBJECT
 
       const query = {};
 
-      /* SEARCH */
+
+
+      // STATUS
+
+      if (status) {
+
+        query.status = status;
+
+      }
+
+
+
+      // SEARCH
 
       if (search) {
 
-        query.name = {
+        query.$or = [
 
-          $regex: search,
+          {
+            name: {
+              $regex: search,
+              $options: "i",
+            },
+          },
 
-          $options: "i",
+          {
+            slug: {
+              $regex: search,
+              $options: "i",
+            },
+          },
 
-        };
+          {
+            sku: {
+              $regex: search,
+              $options: "i",
+            },
+          },
 
+        ];
       }
 
-      /* CATEGORY */
+
+
+      // CATEGORY
 
       if (category) {
 
-        query.category =
-          category;
+        query.category = category;
 
       }
 
-      /* SUBCATEGORY */
 
-if (subcategory) {
 
-  query.subcategory =
-    subcategory;
+      // SUBCATEGORY
 
-}
+      if (subcategory) {
 
-/* MATERIAL */
+        query.subcategory =
+          subcategory;
 
-if (material) {
-
-  query[
-    "variants.material"
-  ] = material;
-
-}
+      }
 
 
 
-      /* TOTAL */
+      // MATERIAL
+
+      if (material) {
+
+        query[
+          "variants.material"
+        ] = material;
+
+      }
+
+
+
+      // TOTAL
 
       const totalProducts =
         await Product.countDocuments(
           query
         );
 
+
+
       const totalPages =
         Math.ceil(
           totalProducts / limit
         );
 
-      /* PRODUCTS */
+
+
+      // PRODUCTS
 
       const products =
         await Product.find(query)
 
-          .sort(sort)
+          .sort(sortOption)
 
           .skip(skip)
 
@@ -109,7 +179,9 @@ if (material) {
 
           .lean();
 
-      /* INVENTORY */
+
+
+      // INVENTORY
 
       const formattedProducts =
         products.map(
@@ -131,7 +203,9 @@ if (material) {
           }
         );
 
-      /* RESPONSE */
+
+
+      // RESPONSE
 
       res.json({
 
@@ -174,59 +248,59 @@ export const getProductStats =
     try {
 
       const products =
-        await Product.find();
+        await Product.find({
 
-      /* TOTAL */
+          status: {
+            $ne: "ARCHIVED",
+          },
 
-      const totalProducts =
-        products.length;
+        })
 
-      /* LOW STOCK */
+          .select(
+            "category variants stock lowStockThreshold"
+          )
 
-      const lowStockProducts =
-        products.filter(
-          (product) => {
+          .lean();
 
-            const {
-              totalStock,
-            } =
-              getInventoryData(
-                product
-              );
 
-            return (
 
-              totalStock > 0 &&
+      let lowStockProducts = 0;
 
-              totalStock <=
-                product.lowStockThreshold
+      let outOfStockProducts = 0;
 
-            );
 
-          }
-        ).length;
 
-      /* OUT OF STOCK */
+      for (const product of products) {
 
-      const outOfStockProducts =
-        products.filter(
-          (product) => {
+        const {
+          totalStock,
+        } =
+          getInventoryData(
+            product
+          );
 
-            const {
-              totalStock,
-            } =
-              getInventoryData(
-                product
-              );
 
-            return (
-              totalStock === 0
-            );
 
-          }
-        ).length;
+        if (
+          totalStock > 0 &&
+          totalStock <=
+            product.lowStockThreshold
+        ) {
 
-      /* CATEGORIES */
+          lowStockProducts++;
+
+        }
+
+
+
+        if (totalStock === 0) {
+
+          outOfStockProducts++;
+
+        }
+      }
+
+
 
       const totalCategories =
         new Set(
@@ -238,11 +312,12 @@ export const getProductStats =
 
         ).size;
 
-      /* RESPONSE */
+
 
       res.json({
 
-        totalProducts,
+        totalProducts:
+          products.length,
 
         lowStockProducts,
 
@@ -281,183 +356,178 @@ export const getProductStats =
 
 // CREATE PRODUCT
 
-
-export const createProduct =
-  async (req, res) => {
-
-    try {
-
-      const {
-
-        name,
-
-        slug,
-
-        price,
-
-        originalPrice,
-
-        category,
-
-        subcategory,
-
-        gender,
-
-        images,
-
-        description,
-
-        variants,
-
-        stock,
-
-        status,
-
-        isBestSeller,
-
-        isNewProduct,
-
-        lowStockThreshold,
-
-      } = req.body;
-
-      /* REQUIRED VALIDATION */
-
-      if (
-
-        !name ||
-
-        !slug ||
-
-        !price ||
-
-        !category ||
-
-        !subcategory
-
-      ) {
-
-        return res.status(400).json({
-
-          message:
-            "Missing required fields",
-
-        });
-
-      }
-
-      /* UNIQUE SLUG */
-
-      const existingProduct =
-        await Product.findOne({
-          slug,
-        });
-
-      if (existingProduct) {
-
-        return res.status(400).json({
-
-          message:
-            "Slug already exists",
-
-        });
-
-      }
-
-      /* SKU */
-
-      const sku =
-        `SKU-${Date.now()}`;
-
-      /* CREATE PRODUCT */
-
-      const product =
-        await Product.create({
-
-          name,
-
-          slug,
-
-          price,
-
-          originalPrice:
-            originalPrice || 0,
-
-          category,
-
-          subcategory,
-
-          gender:
-            gender || "her",
-
-          images:
-            images || [],
-
-          description: {
-
-            short:
-              description?.short || "",
-
-            design:
-              description?.design || "",
-
-            details:
-              description?.details || [],
-
-            styling:
-              description?.styling || "",
-
-          },
-
-          variants:
-            variants || [],
-
-          stock:
-            stock || 0,
-
-          status:
-            status || "ACTIVE",
-
-          isBestSeller:
-            isBestSeller || false,
-
-          isNewProduct:
-            isNewProduct || false,
-
-          lowStockThreshold:
-            lowStockThreshold || 5,
-
-          sku,
-
-        });
-
-      /* RESPONSE */
-
-      res.status(201).json({
-
-        success: true,
-
-        message:
-          "Product created successfully",
-
-        product,
-
-      });
-
-    } catch (error) {
-
-      console.error(error);
-
-      res.status(500).json({
-
-        message:
-          error.message,
-
+export const createProduct = async (req, res) => {
+
+  try {
+
+    const {
+      name,
+      slug,
+      price,
+      originalPrice,
+      category,
+      subcategory,
+      targetAudience,
+      description,
+      variants,
+      stock,
+      status,
+      isBestSeller,
+      isNewProduct,
+      lowStockThreshold,
+    } = req.body;
+
+
+
+    // REQUIRED VALIDATION
+
+    if (
+      !name ||
+      !slug ||
+      !price ||
+      !category
+    ) {
+
+      return res.status(400).json({
+        message: "Missing required fields",
       });
 
     }
 
-  };
+
+
+    // IMAGES REQUIRED
+
+    if (
+      !req.files ||
+      req.files.length === 0
+    ) {
+
+      return res.status(400).json({
+        message: "At least one image is required",
+      });
+
+    }
+
+
+
+    // UNIQUE SLUG
+
+    const existingProduct =
+      await Product.findOne({ slug });
+
+    if (existingProduct) {
+
+      return res.status(400).json({
+        message: "Slug already exists",
+      });
+
+    }
+
+
+
+    // CLOUDINARY IMAGES
+
+    const images = req.files.map(
+      (file) => ({
+        url: file.path,
+        public_id: file.filename,
+      })
+    );
+
+
+
+    // SKU
+
+    const sku = `SKU-${Date.now()}`;
+
+
+
+    // CREATE PRODUCT
+
+    const product = await Product.create({
+
+      name,
+
+      slug,
+
+      price,
+
+      originalPrice:
+        originalPrice || 0,
+
+      category,
+
+      subcategory,
+
+      targetAudience:
+        targetAudience || "women",
+
+      images,
+
+      description: {
+
+        short:
+          description?.short || "",
+
+        design:
+          description?.design || "",
+
+        details:
+          description?.details || [],
+
+        styling:
+          description?.styling || "",
+      },
+
+      variants:
+        variants || [],
+
+      stock:
+        stock || 0,
+
+      status:
+        status || "ACTIVE",
+
+      isBestSeller:
+        isBestSeller || false,
+
+      isNewProduct:
+        isNewProduct || false,
+
+      lowStockThreshold:
+        lowStockThreshold || 5,
+
+      sku,
+    });
+
+
+
+    res.status(201).json({
+
+      success: true,
+
+      message:
+        "Product created successfully",
+
+      product,
+
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+
 
 
 
@@ -469,8 +539,29 @@ export const archiveProduct =
       const { id } =
         req.params;
 
+
+
+      // VALIDATE ID
+
+      if (
+        !mongoose.Types.ObjectId.isValid(id)
+      ) {
+
+        return res.status(404).json({
+
+          message:
+            "Product not found",
+
+        });
+
+      }
+
+
+
       const product =
         await Product.findById(id);
+
+
 
       if (!product) {
 
@@ -483,9 +574,9 @@ export const archiveProduct =
 
       }
 
-      /*
-        TOGGLE STATUS
-      */
+
+
+      // TOGGLE STATUS
 
       product.status =
 
@@ -496,7 +587,11 @@ export const archiveProduct =
 
           : "ARCHIVED";
 
+
+
       await product.save();
+
+
 
       res.json({
 
@@ -544,15 +639,155 @@ export const archiveProduct =
 
 
 // UPDATE PRODUCT
-export const updateProduct = async (req, res) => {
-  res.json({
-    message: "Update product admin route",
-  });
-};
 
-// DELETE PRODUCT
-export const deleteProduct = async (req, res) => {
-  res.json({
-    message: "Delete product admin route",
-  });
-};
+export const updateProduct =
+  async (req, res) => {
+
+    try {
+
+      const { id } =
+        req.params;
+
+
+
+      // VALIDATE ID
+
+      if (
+        !mongoose.Types.ObjectId.isValid(id)
+      ) {
+
+        return res.status(404).json({
+          message: "Product not found",
+        });
+
+      }
+
+
+
+      // FIND PRODUCT
+
+      const product =
+        await Product.findById(id);
+
+
+
+      if (!product) {
+
+        return res.status(404).json({
+          message: "Product not found",
+        });
+
+      }
+
+
+
+      // SLUG CHECK
+
+      if (
+        req.body.slug &&
+        req.body.slug !== product.slug
+      ) {
+
+        const existingSlug =
+          await Product.findOne({
+            slug: req.body.slug,
+            _id: { $ne: id },
+          });
+
+        if (existingSlug) {
+
+          return res.status(400).json({
+            message:
+              "Slug already exists",
+          });
+
+        }
+      }
+
+
+
+     
+
+
+
+      // UPDATE FIELDS
+
+    const allowedFields = [
+
+  "name",
+
+  "slug",
+
+  "price",
+
+  "originalPrice",
+
+  "category",
+
+  "subcategory",
+
+  "targetAudience",
+
+  "description",
+
+  "variants",
+
+  "stock",
+
+  "status",
+
+  "isBestSeller",
+
+  "isNewProduct",
+
+  "lowStockThreshold",
+
+  "images",
+
+];
+
+
+
+      for (const field of allowedFields) {
+
+        if (
+          req.body[field] !== undefined
+        ) {
+
+          product[field] =
+            req.body[field];
+
+        }
+      }
+
+
+
+      // SAVE
+
+      await product.save();
+
+
+
+      res.json({
+
+        success: true,
+
+        message:
+          "Product updated successfully",
+
+        product,
+
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      res.status(500).json({
+        message: error.message,
+      });
+
+    }
+
+  };
+

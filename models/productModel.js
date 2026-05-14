@@ -104,6 +104,8 @@ const variantSchema =
     }
 
   );
+
+
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -116,6 +118,8 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
+      trim: true,
     },
 
     //  BASE PRICE (for listing)
@@ -127,8 +131,20 @@ const productSchema = new mongoose.Schema(
 
     originalPrice: {
       type: Number,
-       min: 0,
+      min: 0,
+
+      validate: {
+        validator: function (value) {
+          if (value == null) return true;
+
+          return value >= this.price;
+        },
+
+        message:
+          "Original price must be greater than or equal to price",
+      },
     },
+
     status: {
       type: String,
       enum: ["ACTIVE", "DRAFT", "ARCHIVED"],
@@ -149,24 +165,50 @@ const productSchema = new mongoose.Schema(
   ],
 },
     subcategory: [
-  "engagement",
-  "wedding",
-  "casual",
-  "luxury",
-  "bridal",
-  "minimal",
-],
+      {
+        type: String,
 
-    gender: {
+        enum: [
+          "engagement",
+          "wedding",
+          "casual",
+          "luxury",
+          "bridal",
+          "minimal",
+        ],
+      },
+    ],
+
+     targetAudience: {
       type: String,
-      enum: ["him", "her", "kids"],
+
+      enum: [
+        "men",
+        "women",
+        "unisex",
+        "kids",
+      ],
+
+      default: "women",
+
       index: true,
     },
+images: {
+  type: [
+    {
+      url: {
+        type: String,
+        required: true,
+      },
 
-   images: {
-  type: [String],
+      public_id: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
 
-
+  default: [],
 
   validate: {
     validator: function (v) {
@@ -177,12 +219,32 @@ const productSchema = new mongoose.Schema(
   },
 },
 
+     // DESCRIPTION
+
     description: {
-      short: String,
-      design: String,
-      details: [String],
-      styling: String,
+      short: {
+        type: String,
+        trim: true,
+      },
+
+      design: {
+        type: String,
+        trim: true,
+      },
+
+      details: [
+        {
+          type: String,
+          trim: true,
+        },
+      ],
+
+      styling: {
+        type: String,
+        trim: true,
+      },
     },
+
 
     isBestSeller: {
       type: Boolean,
@@ -214,6 +276,7 @@ const productSchema = new mongoose.Schema(
   type: String,
   unique: true,
   sparse: true,
+   trim: true,
 },
   },
   { timestamps: true },
@@ -221,34 +284,35 @@ const productSchema = new mongoose.Schema(
 
 
 
-productSchema.pre("save",  async function (next) {
+productSchema.pre("save", async function (next) {
 
- if (
-  Array.isArray(this.variants) &&
-  this.variants.length > 0
-) {
+  // IF VARIANTS EXIST
+  // sync stock + price automatically
+
+  if (
+    Array.isArray(this.variants) &&
+    this.variants.length > 0
+  ) {
+
+    // TOTAL STOCK
 
     this.stock = this.variants.reduce(
-
       (total, variant) => {
-
         return total + variant.stock;
-
       },
-
       0
     );
 
-    this.price = Math.min(
 
+
+    // LOWEST VARIANT PRICE
+
+    this.price = Math.min(
       ...this.variants.map(
         (variant) => variant.price
       )
-
     );
-
   }
-
 
 
 });

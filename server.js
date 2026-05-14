@@ -8,8 +8,9 @@ import dbConnection from "./config/db.js";
 import passport from "./config/passport.js";
 import addressRoutes from "./routes/addressRoutes.js";
 import adminDashboardRoutes from "./routes/admin/dashboard.routes.js";
+import mediaRoutes from "./routes/admin/media.routes.js";
+import adminOrdersRoutes from "./routes/admin/orders.routes.js";
 import adminProductsRoutes from "./routes/admin/products.routes.js";
-import adminOrdersRoutes from './routes/admin/orders.routes.js';
 import authRoutes from "./routes/auth.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import deliveryRoutes from "./routes/deliveryRoutes.js";
@@ -20,15 +21,12 @@ import wishlistRoutes from "./routes/wishlistRoutes.js";
 
 const app = express();
 
-
-
 // cors
 
 const allowedOrigins = [
   process.env.CLIENT_URL?.trim(),
   process.env.ADMIN_URL?.trim(),
 ];
-
 
 app.use(
   cors({
@@ -81,7 +79,7 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/admin/products", adminProductsRoutes);
 app.use("/api/v1/admin/dashboard", adminDashboardRoutes);
 app.use("/api/v1/admin/orders", adminOrdersRoutes);
-
+app.use("/api/v1/admin/media", mediaRoutes);
 
 const PORT = process.env.PORT || 5000;
 

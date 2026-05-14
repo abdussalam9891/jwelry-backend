@@ -152,7 +152,8 @@ export const addToCart = async (req, res) => {
 
         // 🔥 STORE SNAPSHOT (Fix 3)
         name: product.name,
-        image: product.images?.[0] || null,
+       image:
+  product.images?.[0]?.url || null,
 
         price,
         originalPrice: product.originalPrice || price,

@@ -4,12 +4,13 @@ import { getProductDetails } from "../../controllers/admin/productDetails.contro
 import { exportProductsReport } from "../../controllers/admin/productExport.controller.js";
 import {
   createProduct,
-  deleteProduct,
+
   getAdminProducts,
   getProductStats,
   updateProduct,
   archiveProduct,
 } from "../../controllers/admin/products.controller.js";
+import upload from "../../middleware/uploadMiddleware.js";
 
 import { authorize, protect } from "../../middleware/authMiddleware.js";
 
@@ -58,12 +59,31 @@ router.patch(
 );
 
 // CREATE PRODUCT
-router.post("/", createProduct);
+router.post(
+  "/",
+
+  protect,
+
+  authorize("admin"),
+
+  upload.array("images", 5),
+
+  createProduct
+);
 
 // UPDATE PRODUCT
-router.put("/:id", updateProduct);
+router.put(
+  "/:id",
 
-// DELETE PRODUCT
-router.delete("/:id", deleteProduct);
+  protect,
+
+  authorize("admin"),
+
+  upload.array("images", 5),
+
+  updateProduct
+);
+
+ 
 
 export default router;
