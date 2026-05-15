@@ -375,18 +375,19 @@ export const createProduct = async (req, res) => {
       isBestSeller,
       isNewProduct,
       lowStockThreshold,
+       images,
     } = req.body;
 
 
 
     // REQUIRED VALIDATION
 
-    if (
-      !name ||
-      !slug ||
-      !price ||
-      !category
-    ) {
+   if (
+  !name ||
+  !slug ||
+  price == null ||
+  !category
+) {
 
       return res.status(400).json({
         message: "Missing required fields",
@@ -396,18 +397,16 @@ export const createProduct = async (req, res) => {
 
 
 
-    // IMAGES REQUIRED
-
     if (
-      !req.files ||
-      req.files.length === 0
-    ) {
+  !Array.isArray(images) ||
+  images.length === 0
+) {
 
-      return res.status(400).json({
-        message: "At least one image is required",
-      });
+  return res.status(400).json({
+    message: "At least one image is required",
+  });
 
-    }
+}
 
 
 
@@ -426,14 +425,7 @@ export const createProduct = async (req, res) => {
 
 
 
-    // CLOUDINARY IMAGES
 
-    const images = req.files.map(
-      (file) => ({
-        url: file.path,
-        public_id: file.filename,
-      })
-    );
 
 
 
@@ -638,6 +630,9 @@ export const archiveProduct =
 
 
 
+
+
+
 // UPDATE PRODUCT
 
 export const updateProduct =
@@ -706,7 +701,7 @@ export const updateProduct =
 
 
 
-     
+
 
 
 
@@ -791,3 +786,85 @@ export const updateProduct =
 
   };
 
+
+
+
+
+
+  export const deleteProduct =
+  async (req, res) => {
+
+    try {
+
+      const { id } =
+        req.params;
+
+
+
+      // VALIDATE ID
+
+      if (
+        !mongoose.Types.ObjectId.isValid(id)
+      ) {
+
+        return res.status(404).json({
+
+          message:
+            "Product not found",
+
+        });
+
+      }
+
+
+
+      // FIND PRODUCT
+
+      const product =
+
+        await Product.findById(id);
+
+
+
+      if (!product) {
+
+        return res.status(404).json({
+
+          message:
+            "Product not found",
+
+        });
+
+      }
+
+
+
+      // DELETE PRODUCT
+
+      await product.deleteOne();
+
+
+
+      res.json({
+
+        success: true,
+
+        message:
+          "Product deleted successfully",
+
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      res.status(500).json({
+
+        message:
+          error.message,
+
+      });
+
+    }
+
+  };

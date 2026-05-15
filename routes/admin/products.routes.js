@@ -9,6 +9,7 @@ import {
   getProductStats,
   updateProduct,
   archiveProduct,
+  deleteProduct
 } from "../../controllers/admin/products.controller.js";
 import upload from "../../middleware/uploadMiddleware.js";
 
@@ -66,7 +67,7 @@ router.post(
 
   authorize("admin"),
 
-  upload.array("images", 5),
+
 
   createProduct
 );
@@ -79,11 +80,22 @@ router.put(
 
   authorize("admin"),
 
-  upload.array("images", 5),
+
 
   updateProduct
 );
 
- 
+
+router.delete(
+  "/:id",
+
+  protect,
+
+  authorize("admin"),
+
+  deleteProduct
+);
+
+
 
 export default router;
