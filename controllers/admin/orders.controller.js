@@ -270,32 +270,43 @@ export const getSingleOrder =
         .populate(
           "user",
           "name email"
-        );
+        )
+
+        .lean();
+
+
 
       if (!order) {
 
         return res
           .status(404)
           .json({
+
             message:
               "Order not found",
+
           });
 
       }
 
-      res.json(order);
+
+
+      res.json({
+        order,
+      });
 
     } catch (error) {
 
       res.status(500).json({
+
         message:
           error.message,
+
       });
 
     }
 
   };
-
 
 
   /* UPDATE ORDER STATUS */
@@ -305,29 +316,78 @@ export const updateOrderStatus =
 
     try {
 
-      const { orderStatus } =
-        req.body;
+      const { id } =
+        req.params;
+
+      const {
+        orderStatus,
+      } = req.body;
+
+
+
+      /* VALIDATION */
+
+      const allowedStatuses = [
+
+        "PLACED",
+
+        "CONFIRMED",
+
+        "SHIPPED",
+
+        "DELIVERED",
+
+        "CANCELLED",
+
+      ];
+
+
+
+      if (
+        !allowedStatuses.includes(
+          orderStatus
+        )
+      ) {
+
+        return res.status(400).json({
+
+          message:
+            "Invalid order status",
+
+        });
+
+      }
+
+
+
+      /* FIND ORDER */
 
       const order =
-        await Order.findById(
-          req.params.id
-        );
+        await Order.findById(id);
+
+
 
       if (!order) {
 
-        return res
-          .status(404)
-          .json({
-            message:
-              "Order not found",
-          });
+        return res.status(404).json({
+
+          message:
+            "Order not found",
+
+        });
 
       }
+
+
+
+      /* UPDATE STATUS */
 
       order.orderStatus =
         orderStatus;
 
-      /* AUTO DELIVERED DATE */
+
+
+      /* AUTO DATES */
 
       if (
         orderStatus ===
@@ -339,22 +399,51 @@ export const updateOrderStatus =
 
       }
 
-      const updatedOrder =
-        await order.save();
 
-      res.json(updatedOrder);
+
+      /* STATUS HISTORY */
+
+      order.statusHistory.push({
+
+        status: orderStatus,
+
+        changedAt: new Date(),
+
+      });
+
+
+
+      await order.save();
+
+
+
+      res.json({
+
+        success: true,
+
+        message:
+          "Order status updated",
+
+        order,
+
+      });
 
     } catch (error) {
 
+      console.error(error);
+
+
+
       res.status(500).json({
+
         message:
           error.message,
+
       });
 
     }
 
   };
-
 
 
 

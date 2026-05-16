@@ -197,6 +197,23 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
+    statusHistory: [
+
+  {
+
+    status: {
+      type: String,
+    },
+
+    changedAt: {
+      type: Date,
+      default: Date.now,
+    },
+
+  },
+
+],
+
     /* PAYMENT STATUS */
 
     paymentStatus: {

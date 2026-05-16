@@ -51,10 +51,25 @@ router.get(
 
 router.get(
   "/:id",
+
+  protect,
+
+  authorize("admin"),
+
   getSingleOrder
 );
 
 
+
+router.patch(
+  "/:id/status",
+
+  protect,
+
+  authorize("admin"),
+
+  updateOrderStatus
+);
 
 router.put(
   "/:id/status",

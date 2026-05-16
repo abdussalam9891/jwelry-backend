@@ -125,6 +125,15 @@ export const createOrder = async (req, res) => {
 
     const totalPrice = itemsPrice + shippingPrice;
 
+
+
+
+
+    /* ORDER NUMBER */
+
+const orderNumber =
+  `ORD-${Date.now()}`;
+
     /* CREATE ORDER */
 
     const order = await Order.create({
@@ -175,6 +184,23 @@ export const createOrder = async (req, res) => {
       shippingPrice,
 
       totalPrice,
+
+
+// order number
+      orderNumber,
+
+
+       /* STATUS HISTORY */
+
+    statusHistory: [
+
+      {
+        status: "PLACED",
+      },
+
+    ],
+
+    
     });
 
     for (const item of cart.items) {
