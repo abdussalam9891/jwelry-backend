@@ -1,6 +1,10 @@
 import Address from "../models/addressModel.js";
 import Cart from "../models/cartModel.js";
 import Order from "../models/orderModel.js";
+import {
+  createNotification,
+} from "../utils/admin/createNotification.js";
+import User from "../models/UserModel.js";
 
 export const createOrder = async (req, res) => {
   try {
@@ -200,7 +204,7 @@ const orderNumber =
 
     ],
 
-    
+
     });
 
     for (const item of cart.items) {
@@ -222,6 +226,47 @@ const orderNumber =
     cart.items = [];
 
     await cart.save();
+
+
+
+    // order creation notification
+const admin =
+  await User.findOne({
+    role: "admin",
+  });
+
+if (admin) {
+
+  await createNotification({
+
+    userId:
+      admin._id,
+
+    type: "order",
+
+    title:
+      "New Order Received",
+
+    message:
+      `${req.user.name}
+       placed
+       ${order.orderNumber}`,
+
+    link:
+      `/admin/orders/${order._id}`,
+
+  });
+
+}
+
+
+
+
+
+
+
+
+
 
     /* RESPONSE */
 

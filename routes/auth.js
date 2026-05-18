@@ -1,114 +1,36 @@
 import express from "express";
+
 import passport from "../config/passport.js";
-import jwt from "jsonwebtoken";
-import { protect } from "../middleware/authMiddleware.js";
 
-const router = express.Router();
+import { protect }
+from "../middleware/authMiddleware.js";
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-};
+import {
 
+  handleAdminGoogleCallback,
 
+  handleUserGoogleCallback,
 
+  getCurrentUser,
+  updateProfile,
 
-function handleAuthSuccess(
-  req,
-  res,
-  redirectUrl
-) {
+  logoutUser,
 
-  const user =
-    req.user;
+} from "../controllers/authController.js";
 
-  //  create JWT
-  const token =
-    jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
-
-      process.env.JWT_SECRET,
-
-      {
-        expiresIn: "7d",
-      }
-    );
-
-  //  store cookie
-  res.cookie(
-    "token",
-    token,
-    COOKIE_OPTIONS
-  );
-
-  //  redirect
-  res.redirect(
-    redirectUrl
-  );
-
-}
+const router =
+  express.Router();
 
 
-
-
-
-// 🔐 GOOGLE LOGIN
+// GOOGLE LOGIN
 router.get(
+
   "/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-    session: false,
-  })
-);
-
-// 🔐 GOOGLE CALLBACK
-router.get(
-  "/google/callback",
-
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect:
-      `${process.env.CLIENT_URL}/front/pages/auth.html?error=google_failed`
-  }),
-
- (req, res) => {
-
-  handleAuthSuccess(
-
-    req,
-
-    res,
-
-    `${process.env.CLIENT_URL}/front/pages/auth.html`
-
-  );
-
-}
-);
-
-
-
-
-
-// 🔐 ADMIN GOOGLE LOGIN
-router.get(
-
-  "/google/admin",
 
   passport.authenticate(
-    "google-admin",
+    "google",
     {
-      scope: [
-        "profile",
-        "email",
-      ],
-
+      scope: ["profile", "email"],
       session: false,
     }
   )
@@ -116,7 +38,42 @@ router.get(
 );
 
 
-// 🔐 ADMIN GOOGLE CALLBACK
+// GOOGLE CALLBACK
+router.get(
+
+  "/google/callback",
+
+  passport.authenticate(
+    "google",
+    {
+      session: false,
+      failureRedirect:
+        `${process.env.CLIENT_URL}/front/pages/auth.html?error=google_failed`,
+    }
+  ),
+
+  handleUserGoogleCallback
+
+);
+
+
+// ADMIN LOGIN
+router.get(
+
+  "/google/admin",
+
+  passport.authenticate(
+    "google-admin",
+    {
+      scope: ["profile", "email"],
+      session: false,
+    }
+  )
+
+);
+
+
+// ADMIN CALLBACK
 router.get(
 
   "/google/admin/callback",
@@ -125,90 +82,35 @@ router.get(
     "google-admin",
     {
       session: false,
-
       failureRedirect:
         `${process.env.ADMIN_URL}/login`,
     }
   ),
 
-  (req, res) => {
-
-    //  block non-admins
-    if (
-      req.user.role !==
-      "admin"
-    ) {
-
-      return res.redirect(
-        `${process.env.ADMIN_URL}/login`
-      );
-
-    }
-
-    handleAuthSuccess(
-
-      req,
-
-      res,
-
-      `${process.env.ADMIN_URL}/admin`
-
-    );
-
-  }
+  handleAdminGoogleCallback
 
 );
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// 🔐 CURRENT USER
+// CURRENT USER
 router.get(
   "/me",
   protect,
-  (req, res) => {
-
-    res.json({
-      loggedIn: true,
-
-      user: {
-        id: req.user._id,
-        name: req.user.name,
-        email: req.user.email,
-        avatar: req.user.avatar,
-        role: req.user.role,
-      },
-    });
-  }
+  getCurrentUser
 );
 
-// 🔓 LOGOUT
+// edit profile
+router.put(
+  "/profile",
+  protect,
+  updateProfile
+);
+
+
+// LOGOUT
 router.post(
   "/logout",
-  (req, res) => {
-
-    res.clearCookie(
-      "token",
-      COOKIE_OPTIONS
-    );
-
-    res.json({
-      message: "Logged out successfully",
-    });
-  }
+  logoutUser
 );
 
 export default router;

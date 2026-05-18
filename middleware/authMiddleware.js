@@ -51,14 +51,28 @@ export const protect = async (req, res, next) => {
 
     }
 
-    // ✅ Attach safe user
-    req.user = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      avatar: user.avatar,
-      role: user.role,
-    };
+    // Attach safe user
+   req.user = {
+
+  _id: user._id,
+
+  name: user.name,
+
+  email: user.email,
+
+  avatar: user.avatar,
+
+  role: user.role,
+
+  phone: user.phone,
+
+  createdAt:
+    user.createdAt,
+
+  lastLoginAt:
+    user.lastLoginAt,
+
+};
 
     next();
 

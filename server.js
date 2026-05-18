@@ -19,6 +19,8 @@ import productRoutes from "./routes/productRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import AdminCustomersRoutes from './routes/admin/customers.routes.js'
+import notificationRoutes
+from "./routes/admin/notification.routes.js";
 
 const app = express();
 
@@ -82,6 +84,10 @@ app.use("/api/v1/admin/dashboard", adminDashboardRoutes);
 app.use("/api/v1/admin/orders", adminOrdersRoutes);
 app.use("/api/v1/admin/media", mediaRoutes);
 app.use("/api/v1/admin/customers", AdminCustomersRoutes)
+app.use(
+  "/api/v1/admin/notifications",
+  notificationRoutes
+);
 
 const PORT = process.env.PORT || 5000;
 
