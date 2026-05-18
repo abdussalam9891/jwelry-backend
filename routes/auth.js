@@ -13,10 +13,19 @@ import {
 
   getCurrentUser,
   updateProfile,
+  updateAvatar,
+  updateNotificationPreferences,
 
   logoutUser,
 
 } from "../controllers/authController.js";
+
+
+import upload,
+{
+  setUploadFolder,
+}
+from "../middleware/uploadMiddleware.js";
 
 const router =
   express.Router();
@@ -104,6 +113,37 @@ router.put(
   "/profile",
   protect,
   updateProfile
+);
+
+
+
+router.put(
+
+  "/profile/avatar",
+
+  protect,
+
+  setUploadFolder(
+    "avatars"
+  ),
+
+  upload.single(
+    "avatar"
+  ),
+
+  updateAvatar
+
+);
+
+
+router.put(
+
+  "/preferences",
+
+  protect,
+
+  updateNotificationPreferences
+
 );
 
 

@@ -3,6 +3,7 @@ import { COOKIE_OPTIONS } from "../utils/cookieOptions.js";
 import User from "../models/UserModel.js";
 
 
+
 // GOOGLE SUCCESS
 export const googleAuthSuccess = (
   req,
@@ -140,10 +141,7 @@ export const updateProfile =
         req.body.phone ||
         user.phone;
 
-      // avatar optional later
-      user.avatar =
-        req.body.avatar ||
-        user.avatar;
+
 
       const updatedUser =
         await user.save();
@@ -167,8 +165,7 @@ export const updateProfile =
           role:
             updatedUser.role,
 
-          avatar:
-            updatedUser.avatar,
+
 
           phone:
             updatedUser.phone,
@@ -182,6 +179,121 @@ export const updateProfile =
       res.status(500).json({
         message:
           "Failed to update profile",
+      });
+
+    }
+
+};
+
+
+export const updateAvatar =
+  async (req, res) => {
+
+    try {
+
+      const user =
+        await User.findById(
+          req.user._id
+        );
+
+      if (!user) {
+
+        return res.status(404).json({
+
+          message:
+            "User not found",
+
+        });
+
+      }
+
+      if (!req.file) {
+
+        return res.status(400).json({
+
+          message:
+            "No image uploaded",
+
+        });
+
+      }
+
+      user.avatar =
+        req.file.path;
+
+      await user.save();
+
+      res.json({
+
+        success: true,
+
+        user,
+
+      });
+
+    } catch {
+
+      res.status(500).json({
+
+        message:
+          "Failed to update avatar",
+
+      });
+
+    }
+
+};
+
+
+
+export const
+updateNotificationPreferences =
+  async (req, res) => {
+
+    try {
+
+      const user =
+        await User.findById(
+          req.user._id
+        );
+
+      if (!user) {
+
+        return res.status(404).json({
+
+          message:
+            "User not found",
+
+        });
+
+      }
+
+      user.notificationPreferences = {
+
+        ...user.notificationPreferences,
+
+        ...req.body,
+
+      };
+
+      await user.save();
+
+      res.json({
+
+        success: true,
+
+        notificationPreferences:
+          user.notificationPreferences,
+
+      });
+
+    } catch {
+
+      res.status(500).json({
+
+        message:
+          "Failed to update preferences",
+
       });
 
     }
@@ -211,3 +323,6 @@ export const logoutUser = (
   });
 
 };
+
+
+

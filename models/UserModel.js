@@ -46,6 +46,34 @@ const userSchema = new mongoose.Schema(
    default: false,
 },
 
+notificationPreferences: {
+
+  orders: {
+
+    type: Boolean,
+
+    default: true,
+
+  },
+
+  stockAlerts: {
+
+    type: Boolean,
+
+    default: true,
+
+  },
+
+  customers: {
+
+    type: Boolean,
+
+    default: false,
+
+  },
+
+},
+
     // AUTH PROVIDER (scalable)
     provider: {
       type: String,

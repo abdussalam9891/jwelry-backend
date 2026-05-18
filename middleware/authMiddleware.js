@@ -66,6 +66,9 @@ export const protect = async (req, res, next) => {
 
   phone: user.phone,
 
+   notificationPreferences:
+    user.notificationPreferences,
+
   createdAt:
     user.createdAt,
 

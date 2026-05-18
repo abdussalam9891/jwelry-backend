@@ -1,35 +1,101 @@
 import multer from "multer";
 
-import { CloudinaryStorage } from "multer-storage-cloudinary";
+import {
+  CloudinaryStorage,
+} from "multer-storage-cloudinary";
 
-import cloudinary from "../config/cloudinary.js";
+import cloudinary
+from "../config/cloudinary.js";
 
-const storage = new CloudinaryStorage({
-  cloudinary,
+const storage =
+  new CloudinaryStorage({
 
-  params: async (req, file) => ({
-    folder: "products",
+    cloudinary,
 
-    allowed_formats: ["jpg", "jpeg", "png", "webp"],
-  }),
-});
+    params: async (
+      req,
+      file
+    ) => ({
 
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image")) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only image files allowed"), false);
-  }
-};
+      folder:
+        req.uploadFolder ||
+        "misc",
 
-const upload = multer({
-  storage,
+      allowed_formats: [
 
-  fileFilter,
+        "jpg",
 
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
-});
+        "jpeg",
+
+        "png",
+
+        "webp",
+
+      ],
+
+    }),
+
+  });
+
+const fileFilter =
+  (req, file, cb) => {
+
+    if (
+      file.mimetype.startsWith(
+        "image"
+      )
+    ) {
+
+      cb(null, true);
+
+    } else {
+
+      cb(
+        new Error(
+          "Only image files allowed"
+        ),
+        false
+      );
+
+    }
+
+  };
+
+const upload =
+  multer({
+
+    storage,
+
+    fileFilter,
+
+    limits: {
+
+      fileSize:
+        5 * 1024 * 1024,
+
+    },
+
+  });
+
+
+
+  export function setUploadFolder(
+  folder
+) {
+
+  return (
+    req,
+    res,
+    next
+  ) => {
+
+    req.uploadFolder =
+      folder;
+
+    next();
+
+  };
+
+}
 
 export default upload;
