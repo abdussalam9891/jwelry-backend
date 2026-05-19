@@ -15,13 +15,22 @@ const userSchema = new mongoose.Schema(
     },
 
     email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-    },
-    phone: String,
+  type: String,
+  unique: true,
+  sparse: true,
+  lowercase: true,
+  trim: true,
+},
+   phone: {
+  type: String,
+  unique: true,
+  sparse: true, // allow google-only users without phone
+  trim: true,
+},
+isPhoneVerified: {
+  type: Boolean,
+  default: false,
+},
 
     avatar: {
       type: String,
@@ -75,11 +84,11 @@ notificationPreferences: {
 },
 
     // AUTH PROVIDER (scalable)
-    provider: {
-      type: String,
-      enum: ["google", "local"],
-      default: "google",
-    },
+   provider: {
+  type: String,
+  enum: ["google", "phone"],
+  default: "google",
+},
     lastLoginAt: Date,
 
   },

@@ -1,92 +1,87 @@
 import jwt from "jsonwebtoken";
 import User from "../models/UserModel.js";
 
-// 🔐 PROTECT
-export const protect = async (req, res, next) => {
-
+export const protect = async (
+  req,
+  res,
+  next
+) => {
   try {
+    let user = null;
 
-    let token =
-      req.cookies?.token ||
-      (
-        req.headers.authorization?.startsWith("Bearer ")
-          ? req.headers.authorization.split(" ")[1]
-          : null
-      );
-
-    // ❌ No token
-    if (!token) {
-
-      return res.status(401).json({
-        message: "Not authorized",
-      });
-
+    // 1) SESSION AUTH (OTP / Passport)
+    if (req.user) {
+      user = req.user;
     }
 
-    // 🔥 Verify token
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
+    else if (
+      req.session?.userId
+    ) {
+      user =
+        await User.findById(
+          req.session.userId
+        ).select("-__v");
+    }
 
-    // 🔥 Get user
-    const user = await User.findById(decoded.id)
-      .select("-password -__v");
+    // 2) JWT AUTH (legacy/admin/api)
+    else {
+      const token =
+        req.cookies?.token ||
+        (
+          req.headers.authorization?.startsWith(
+            "Bearer "
+          )
+            ? req.headers.authorization.split(
+                " "
+              )[1]
+            : null
+        );
 
-    // ❌ User not found
+      if (token) {
+        const decoded =
+          jwt.verify(
+            token,
+            process.env.JWT_SECRET
+          );
+
+        user =
+          await User.findById(
+            decoded.id
+          ).select("-__v");
+      }
+    }
+
     if (!user) {
-
-      return res.status(401).json({
-        message: "User not found",
-      });
-
+      return res
+        .status(401)
+        .json({
+          message:
+            "Not authorized",
+        });
     }
 
-    // 🚫 Disabled account
     if (!user.isActive) {
-
-      return res.status(403).json({
-        message: "Account disabled",
-      });
-
+      return res
+        .status(403)
+        .json({
+          message:
+            "Account disabled",
+        });
     }
 
-    // Attach safe user
-   req.user = {
-
-  _id: user._id,
-
-  name: user.name,
-
-  email: user.email,
-
-  avatar: user.avatar,
-
-  role: user.role,
-
-  phone: user.phone,
-
-   notificationPreferences:
-    user.notificationPreferences,
-
-  createdAt:
-    user.createdAt,
-
-  lastLoginAt:
-    user.lastLoginAt,
-
-};
+    req.user = user;
 
     next();
-
   } catch (err) {
+    console.error(err);
 
-    return res.status(401).json({
-      message: "Invalid or expired token",
-    });
-
+    return res
+      .status(401)
+      .json({
+        message:
+          "Invalid auth",
+      });
   }
-
 };
 
 // 🔐 AUTHORIZE

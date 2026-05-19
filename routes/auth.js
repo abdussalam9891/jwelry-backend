@@ -15,6 +15,9 @@ import {
   updateProfile,
   updateAvatar,
   updateNotificationPreferences,
+  requestOtp,
+  verifyOtp,
+  verifyAdminOtp,
 
   logoutUser,
 
@@ -64,6 +67,29 @@ router.get(
   handleUserGoogleCallback
 
 );
+
+
+// otp based log in
+router.post(
+  "/request-otp",
+  requestOtp
+);
+
+router.post(
+  "/verify-otp",
+  verifyOtp
+);
+
+
+// otp based admin log in
+router.post(
+  "/verify-otp-admin",
+  verifyAdminOtp
+);
+
+
+
+
 
 
 // ADMIN LOGIN

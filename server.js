@@ -1,6 +1,7 @@
 import "./config/env.js";
 
 import cookieParser from "cookie-parser";
+import session from "express-session";
 import cors from "cors";
 import express from "express";
 import path from "path";
@@ -51,11 +52,34 @@ app.use(
   }),
 );
 
+
+app.use(
+  session({
+    secret:
+      process.env.SESSION_SECRET ||
+      "gemora_secret",
+
+    resave: false,
+    saveUninitialized: false,
+
+    cookie: {
+      httpOnly: true,
+      secure: false,       // localhost
+      sameSite: "lax",     // important
+      maxAge:
+        7 * 24 * 60 * 60 * 1000,
+    },
+  })
+);
+
 dbConnection();
 
 app.use(express.json());
 app.use(cookieParser());
+
+
 app.use(passport.initialize());
+app.use(passport.session()); // missing
 
 app.get("/", (req, res) => {
   res.send("API running...");
