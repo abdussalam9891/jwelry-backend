@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema(
   {
@@ -21,6 +22,27 @@ const userSchema = new mongoose.Schema(
   lowercase: true,
   trim: true,
 },
+isEmailVerified: {
+  type: Boolean,
+  default: false
+},
+
+emailOtp: {
+  type: String,
+  default: null,
+},
+
+emailOtpExpires: {
+  type: Date,
+  default: null,
+},
+password: {
+  type: String,
+  minlength: 6,
+  select: false,
+},
+passwordResetToken: String,
+passwordResetExpires: Date,
    phone: {
   type: String,
   unique: true,
@@ -86,7 +108,7 @@ notificationPreferences: {
     // AUTH PROVIDER (scalable)
    provider: {
   type: String,
-  enum: ["google", "phone"],
+  enum: ["google", "phone", "email"],
   default: "google",
 },
     lastLoginAt: Date,
@@ -94,6 +116,25 @@ notificationPreferences: {
   },
   { timestamps: true }
 );
+
+
+
+
+
+
+userSchema.pre("save", async function ( ) {
+  if (!this.isModified("password")) return;
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+
+
+});
+
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return bcrypt.compare(enteredPassword, this.password);
+};
+
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 

@@ -3,6 +3,385 @@ import { COOKIE_OPTIONS } from "../utils/cookieOptions.js";
 import User from "../models/UserModel.js";
 import bcrypt from "bcrypt";
 import Otp from "../models/otpModel.js";
+import crypto from "crypto";
+import { sendOtpEmail } from "../utils/sendOtpEmail.js";
+import { sendResetEmail }
+  from "../utils/sendResetEmail.js";
+
+
+
+
+
+
+
+
+
+export const registerUser = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+    } = req.body;
+
+    const userExists =
+      await User.findOne({
+        email,
+      });
+
+    if (userExists) {
+      return res.status(400).json({
+        message:
+          "User already exists",
+      });
+    }
+
+    const otp = Math.floor(
+      100000 +
+        Math.random() * 900000
+    ).toString();
+
+     const user = await User.create({
+      name,
+      email,
+      password,
+      provider: "email",
+      isEmailVerified: false,
+      emailOtp: otp,
+      emailOtpExpires:
+        Date.now() +
+        10 * 60 * 1000, // 10 min
+    });
+
+    await sendOtpEmail(
+      email,
+      otp
+    );
+
+    return res.status(201).json({
+      success: true,
+      message:
+        "OTP sent to email. Verify to continue.",
+      email,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      message:
+        err.message,
+    });
+  }
+};
+
+
+export const verifyEmailOtp =
+  async (req, res) => {
+    try {
+      const {
+        email,
+        otp,
+      } = req.body;
+
+      const user =
+        await User.findOne({
+          email,
+        });
+
+
+        if (user.isEmailVerified) {
+  return res.status(400).json({
+    message: "Email already verified",
+  });
+}
+
+
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({
+            message:
+              "User not found",
+          });
+      }
+
+      if (
+        user.emailOtp !==
+        otp
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "Invalid OTP",
+          });
+      }
+
+     if (
+  !user.emailOtpExpires ||
+  user.emailOtpExpires < Date.now()
+) {
+  return res.status(400).json({
+    message: "OTP expired",
+  });
+}
+
+
+if (!user.emailOtp) {
+  return res.status(400).json({
+    message: "OTP not found",
+  });
+}
+
+      /* VERIFY USER */
+      user.isEmailVerified = true;
+      user.emailOtp = null;
+      user.emailOtpExpires =
+        null;
+
+      await user.save();
+
+      /* NOW LOGIN */
+      const token =
+        generateToken(user);
+
+      res.cookie(
+        "token",
+        token,
+        COOKIE_OPTIONS
+      );
+
+
+      const userResponse =
+  user.toObject();
+
+delete userResponse.password;
+delete userResponse.emailOtp;
+delete userResponse.emailOtpExpires;
+
+
+
+      return res.json({
+        success: true,
+        message:
+          "Email verified",
+       user: userResponse,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        message:
+          err.message,
+      });
+    }
+  };
+
+export const loginWithEmail = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email })
+      .select("+password");
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
+
+    const isMatch =
+      await user.matchPassword(password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
+
+    /* BLOCK */
+if (!user.isEmailVerified) {
+  return res.status(403).json({
+    message:
+      "Verify email first",
+  });
+}
+
+    user.lastLoginAt = new Date();
+    await user.save();
+
+    const token = generateToken(user);
+
+    res.cookie(
+      "token",
+      token,
+      COOKIE_OPTIONS
+    );
+
+   const userResponse =
+  user.toObject();
+
+delete userResponse.password;
+
+return res.json({
+  success: true,
+  user: userResponse,
+});
+  }catch (err) {
+  console.error(err);
+
+  return res.status(500).json({
+    message: err.message,
+  });
+}
+};
+
+
+export const forgotPassword = async (
+  req,
+  res
+) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Email is required",
+        });
+    }
+
+    const user =
+      await User.findOne({
+        email,
+      });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({
+          message:
+            "User not found",
+        });
+    }
+
+    // generate raw token
+    const resetToken =
+      crypto
+        .randomBytes(32)
+        .toString("hex");
+
+    // hash token before DB save
+    const hashedToken =
+      crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    user.passwordResetToken =
+      hashedToken;
+
+    user.passwordResetExpires =
+      Date.now() +
+      10 * 60 * 1000; // 10 mins
+
+    await user.save();
+
+    // TEMP → later send email
+  const resetLink =
+  `http://localhost:5500/front/pages/resetPassword.html?token=${resetToken}`;
+
+await sendResetEmail(
+  user.email,
+  resetLink
+);
+
+
+    console.log(
+      "RESET TOKEN:",
+      resetToken
+    );
+
+    return res.json({
+      success: true,
+      message:
+        "Password reset token generated",
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res
+      .status(500)
+      .json({
+        message: err.message,
+      });
+  }
+};
+
+
+export const resetPassword =
+  async (req, res) => {
+    try {
+      const {
+        token,
+        password,
+      } = req.body;
+
+      if (!token) {
+        return res.status(400).json({
+          message: "Token missing",
+        });
+      }
+
+      const hashedToken =
+        crypto
+          .createHash("sha256")
+          .update(token)
+          .digest("hex");
+
+      const user =
+        await User.findOne({
+          passwordResetToken:
+            hashedToken,
+          passwordResetExpires: {
+            $gt: Date.now(),
+          },
+        });
+
+      if (!user) {
+        return res.status(400).json({
+          message:
+            "Invalid or expired token",
+        });
+      }
+
+      user.password =
+        password;
+
+      user.passwordResetToken =
+        undefined;
+
+      user.passwordResetExpires =
+        undefined;
+
+      await user.save();
+
+      return res.json({
+        success: true,
+        message:
+          "Password reset successful",
+      });
+    } catch (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        message:
+          err.message,
+      });
+    }
+  };
+
 
 
 
@@ -87,11 +466,7 @@ export const getCurrentUser = async (
 ) => {
   try {
 
-   console.log("===== /auth/me =====");
-console.log("SESSION ID:", req.sessionID);
-console.log("SESSION:", req.session);
-console.log("SESSION USER ID:", req.session?.userId);
-console.log("REQ.USER:", req.user);
+
     let user = null;
 
     // GOOGLE / PASSPORT
@@ -599,8 +974,7 @@ export const verifyOtp = async (
 
 
 
-console.log("===== VERIFY OTP =====");
-console.log("SETTING USER ID:", user._id.toString());
+
 
     // session login
     req.session.userId =

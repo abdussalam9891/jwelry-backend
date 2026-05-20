@@ -1,11 +1,19 @@
 import express from "express";
 
+
+
 import passport from "../config/passport.js";
 
 import { protect }
 from "../middleware/authMiddleware.js";
 
 import {
+
+  registerUser,
+  verifyEmailOtp,
+  loginWithEmail,
+  forgotPassword,
+  resetPassword,
 
   handleAdminGoogleCallback,
 
@@ -32,6 +40,35 @@ from "../middleware/uploadMiddleware.js";
 
 const router =
   express.Router();
+
+
+
+
+
+  router.post(
+  "/register",
+  registerUser
+);
+
+
+router.post(
+  "/verify-email-otp",
+  verifyEmailOtp
+);
+
+router.post(
+  "/login",
+  loginWithEmail
+);
+
+
+
+router.post("/forgot-password", forgotPassword);
+router.post(
+  "/reset-password",
+  resetPassword
+);
+
 
 
 // GOOGLE LOGIN
