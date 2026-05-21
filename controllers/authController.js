@@ -16,23 +16,30 @@ import { sendResetEmail }
 
 
 
-export const registerUser = async (req, res) => {
+export const registerUser = async (
+  req,
+  res
+) => {
   try {
-    const {
-      name,
-      email,
-      password,
-    } = req.body;
+    const name =
+      req.body.name?.trim();
 
-    const userExists =
-      await User.findOne({
-        email,
-      });
+    const email =
+      req.body.email
+        ?.toLowerCase()
+        .trim();
 
-    if (userExists) {
+    const password =
+      req.body.password?.trim();
+
+    if (
+      !name ||
+      !email ||
+      !password
+    ) {
       return res.status(400).json({
         message:
-          "User already exists",
+          "All fields required",
       });
     }
 
@@ -41,17 +48,66 @@ export const registerUser = async (req, res) => {
         Math.random() * 900000
     ).toString();
 
-     const user = await User.create({
-      name,
-      email,
-      password,
-      provider: "email",
-      isEmailVerified: false,
-      emailOtp: otp,
-      emailOtpExpires:
+    let user =
+      await User.findOne({
+        email,
+      }).select("+password");
+
+    /* EXISTING USER */
+    if (user) {
+      // already email-password account
+      if (user.password) {
+        return res.status(409).json({
+          message:
+            "Account already exists. Please sign in.",
+        });
+      }
+
+      // GOOGLE / PHONE account -> add password login
+      user.password =
+        password;
+
+      user.isEmailVerified =
+        false;
+
+      user.emailOtp = otp;
+
+      user.emailOtpExpires =
         Date.now() +
-        10 * 60 * 1000, // 10 min
-    });
+        10 * 60 * 1000;
+
+      // optional: if it was google-only / phone-only
+      user.provider = "email";
+
+      await user.save();
+
+      await sendOtpEmail(
+        email,
+        otp
+      );
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "Email login linked. Verify OTP to continue.",
+        email,
+      });
+    }
+
+    /* BRAND NEW USER */
+    user =
+      await User.create({
+        name,
+        email,
+        password,
+        provider: "email",
+        isEmailVerified:
+          false,
+        emailOtp: otp,
+        emailOtpExpires:
+          Date.now() +
+          10 * 60 * 1000,
+      });
 
     await sendOtpEmail(
       email,
@@ -65,11 +121,14 @@ export const registerUser = async (req, res) => {
       email,
     });
   } catch (err) {
-    console.error(err);
+    console.error(
+      "REGISTER ERROR:",
+      err
+    );
 
     return res.status(500).json({
       message:
-        err.message,
+        "Something went wrong",
     });
   }
 };
@@ -176,40 +235,62 @@ delete userResponse.emailOtpExpires;
     }
   };
 
-export const loginWithEmail = async (req, res) => {
+export const loginWithEmail = async (
+  req,
+  res
+) => {
   try {
-    const { email, password } = req.body;
+    const email =
+      req.body.email
+        ?.toLowerCase()
+        .trim();
 
-    const user = await User.findOne({ email })
-      .select("+password");
+    const password =
+      req.body.password?.trim();
+
+    const user =
+      await User.findOne({
+        email,
+      }).select("+password");
 
     if (!user) {
       return res.status(401).json({
-        message: "Invalid credentials",
+        success: false,
+        message:
+          "Invalid credentials",
       });
     }
 
     const isMatch =
-      await user.matchPassword(password);
+      await user.matchPassword(
+        password
+      );
 
     if (!isMatch) {
       return res.status(401).json({
-        message: "Invalid credentials",
+        success: false,
+        message:
+          "Invalid credentials",
       });
     }
 
-    /* BLOCK */
-if (!user.isEmailVerified) {
-  return res.status(403).json({
-    message:
-      "Verify email first",
-  });
-}
+    if (
+      !user.isEmailVerified
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Verify email first",
+      });
+    }
 
-    user.lastLoginAt = new Date();
+    user.lastLoginAt =
+      new Date();
+
     await user.save();
 
-    const token = generateToken(user);
+    const token =
+      generateToken(user);
 
     res.cookie(
       "token",
@@ -217,22 +298,24 @@ if (!user.isEmailVerified) {
       COOKIE_OPTIONS
     );
 
-   const userResponse =
-  user.toObject();
+    const {
+      password: _,
+      ...userResponse
+    } = user.toObject();
 
-delete userResponse.password;
+    return res.json({
+      success: true,
+      user: userResponse,
+    });
+  } catch (err) {
+    console.error(err);
 
-return res.json({
-  success: true,
-  user: userResponse,
-});
-  }catch (err) {
-  console.error(err);
-
-  return res.status(500).json({
-    message: err.message,
-  });
-}
+    return res.status(500).json({
+      success: false,
+      message:
+        "Something went wrong",
+    });
+  }
 };
 
 

@@ -107,9 +107,9 @@ notificationPreferences: {
 
     // AUTH PROVIDER (scalable)
    provider: {
-  type: String,
+  type: [String],
   enum: ["google", "phone", "email"],
-  default: "google",
+  default: [],
 },
     lastLoginAt: Date,
 

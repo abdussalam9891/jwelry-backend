@@ -7,39 +7,67 @@ import {
 import User from "../models/UserModel.js";
 
 
-//  reusable user resolver
-async function resolveGoogleUser(
-  profile
-) {
+async function resolveGoogleUser(profile) {
+  const email =
+    profile.emails?.[0]?.value
+      ?.toLowerCase()
+      .trim();
 
+  if (!email) {
+    throw new Error(
+      "Google account has no email"
+    );
+  }
+
+  // 1) already linked google account
   let user =
     await User.findOne({
       googleId: profile.id,
     });
 
-  if (!user) {
+  if (user) return user;
 
-    user =
-      await User.create({
+  // 2) existing account with same email
+  user =
+    await User.findOne({
+      email,
+    });
 
-        googleId:
-          profile.id,
+  if (user) {
+    // link google account
+    if (!user.googleId) {
+      user.googleId =
+        profile.id;
 
-        name:
-          profile.displayName,
+      if (
+        profile.photos?.[0]
+          ?.value
+      ) {
+        user.avatar =
+          profile.photos[0].value;
+      }
 
-        email:
-          profile.emails[0].value,
+      await user.save();
+    }
 
-        avatar:
-          profile.photos[0].value,
-
-      });
-
+    return user;
   }
 
-  return user;
+  // 3) brand new google user
+  user =
+    await User.create({
+      googleId:
+        profile.id,
+      name:
+        profile.displayName,
+      email,
+      avatar:
+        profile.photos?.[0]
+          ?.value || "",
+      isVerified: true,
+    });
 
+  return user;
 }
 
 
