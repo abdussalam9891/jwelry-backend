@@ -1,15 +1,18 @@
 import "./config/env.js";
 
 import cookieParser from "cookie-parser";
-import session from "express-session";
 import cors from "cors";
 import express from "express";
+import session from "express-session";
 import path from "path";
 import dbConnection from "./config/db.js";
 import passport from "./config/passport.js";
 import addressRoutes from "./routes/addressRoutes.js";
+import AdminCustomersRoutes from "./routes/admin/customers.routes.js";
 import adminDashboardRoutes from "./routes/admin/dashboard.routes.js";
+import adminAnalyticsRoutes from "./routes/admin/analytics.routes.js";
 import mediaRoutes from "./routes/admin/media.routes.js";
+import notificationRoutes from "./routes/admin/notification.routes.js";
 import adminOrdersRoutes from "./routes/admin/orders.routes.js";
 import adminProductsRoutes from "./routes/admin/products.routes.js";
 import authRoutes from "./routes/auth.js";
@@ -19,11 +22,16 @@ import orderRoutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
-import AdminCustomersRoutes from './routes/admin/customers.routes.js'
-import notificationRoutes
-from "./routes/admin/notification.routes.js";
+
+
+
+
+
+dbConnection();
 
 const app = express();
+
+
 
 // cors
 
@@ -52,31 +60,26 @@ app.use(
   }),
 );
 
-
 app.use(
   session({
-    secret:
-      process.env.SESSION_SECRET ||
-      "gemora_secret",
+    secret: process.env.SESSION_SECRET || "gemora_secret",
 
     resave: false,
     saveUninitialized: false,
 
     cookie: {
       httpOnly: true,
-      secure: false,       // localhost
-      sameSite: "lax",     // important
-      maxAge:
-        7 * 24 * 60 * 60 * 1000,
+      secure: false, // localhost
+      sameSite: "lax", // important
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     },
-  })
+  }),
 );
 
-dbConnection();
+
 
 app.use(express.json());
 app.use(cookieParser());
-
 
 app.use(passport.initialize());
 app.use(passport.session()); // missing
@@ -105,13 +108,11 @@ app.use("/api/v1/orders", orderRoutes);
 // admin
 app.use("/api/v1/admin/products", adminProductsRoutes);
 app.use("/api/v1/admin/dashboard", adminDashboardRoutes);
+app.use("/api/v1/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/v1/admin/orders", adminOrdersRoutes);
 app.use("/api/v1/admin/media", mediaRoutes);
-app.use("/api/v1/admin/customers", AdminCustomersRoutes)
-app.use(
-  "/api/v1/admin/notifications",
-  notificationRoutes
-);
+app.use("/api/v1/admin/customers", AdminCustomersRoutes);
+app.use("/api/v1/admin/notifications", notificationRoutes);
 
 const PORT = process.env.PORT || 5000;
 

@@ -1,88 +1,82 @@
 import jwt from "jsonwebtoken";
 import User from "../models/UserModel.js";
 
-export const protect = async (
-  req,
-  res,
-  next
-) => {
-  try {
-    let user = null;
+ 
+export const protect =
+  async (
+    req,
+    res,
+    next
+  ) => {
+    try {
+      let token =
+        req.cookies
+          ?.admin_token ||
+        req.cookies
+          ?.user_token;
 
-    // 1) SESSION AUTH (OTP / Passport)
-    if (req.user) {
-      user = req.user;
-    }
+      if (
+        !token &&
+        req.headers.authorization?.startsWith(
+          "Bearer "
+        )
+      ) {
+        token =
+          req.headers.authorization.split(
+            " "
+          )[1];
+      }
 
-    else if (
-      req.session?.userId
-    ) {
-      user =
-        await User.findById(
-          req.session.userId
-        ).select("-__v");
-    }
+      if (!token) {
+        return res
+          .status(401)
+          .json({
+            message:
+              "Not authorized",
+          });
+      }
 
-    // 2) JWT AUTH (legacy/admin/api)
-    else {
-      const token =
-        req.cookies?.token ||
-        (
-          req.headers.authorization?.startsWith(
-            "Bearer "
-          )
-            ? req.headers.authorization.split(
-                " "
-              )[1]
-            : null
+      const decoded =
+        jwt.verify(
+          token,
+          process.env.JWT_SECRET
         );
 
-      if (token) {
-        const decoded =
-          jwt.verify(
-            token,
-            process.env.JWT_SECRET
-          );
+      const user =
+        await User.findById(
+          decoded.id
+        ).select("-__v");
 
-        user =
-          await User.findById(
-            decoded.id
-          ).select("-__v");
+      if (!user) {
+        return res
+          .status(401)
+          .json({
+            message:
+              "User not found",
+          });
       }
-    }
 
-    if (!user) {
+      if (!user.isActive) {
+        return res
+          .status(403)
+          .json({
+            message:
+              "Account disabled",
+          });
+      }
+
+      req.user = user;
+
+      next();
+    } catch (err) {
       return res
         .status(401)
         .json({
           message:
-            "Not authorized",
+            "Invalid auth",
         });
     }
-
-    if (!user.isActive) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Account disabled",
-        });
-    }
-
-    req.user = user;
-
-    next();
-  } catch (err) {
-    console.error(err);
-
-    return res
-      .status(401)
-      .json({
-        message:
-          "Invalid auth",
-      });
-  }
-};
+  };
 
 // 🔐 AUTHORIZE
 export const authorize = (...roles) => {

@@ -131,11 +131,11 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    customerEmail: {
-      type: String,
-      required: true,
-      lowercase: true,
-    },
+  customerEmail: {
+  type: String,
+  trim: true,
+  default: null,
+},
 
     customerPhone: {
       type: String,

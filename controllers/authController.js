@@ -1,12 +1,18 @@
  import { generateToken } from "../utils/generateToken.js";
-import { COOKIE_OPTIONS } from "../utils/cookieOptions.js";
+ import jwt from "jsonwebtoken";
+
+import {
+  ADMIN_COOKIE,
+  USER_COOKIE,
+} from "../utils/cookieOptions.js";
 import User from "../models/UserModel.js";
 import bcrypt from "bcrypt";
-import Otp from "../models/otpModel.js";
+
 import crypto from "crypto";
 import { sendOtpEmail } from "../utils/sendOtpEmail.js";
 import { sendResetEmail }
   from "../utils/sendResetEmail.js";
+
 
 
 
@@ -77,7 +83,15 @@ export const registerUser = async (
         10 * 60 * 1000;
 
       // optional: if it was google-only / phone-only
-      user.provider = "email";
+      if (
+  !user.provider.includes(
+    "email"
+  )
+) {
+  user.provider.push(
+    "email"
+  );
+}
 
       await user.save();
 
@@ -205,11 +219,18 @@ if (!user.emailOtp) {
       const token =
         generateToken(user);
 
-      res.cookie(
-        "token",
-        token,
-        COOKIE_OPTIONS
-      );
+      const cookieName =
+  user.role === "admin"
+    ? "admin_token"
+    : "user_token";
+
+res.cookie(
+  cookieName,
+  token,
+  user.role === "admin"
+    ? ADMIN_COOKIE
+    : USER_COOKIE
+);
 
 
       const userResponse =
@@ -292,11 +313,18 @@ export const loginWithEmail = async (
     const token =
       generateToken(user);
 
-    res.cookie(
-      "token",
-      token,
-      COOKIE_OPTIONS
-    );
+   const cookieName =
+  user.role === "admin"
+    ? "admin_token"
+    : "user_token";
+
+res.cookie(
+  cookieName,
+  token,
+  user.role === "admin"
+    ? ADMIN_COOKIE
+    : USER_COOKIE
+);
 
     const {
       password: _,
@@ -324,81 +352,79 @@ export const forgotPassword = async (
   res
 ) => {
   try {
-    const { email } = req.body;
+    const email =
+      req.body.email
+        ?.toLowerCase()
+        .trim();
 
     if (!email) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Email is required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
     }
 
     const user =
-      await User.findOne({
-        email,
-      });
+      await User.findOne({ email });
 
     if (!user) {
-      return res
-        .status(404)
-        .json({
-          message:
-            "User not found",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
-    // generate raw token
-    const resetToken =
-      crypto
-        .randomBytes(32)
-        .toString("hex");
+    // generate token
+    const resetToken = crypto
+      .randomBytes(32)
+      .toString("hex");
 
-    // hash token before DB save
-    const hashedToken =
-      crypto
-        .createHash("sha256")
-        .update(resetToken)
-        .digest("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
 
     user.passwordResetToken =
       hashedToken;
 
     user.passwordResetExpires =
       Date.now() +
-      10 * 60 * 1000; // 10 mins
+      10 * 60 * 1000;
 
     await user.save();
 
-    // TEMP → later send email
-  const resetLink =
-  `http://localhost:5500/front/pages/resetPassword.html?token=${resetToken}`;
+    // role-based reset link
+    const resetLink =
+  user.role === "admin"
+    ? `${process.env.ADMIN_URL}/reset-password?token=${resetToken}`
+    : `${process.env.CLIENT_URL}/front/pages/resetPassword.html?token=${resetToken}`;
 
-await sendResetEmail(
-  user.email,
-  resetLink
-);
-
+    await sendResetEmail(
+      user.email,
+      resetLink
+    );
 
     console.log(
       "RESET TOKEN:",
       resetToken
     );
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       message:
-        "Password reset token generated",
+        "Password reset link sent",
     });
   } catch (err) {
-    console.error(err);
+    console.error(
+      "FORGOT PASSWORD ERROR:",
+      err
+    );
 
-    return res
-      .status(500)
-      .json({
-        message: err.message,
-      });
+    return res.status(500).json({
+      success: false,
+      message:
+        "Something went wrong",
+    });
   }
 };
 
@@ -475,22 +501,46 @@ export const googleAuthSuccess = (
   res,
   redirectUrl
 ) => {
-
   const user = req.user;
 
   const token =
     generateToken(user);
 
+  const cookieName =
+    user.role === "admin"
+      ? "admin_token"
+      : "user_token";
+
+  const cookieOptions =
+    user.role === "admin"
+      ? ADMIN_COOKIE
+      : USER_COOKIE;
+
+  // set jwt
   res.cookie(
-    "token",
+    cookieName,
     token,
-    COOKIE_OPTIONS
+    cookieOptions
   );
 
-  res.redirect(
+  // destroy temp passport session
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error(err);
+      }
+
+      return res.redirect(
+        redirectUrl
+      ); // ONLY RESPONSE
+    });
+
+    return; // critical
+  }
+
+  return res.redirect(
     redirectUrl
   );
-
 };
 
 
@@ -543,67 +593,72 @@ export const handleUserGoogleCallback = (
 
 
 // CURRENT USER
-export const getCurrentUser = async (
-  req,
-  res
-) => {
-  try {
+export const getCurrentUser =
+  async (
+    req,
+    res
+  ) => {
+    try {
+      let token =
+        req.cookies
+          ?.admin_token ||
+        req.cookies
+          ?.user_token;
 
+      if (!token) {
+        return res
+          .status(401)
+          .json({
+            loggedIn: false,
+          });
+      }
 
-    let user = null;
-
-    // GOOGLE / PASSPORT
-    if (req.user) {
-      user = req.user;
-    }
-
-    // OTP / SESSION LOGIN
-    else if (
-      req.session?.userId
-    ) {
-      user =
-        await User.findById(
-          req.session.userId
+      const decoded =
+        jwt.verify(
+          token,
+          process.env.JWT_SECRET
         );
-    }
 
-    if (!user) {
-      return res
-        .status(401)
-        .json({
-          loggedIn: false,
-          message:
-            "Unauthorized",
-        });
-    }
+      const user =
+        await User.findById(
+          decoded.id
+        );
 
-    return res.json({
-      loggedIn: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        role: user.role,
-        phone: user.phone,
-        createdAt:
-          user.createdAt,
-        lastLoginAt:
-          user.lastLoginAt,
-      },
-    });
-  } catch (err) {
-    console.error(err);
+      if (!user) {
+        return res
+          .status(401)
+          .json({
+            loggedIn: false,
+          });
+      }
 
-    return res
-      .status(500)
-      .json({
-        message:
-          "Failed to fetch user",
+      return res.json({
+        loggedIn: true,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+          role: user.role,
+          phone: user.phone,
+          createdAt:
+            user.createdAt,
+          lastLoginAt:
+            user.lastLoginAt,
+        },
       });
-  }
-};
+    } catch (err) {
+  console.error(
+    "getCurrentUser error:",
+    err
+  );
 
+  return res.status(401).json({
+    loggedIn: false,
+    error: err.message,
+  });
+}
+  };
 
 
 
@@ -811,29 +866,17 @@ export const logoutUser = (
           });
       }
 
-      // clear JWT (legacy)
-      res.clearCookie(
-        "token",
-        {
-          httpOnly: true,
-          secure:
-            process.env.NODE_ENV ===
-            "production",
-          sameSite: "lax",
-        }
-      );
+  res.clearCookie(
+  "admin_token"
+);
 
-      // clear session cookie
-      res.clearCookie(
-        "connect.sid",
-        {
-          httpOnly: true,
-          secure:
-            process.env.NODE_ENV ===
-            "production",
-          sameSite: "lax",
-        }
-      );
+res.clearCookie(
+  "user_token"
+);
+
+res.clearCookie(
+  "connect.sid"
+);
 
       return res.json({
         message:
@@ -846,369 +889,83 @@ export const logoutUser = (
 
 
 
-
-export const requestOtp = async (
-  req,
-  res
-) => {
-  try {
-    const { phone } = req.body;
-
-    if (!phone) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Phone number required",
-        });
-    }
-
-    // normalize
-    const normalizedPhone =
-      phone.replace(/\D/g, "");
-
-    if (
-      normalizedPhone.length !== 10
-    ) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Invalid phone number",
-        });
-    }
-
-    // generate OTP
-    const otp = Math.floor(
-      100000 +
-        Math.random() * 900000
-    ).toString();
-
-    const otpHash =
-      await bcrypt.hash(
-        otp,
-        10
-      );
-
-    // remove old otp
-    await Otp.deleteMany({
-      phone: normalizedPhone,
-    });
-
-    // save new
-    await Otp.create({
-      phone: normalizedPhone,
-      otpHash,
-      expiresAt: new Date(
-        Date.now() +
-          5 * 60 * 1000
-      ), // 5 min
-    });
-
-    // TEMP → console until SMS provider
-    console.log(
-      "OTP:",
-      otp
-    );
-
-    return res.json({
-      success: true,
-      message:
-        "OTP sent successfully",
-    });
-  } catch (err) {
-    console.error(err);
-
-    return res
-      .status(500)
-      .json({
-        message:
-          "Failed to send OTP",
-      });
-  }
-};
-
-
-
-
-
-
-export const verifyOtp = async (
-  req,
-  res
-) => {
-  try {
-    const { phone, otp } =
-      req.body;
-
-    if (!phone || !otp) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Phone and OTP required",
-        });
-    }
-
-    const normalizedPhone =
-      phone.replace(/\D/g, "");
-
-    const otpDoc =
-      await Otp.findOne({
-        phone:
-          normalizedPhone,
-      });
-
-    if (!otpDoc) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "OTP not found",
-        });
-    }
-
-    // expiry
-    if (
-      otpDoc.expiresAt <
-      new Date()
-    ) {
-      await Otp.deleteOne({
-        _id: otpDoc._id,
-      });
-
-      return res
-        .status(400)
-        .json({
-          message:
-            "OTP expired",
-        });
-    }
-
-    // attempts
-    if (
-      otpDoc.attempts >= 5
-    ) {
-      return res
-        .status(429)
-        .json({
-          message:
-            "Too many attempts",
-        });
-    }
-
-    const isValid =
-      await bcrypt.compare(
-        otp,
-        otpDoc.otpHash
-      );
-
-    if (!isValid) {
-      otpDoc.attempts += 1;
-      await otpDoc.save();
-
-      return res
-        .status(400)
-        .json({
-          message:
-            "Invalid OTP",
-        });
-    }
-
-    // find/create user
-    let user =
-      await User.findOne({
-        phone:
-          normalizedPhone,
-      });
-
-    if (!user) {
-      user =
-        await User.create({
-          phone:
-            normalizedPhone,
-          name:
-            "Gemora User",
-          provider:
-            "phone",
-          isPhoneVerified:
-            true,
-        });
-    }
-
-    user.lastLoginAt =
-      new Date();
-
-    await user.save();
-
-    // cleanup otp
-    await Otp.deleteOne({
-      _id: otpDoc._id,
-    });
-
-
-
-
-    if (!req.session) {
-  throw new Error(
-    "Session not initialized"
-  );
-}
-
-
-
-
-
-    // session login
-    req.session.userId =
-      user._id.toString();
-
-      console.log(
-  "AFTER SET SESSION:",
-  req.session
-);
-
-      req.session.save((err) => {
-  if (err) {
-    console.error(err);
-
-    return res
-      .status(500)
-      .json({
-        message:
-          "Session save failed",
-      });
-  }   return res.json({
-    success: true,
-    user,
-  });
-});
-
-
-
-
-  } catch (err) {
-    console.error(err);
-
-    return res
-      .status(500)
-      .json({
-        message:
-          "OTP verification failed",
-      });
-  }
-};
-
-
-
-export const verifyAdminOtp =
+export const firebaseLogin =
   async (req, res) => {
     try {
-      const { phone, otp } =
+      const { phone } =
         req.body;
 
-      if (!phone || !otp) {
+      if (!phone) {
         return res
           .status(400)
           .json({
+            success: false,
             message:
-              "Phone and OTP required",
+              "Phone required",
           });
       }
 
       const normalizedPhone =
-        phone.replace(/\D/g, "");
+        phone
+          .replace(/\D/g, "")
+          .slice(-10);
 
-      const otpDoc =
-        await Otp.findOne({
-          phone:
-            normalizedPhone,
-        });
-
-      if (!otpDoc) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "OTP not found",
-          });
-      }
-
-      const isValid =
-        await bcrypt.compare(
-          otp,
-          otpDoc.otpHash
-        );
-
-      if (!isValid) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Invalid OTP",
-          });
-      }
-
-      const user =
+      let user =
         await User.findOne({
           phone:
             normalizedPhone,
         });
 
       if (!user) {
-        return res
-          .status(404)
-          .json({
-            message:
-              "User not found",
+        user =
+          await User.create({
+            phone:
+              normalizedPhone,
+            name:
+              "Gemora User",
+            provider:
+              "phone",
+            isPhoneVerified:
+              true,
           });
       }
 
-      // CRITICAL
-      if (
-        user.role !== "admin"
-      ) {
-        return res
-          .status(403)
-          .json({
-            message:
-              "Admin access denied",
-          });
-      }
+      user.lastLoginAt =
+        new Date();
 
-      req.session.userId =
-        user._id.toString();
+      user.isPhoneVerified =
+        true;
 
-      await Otp.deleteOne({
-        _id: otpDoc._id,
-      });
+      await user.save();
 
-      req.session.save(
-        (err) => {
-          if (err) {
-            return res
-              .status(500)
-              .json({
-                message:
-                  "Session failed",
-              });
-          }
 
-          return res.json({
-            success: true,
-            user,
-          });
-        }
-      );
+
+     const token =
+  generateToken(user);
+
+res.cookie(
+  "user_token",
+  token,
+  USER_COOKIE
+);
+
+return res.json({
+  success: true,
+  user,
+});
     } catch (err) {
-      console.error(err);
+      console.error(
+        err
+      );
 
       return res
         .status(500)
         .json({
+          success: false,
           message:
-            "OTP verification failed",
-        });
+            "Login failed",
+          });
     }
   };
+
 

@@ -23,9 +23,7 @@ import {
   updateProfile,
   updateAvatar,
   updateNotificationPreferences,
-  requestOtp,
-  verifyOtp,
-  verifyAdminOtp,
+  firebaseLogin,
 
   logoutUser,
 
@@ -106,25 +104,10 @@ router.get(
 );
 
 
-// otp based log in
-router.post(
-  "/request-otp",
-  requestOtp
+ router.post(
+  "/firebase-login",
+  firebaseLogin
 );
-
-router.post(
-  "/verify-otp",
-  verifyOtp
-);
-
-
-// otp based admin log in
-router.post(
-  "/verify-otp-admin",
-  verifyAdminOtp
-);
-
-
 
 
 
