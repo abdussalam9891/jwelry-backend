@@ -620,19 +620,6 @@ export const archiveProduct =
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 // UPDATE PRODUCT
 
 export const updateProduct =

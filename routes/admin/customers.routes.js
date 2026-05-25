@@ -1,49 +1,16 @@
 import express from "express";
-import { getCustomers, getCustomerDetails } from "../../controllers/admin/customer.controller.js";
 import {
-  protect,
-  authorize,
-} from "../../middleware/authMiddleware.js";
-import {
-  exportCustomersReport,
-} from "../../controllers/admin/customerExport.controller.js";
+  getCustomerDetails,
+  getCustomers,
+} from "../../controllers/admin/customer.controller.js";
+import { exportCustomersReport } from "../../controllers/admin/customerExport.controller.js";
+import { authorize, protect } from "../../middleware/authMiddleware.js";
 
 const router = express.Router();
+router.use(protect, authorize("admin"));
 
-router.get(
-  "/",
-
-  protect,
-
-  authorize("admin"),
-
-  getCustomers
-);
-
-router.get(
-  "/export",
-
-  protect,
-
-  authorize("admin"),
-
-  exportCustomersReport
-);
-
-
-
-router.get(
-  "/:id",
-
-  protect,
-
-  authorize("admin"),
-
-  getCustomerDetails
-);
+router.get("/", getCustomers);
+router.get("/export", exportCustomersReport);
+router.get("/:id", getCustomerDetails);
 
 export default router;
-
-
-
-

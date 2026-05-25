@@ -1,76 +1,30 @@
 import express from "express";
 
 import {
-  getDashboardData,
-  getRevenueData,
-  getOrdersData,
-  getProductsData,
   getCustomersData,
-  getPaymentsData,
-  getInventoryData,
+  getDashboardData,
   getGeoData,
+  getInventoryData,
+  getOrdersData,
+  getPaymentsData,
+  getProductsData,
+  getRevenueData,
 } from "../../controllers/admin/analytics.controller.js";
 
-import {
-  protect,
-  authorize,
-} from "../../middleware/authMiddleware.js";
+import { authorize, protect } from "../../middleware/authMiddleware.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
 /* ---------------- GLOBAL PROTECTION ---------------- */
-router.use(
-  protect,
-  authorize("admin")
-);
+router.use(protect, authorize("admin"));
 
-/* ---------------- DASHBOARD ---------------- */
-router.get(
-  "/dashboard",
-  getDashboardData
-);
-
-/* ---------------- REVENUE ---------------- */
-router.get(
-  "/revenue",
-  getRevenueData
-);
-
-/* ---------------- ORDERS ---------------- */
-router.get(
-  "/orders",
-  getOrdersData
-);
-
-/* ---------------- TOP PRODUCTS ---------------- */
-router.get(
-  "/products",
-  getProductsData
-);
-
-/* ---------------- CUSTOMERS ---------------- */
-router.get(
-  "/customers",
-  getCustomersData
-);
-
-/* ---------------- PAYMENTS ---------------- */
-router.get(
-  "/payments",
-  getPaymentsData
-);
-
-/* ---------------- INVENTORY ---------------- */
-router.get(
-  "/inventory",
-  getInventoryData
-);
-
-/* ---------------- GEO ---------------- */
-router.get(
-  "/geo",
-  getGeoData
-);
+router.get("/dashboard", getDashboardData);
+router.get("/revenue", getRevenueData);
+router.get("/orders", getOrdersData);
+router.get("/products", getProductsData);
+router.get("/customers", getCustomersData);
+router.get("/payments", getPaymentsData);
+router.get("/inventory", getInventoryData);
+router.get("/geo", getGeoData);
 
 export default router;

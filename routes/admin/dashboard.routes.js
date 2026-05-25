@@ -1,34 +1,15 @@
 import express from "express";
 
-import {
-  getDashboardData,
-
-} from "../../controllers/admin/dashboard.controller.js";
+import { getDashboardData } from "../../controllers/admin/dashboard.controller.js";
 import { exportDashboardReport } from "../../controllers/admin/exportReport.controller.js";
 
-import {
-  protect,
-  authorize,
-} from "../../middleware/authMiddleware.js";
+import { authorize, protect } from "../../middleware/authMiddleware.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
-router.get(
-  "/",
-  protect,
-  authorize("admin"),
-  getDashboardData
-);
+router.use(protect, authorize("admin"));
 
-router.get(
-  "/export",
-
-  protect,
-
-  authorize("admin"),
-
-  exportDashboardReport
-);
+router.get("/", getDashboardData);
+router.get("/export", exportDashboardReport);
 
 export default router;

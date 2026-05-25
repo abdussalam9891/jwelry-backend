@@ -12,10 +12,10 @@ import mongoose from "mongoose";
 
 const router = express.Router();
 
-// 🔐 protect all routes
+// protect all routes
 router.use(protect);
 
-// 🔍 VALIDATION HELPERS
+//VALIDATION HELPERS
 
 const validateProductId = (req, res, next) => {
   const id = req.params.productId;
@@ -33,7 +33,7 @@ const validateItemId = (req, res, next) => {
   next();
 };
 
-// 🚀 ROUTES
+// ROUTES
 
 // Get full cart
 router.get("/", getCart);
@@ -41,10 +41,10 @@ router.get("/", getCart);
 // Add item (still uses productId)
 router.post("/:productId", validateProductId, addToCart);
 
-// 🔥 Remove by ITEM ID (not product)
+//Remove by ITEM ID (not product)
 router.delete("/item/:itemId", validateItemId, removeFromCart);
 
-// 🔥 Update quantity by ITEM ID
+//Update quantity by ITEM ID
 router.patch("/item/:itemId", validateItemId, updateQuantity);
 
 // Clear cart

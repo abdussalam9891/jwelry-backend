@@ -14,10 +14,10 @@ router.use(protect);
 // GET wishlist (should support pagination later)
 router.get("/", getWishlist);
 
-//  Add product to wishlist
+ 
 router.post("/:productId", addToWishlist);
 
-//  Remove product from wishlist
+
 router.delete("/:productId", removeFromWishlist);
 
 export default router;

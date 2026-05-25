@@ -5,23 +5,13 @@ import {
   markAsRead,
 } from "../../controllers/admin/notification.controller.js";
 
-import {
-  protect,
-} from "../../middleware/authMiddleware.js";
+import { authorize, protect } from "../../middleware/authMiddleware.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
-router.get(
-  "/",
-  protect,
-  getNotifications
-);
+router.use(protect, authorize("admin"));
 
-router.put(
-  "/:id/read",
-  protect,
-  markAsRead
-);
+router.get("/", getNotifications);
+router.patch("/:id/read", markAsRead);
 
 export default router;

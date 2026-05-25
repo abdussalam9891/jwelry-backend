@@ -1,37 +1,14 @@
 import express from "express";
 
-import upload from
-  "../../middleware/uploadMiddleware.js";
+import upload from "../../middleware/uploadMiddleware.js";
 
-import {
-  uploadImages,
-} from
-  "../../controllers/admin/media.controller.js";
+import { uploadImages } from "../../controllers/admin/media.controller.js";
 
-import {
-  protect,
-  authorize,
-} from
-  "../../middleware/authMiddleware.js";
+import { authorize, protect } from "../../middleware/authMiddleware.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
-
-
-router.post(
-
-  "/images",
-
-  protect,
-
-  authorize("admin"),
-
-  upload.array("images", 5),
-
-  uploadImages
-);
-
-
+router.use(protect, authorize("admin"));
+router.post("/images", upload.array("images", 5), uploadImages);
 
 export default router;
