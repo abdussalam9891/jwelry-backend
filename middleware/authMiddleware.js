@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/UserModel.js";
 
- 
+
 export const protect =
   async (
     req,
@@ -78,12 +78,12 @@ export const protect =
     }
   };
 
-// 🔐 AUTHORIZE
+// AUTHORIZE
 export const authorize = (...roles) => {
 
   return (req, res, next) => {
 
-    // ❌ Not logged in
+    // Not logged in
     if (!req.user) {
 
       return res.status(401).json({
@@ -92,7 +92,7 @@ export const authorize = (...roles) => {
 
     }
 
-    // ❌ Role not allowed
+    // Role not allowed
     if (!roles.includes(req.user.role)) {
 
       return res.status(403).json({
