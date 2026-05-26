@@ -60,6 +60,8 @@ app.use(
   }),
 );
 
+
+app.set("trust proxy", 1);
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "gemora_secret",
@@ -69,7 +71,7 @@ app.use(
 
     cookie: {
       httpOnly: true,
-      secure: false, // localhost
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax", // important
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },

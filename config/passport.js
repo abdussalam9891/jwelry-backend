@@ -145,8 +145,7 @@ passport.use(
         process.env
           .GOOGLE_CLIENT_SECRET,
 
-      callbackURL:
-        "/api/v1/auth/google/admin/callback",
+      callbackURL: `${process.env.BACKEND_URL}/api/v1/auth/google/admin/callback`,
 
     },
 
@@ -185,7 +184,7 @@ passport.use(
 );
 
 
- 
+
 
 
 export default passport;
