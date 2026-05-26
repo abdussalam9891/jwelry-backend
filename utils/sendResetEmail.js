@@ -1,77 +1,30 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const transporter =
-  nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-
-    tls: {
-      rejectUnauthorized: false,
-    },
-
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-  });
+const resend = new Resend(
+  process.env.RESEND_API_KEY
+);
 
 export const sendResetEmail =
   async (email, resetLink) => {
     try {
-
-      await transporter.verify();
-    console.log("SMTP READY");
-
-
-      await transporter.sendMail({
-        from: `"Gemora" <${process.env.EMAIL_USER}>`,
+      await resend.emails.send({
+        from:
+          "Gemora <onboarding@resend.dev>",
         to: email,
         subject:
           "Reset your Gemora password",
         html: `
           <div style="
-            font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: auto;
-            padding: 24px;
-            border: 1px solid #eee;
-            border-radius: 12px;
+            font-family: Arial;
+            max-width:500px;
+            margin:auto;
+            padding:24px;
           ">
-            <h2 style="color:#6B1A2A;">
-              Reset Password
-            </h2>
+            <h2>Reset Password</h2>
 
-            <p>
-              Click below to reset your password:
-            </p>
-
-            <a
-              href="${resetLink}"
-              style="
-                display:inline-block;
-                margin-top:20px;
-                background:#6B1A2A;
-                color:white;
-                padding:12px 20px;
-                border-radius:8px;
-                text-decoration:none;
-              "
-            >
+            <a href="${resetLink}">
               Reset Password
             </a>
-
-            <p style="
-              margin-top:20px;
-              color:#777;
-            ">
-              If you didn’t request this,
-              ignore this email.
-            </p>
           </div>
         `,
       });

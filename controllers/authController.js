@@ -161,6 +161,14 @@ export const verifyEmailOtp =
           email,
         });
 
+             if (!user) {
+        return res
+          .status(404)
+          .json({
+            message:
+              "User not found",
+          });
+      }
 
         if (user.isEmailVerified) {
   return res.status(400).json({
@@ -170,28 +178,15 @@ export const verifyEmailOtp =
 
 
 
-      if (!user) {
-        return res
-          .status(404)
-          .json({
-            message:
-              "User not found",
-          });
-      }
 
-      if (
-        user.emailOtp !==
-        otp
-      ) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Invalid OTP",
-          });
-      }
 
-     if (
+if (!user.emailOtp) {
+  return res.status(400).json({
+    message: "OTP not found",
+  });
+}
+
+if (
   !user.emailOtpExpires ||
   user.emailOtpExpires < Date.now()
 ) {
@@ -200,10 +195,9 @@ export const verifyEmailOtp =
   });
 }
 
-
-if (!user.emailOtp) {
+if (user.emailOtp !== otp) {
   return res.status(400).json({
-    message: "OTP not found",
+    message: "Invalid OTP",
   });
 }
 
@@ -326,10 +320,14 @@ res.cookie(
     : USER_COOKIE
 );
 
-    const {
-      password: _,
-      ...userResponse
-    } = user.toObject();
+  const userResponse =
+  user.toObject();
+
+delete userResponse.password;
+delete userResponse.emailOtp;
+delete userResponse.emailOtpExpires;
+delete userResponse.passwordResetToken;
+delete userResponse.passwordResetExpires;
 
     return res.json({
       success: true,
@@ -399,10 +397,22 @@ export const forgotPassword = async (
     ? `${process.env.ADMIN_URL}/reset-password?token=${resetToken}`
     : `${process.env.CLIENT_URL}/front/pages/resetPassword.html?token=${resetToken}`;
 
-    await sendResetEmail(
-      user.email,
-      resetLink
-    );
+  try {
+  await sendResetEmail(
+    user.email,
+    resetLink
+  );
+} catch (err) {
+  user.passwordResetToken =
+    undefined;
+
+  user.passwordResetExpires =
+    undefined;
+
+  await user.save();
+
+  throw err;
+}
 
     console.log(
       "RESET TOKEN:",
@@ -436,6 +446,16 @@ export const resetPassword =
         token,
         password,
       } = req.body;
+
+      if (
+  !password ||
+  password.length < 6
+) {
+  return res.status(400).json({
+    message:
+      "Password must be at least 6 characters",
+  });
+}
 
       if (!token) {
         return res.status(400).json({
