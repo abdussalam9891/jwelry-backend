@@ -23,6 +23,11 @@ const transporter =
 export const sendResetEmail =
   async (email, resetLink) => {
     try {
+
+      await transporter.verify();
+    console.log("SMTP READY");
+
+
       await transporter.sendMail({
         from: `"Gemora" <${process.env.EMAIL_USER}>`,
         to: email,
