@@ -98,8 +98,8 @@ if (diffInDays <= 31) {
           "PAID",
 
         createdAt: {
-          $gte:
-            startDate,
+          $gte: startDate,
+        $lte: endDate,
         },
 
       },
@@ -122,23 +122,16 @@ if (diffInDays <= 31) {
 
     /* PARALLEL QUERIES */
 
-    const [
-      revenueResult,
-
-      totalOrders,
-
-      pendingOrders,
-
-      totalCustomers,
-
-      totalProducts,
-
-      products,
-
-      recentOrders,
-
-      recentCustomers,
-    ] = await Promise.all([
+  const [
+  revenueResult,
+  totalOrders,
+  pendingOrders,
+  customerEmails,
+  totalProducts,
+  products,
+  recentOrders,
+  recentCustomers,
+] = await Promise.all([
       revenuePromise,
 
       /* TOTAL ORDERS */
@@ -153,9 +146,7 @@ if (diffInDays <= 31) {
 
       /* TOTAL CUSTOMERS */
 
-      User.countDocuments({
-        role: "user",
-      }),
+    Order.distinct("customerEmail"),
 
       /* TOTAL PRODUCTS */
 
@@ -214,20 +205,29 @@ if (diffInDays <= 31) {
 
     const totalRevenue = revenueResult[0]?.totalRevenue || 0;
 
+    const totalCustomers =
+  customerEmails.length;
+
     /* LOW STOCK */
 
-    const lowStockProducts = products.filter((product) => {
-      const totalStock =
-        product.variants?.length > 0
-          ? product.variants.reduce(
-              (acc, variant) => acc + variant.stock,
+ const lowStockProducts = products.filter((product) => {
+  const totalStock =
+    product.variants?.length > 0
+      ? product.variants.reduce(
+          (acc, variant) =>
+            acc + (variant.stock || 0),
+          0
+        )
+      : product.stock || 0;
 
-              0,
-            )
-          : product.stock;
+  const threshold =
+    product.lowStockThreshold || 5; // fallback
 
-      return totalStock > 0 && totalStock <= product.lowStockThreshold;
-    });
+  return (
+    totalStock > 0 &&
+    totalStock <= threshold
+  );
+});
 
 
 

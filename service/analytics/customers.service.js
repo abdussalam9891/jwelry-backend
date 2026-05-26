@@ -1,5 +1,4 @@
 import Order from "../../models/orderModel.js";
-import User from "../../models/UserModel.js";
 
 export const getCustomerAnalytics =
   async (
@@ -7,26 +6,28 @@ export const getCustomerAnalytics =
     endDate
   ) => {
     const [
-      newCustomers,
+      newCustomerEmails,
       repeatCustomers,
       recentCustomers,
     ] =
       await Promise.all([
-        User.countDocuments({
-          role: "user",
-          createdAt: {
-            $gte:
-              startDate,
-            $lte:
-              endDate,
-          },
-        }),
 
+        // NEW CUSTOMERS
+        Order.distinct(
+          "customerEmail",
+          {
+            createdAt: {
+              $gte: startDate,
+              $lte: endDate,
+            },
+          }
+        ),
+
+        // REPEAT CUSTOMERS
         Order.aggregate([
           {
             $group: {
-              _id:
-                "$user",
+              _id: "$customerEmail",
               orders: {
                 $sum: 1,
               },
@@ -41,26 +42,31 @@ export const getCustomerAnalytics =
           },
         ]),
 
-        User.find({
-          role: "user",
+        // RECENT CUSTOMERS
+        Order.find({
           createdAt: {
-            $gte:
-              startDate,
-            $lte:
-              endDate,
+            $gte: startDate,
+            $lte: endDate,
           },
         })
           .sort({
-            createdAt:
-              -1,
+            createdAt: -1,
           })
-          .limit(5),
+          .limit(5)
+          .select(`
+            customerName
+            customerEmail
+            createdAt
+          `),
       ]);
 
     return {
-      newCustomers,
+      newCustomers:
+        newCustomerEmails.length,
+
       repeatCustomers:
         repeatCustomers.length,
+
       recentCustomers,
     };
   };
