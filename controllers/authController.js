@@ -866,13 +866,17 @@ export const logoutUser = (
           });
       }
 
-  res.clearCookie(
-  "admin_token"
-);
+res.clearCookie("admin_token", {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+});
 
-res.clearCookie(
-  "user_token"
-);
+res.clearCookie("user_token", {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+});
 
 res.clearCookie(
   "connect.sid"

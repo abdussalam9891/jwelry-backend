@@ -9,6 +9,10 @@ export const protect =
     next
   ) => {
     try {
+
+
+
+
       let token =
         req.cookies
           ?.admin_token ||
@@ -26,6 +30,9 @@ export const protect =
             " "
           )[1];
       }
+
+      console.log("REQ COOKIES:", req.cookies);
+console.log("HEADER COOKIE:", req.headers.cookie);
 
       if (!token) {
         return res
