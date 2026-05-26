@@ -8,13 +8,14 @@ import path from "path";
 import dbConnection from "./config/db.js";
 import passport from "./config/passport.js";
 import addressRoutes from "./routes/addressRoutes.js";
+import adminAnalyticsRoutes from "./routes/admin/analytics.routes.js";
 import AdminCustomersRoutes from "./routes/admin/customers.routes.js";
 import adminDashboardRoutes from "./routes/admin/dashboard.routes.js";
-import adminAnalyticsRoutes from "./routes/admin/analytics.routes.js";
 import mediaRoutes from "./routes/admin/media.routes.js";
 import notificationRoutes from "./routes/admin/notification.routes.js";
 import adminOrdersRoutes from "./routes/admin/orders.routes.js";
 import adminProductsRoutes from "./routes/admin/products.routes.js";
+import adminSearchRoutes from "./routes/admin/search.routes.js";
 import authRoutes from "./routes/auth.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import deliveryRoutes from "./routes/deliveryRoutes.js";
@@ -23,15 +24,9 @@ import productRoutes from "./routes/productRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 
-
-
-
-
 dbConnection();
 
 const app = express();
-
-
 
 // cors
 
@@ -60,7 +55,6 @@ app.use(
   }),
 );
 
-
 app.set("trust proxy", 1);
 app.use(
   session({
@@ -77,8 +71,6 @@ app.use(
     },
   }),
 );
-
-
 
 app.use(express.json());
 app.use(cookieParser());
@@ -115,6 +107,7 @@ app.use("/api/v1/admin/orders", adminOrdersRoutes);
 app.use("/api/v1/admin/media", mediaRoutes);
 app.use("/api/v1/admin/customers", AdminCustomersRoutes);
 app.use("/api/v1/admin/notifications", notificationRoutes);
+app.use("/api/v1/admin/search", adminSearchRoutes);
 
 const PORT = process.env.PORT || 5000;
 
