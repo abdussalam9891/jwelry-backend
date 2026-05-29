@@ -105,6 +105,9 @@ const getProducts = async (req, res) => {
     if (sort === "price_desc") sortOption = { price: -1, _id: -1 };
     if (sort === "newest") sortOption = { createdAt: -1, _id: -1 };
 
+
+
+      console.log("QUERY:", JSON.stringify(query, null, 2));
     // EXECUTE
     const [products, total] = await Promise.all([
       Product.find(query)
@@ -118,6 +121,11 @@ const getProducts = async (req, res) => {
 
       Product.countDocuments(query),
     ]);
+
+
+
+
+console.log("PRODUCTS FOUND:", products.length);
 
     res.json({
       products,
