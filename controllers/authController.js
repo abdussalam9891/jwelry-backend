@@ -268,10 +268,9 @@ export const forgotPassword = async (req, res) => {
 
     // role-based reset link
     const resetLink =
-      user.role === "admin"
-        ? `${process.env.ADMIN_URL}/reset-password?token=${resetToken}`
-        : `${process.env.CLIENT_URL}/pages/resetPassword.html?token=${resetToken}`;
-
+  req.body.app === "admin"
+    ? `${process.env.ADMIN_URL}/reset-password?token=${resetToken}`
+    : `${process.env.CLIENT_URL}/pages/resetPassword.html?token=${resetToken}`;
     try {
       await sendResetEmail(user.email, resetLink);
     } catch (err) {
