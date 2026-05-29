@@ -31,8 +31,8 @@ const app = express();
 // cors
 
 const allowedOrigins = [
-  process.env.CLIENT_URL?.trim(),
-  process.env.ADMIN_URL?.trim(),
+  process.env.CLIENT_URL?.trim().replace(/\/$/, ""),
+  process.env.ADMIN_URL?.trim().replace(/\/$/, ""),
 ];
 
 console.log("Allowed Origins:", allowedOrigins);
@@ -41,6 +41,7 @@ app.use(
   cors({
     origin: function (origin, callback) {
       console.log("Incoming Origin:", origin);
+      console.log("Allowed Origins:", allowedOrigins);
 
       if (!origin) {
         return callback(null, true);
