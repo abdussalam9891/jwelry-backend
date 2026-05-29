@@ -42,7 +42,7 @@ router.get(
   "/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: `${process.env.CLIENT_URL}/front/pages/auth.html?error=google_failed`,
+    failureRedirect: `${process.env.CLIENT_URL}/pages/auth.html?error=google_failed`,
   }),
   handleUserGoogleCallback,
 );
