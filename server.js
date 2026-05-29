@@ -35,11 +35,13 @@ const allowedOrigins = [
   process.env.ADMIN_URL?.trim(),
 ];
 
+console.log("Allowed Origins:", allowedOrigins);
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow server-to-server
-      // or postman
+      console.log("Incoming Origin:", origin);
+
       if (!origin) {
         return callback(null, true);
       }
@@ -48,11 +50,12 @@ app.use(
         return callback(null, true);
       }
 
+      console.log("Blocked Origin:", origin);
+
       return callback(new Error("Not allowed by CORS"));
     },
-
     credentials: true,
-  }),
+  })
 );
 
 app.set("trust proxy", 1);
