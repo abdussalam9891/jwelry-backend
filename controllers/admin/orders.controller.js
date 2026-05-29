@@ -1,4 +1,5 @@
 import Order from "../../models/orderModel.js";
+import Product from "../../models/productModel.js";
 
 
 /* GET ALL ORDERS */
@@ -365,6 +366,39 @@ export const updateOrderStatus =
 
       const order =
         await Order.findById(id);
+
+        const previousStatus = order.orderStatus;
+
+/*
+  RESTORE INVENTORY
+  ONLY WHEN ORDER IS
+  CANCELLED FOR FIRST TIME
+*/
+
+if (
+  previousStatus !== "CANCELLED" &&
+  orderStatus === "CANCELLED"
+) {
+  for (const item of order.items) {
+    const product = await Product.findById(
+      item.product
+    );
+
+    if (!product) continue;
+
+    const variant = product.variants.find(
+      (v) =>
+        v._id.toString() ===
+        item.variant?.variantId?.toString()
+    );
+
+    if (variant) {
+      variant.stock += item.quantity;
+    }
+
+    await product.save();
+  }
+}
 
 
 

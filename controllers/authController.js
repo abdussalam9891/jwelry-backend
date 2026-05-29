@@ -413,11 +413,7 @@ export const forgotPassword = async (
 
   throw err;
 }
-
-    console.log(
-      "RESET TOKEN:",
-      resetToken
-    );
+ 
 
     return res.status(200).json({
       success: true,

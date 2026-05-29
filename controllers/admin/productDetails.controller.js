@@ -101,7 +101,10 @@ export const getProductDetails = async (req, res) => {
 
 */
 
-    orders.forEach((order) => {
+   orders.forEach((order) => {
+  if (order.orderStatus === "CANCELLED") {
+    return;
+  }
       order.items.forEach((item) => {
         if (item.product.toString() === id) {
           totalUnitsSold += item.quantity;
@@ -225,6 +228,7 @@ product.lowStockThreshold
 
       {
         $sort: {
+          "_id.year": 1,
           "_id.month": 1,
         },
       },

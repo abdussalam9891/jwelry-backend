@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
     googleId: {
       type: String,
       unique: true,
-      sparse: true, //  allows non-google users later
+      sparse: true, 
     },
 
     name: {
@@ -147,7 +147,7 @@ userSchema.pre(
         salt
       );
 
-    
+
   }
 );
 

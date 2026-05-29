@@ -31,8 +31,7 @@ export const protect =
           )[1];
       }
 
-      console.log("REQ COOKIES:", req.cookies);
-console.log("HEADER COOKIE:", req.headers.cookie);
+ 
 
       if (!token) {
         return res
