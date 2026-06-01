@@ -2,13 +2,15 @@ import mongoose from "mongoose";
 
 import Order from "../../models/orderModel.js";
 import Product from "../../models/productModel.js";
+import Review from "../../models/reviewModel.js";
 
 export const getProductDetails = async (req, res) => {
   try {
     const { id } = req.params;
 
-    /*VALIDATION*/
 
+
+    /*VALIDATION*/
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         message: "Invalid product id",
@@ -16,7 +18,6 @@ export const getProductDetails = async (req, res) => {
     }
 
     /*products*/
-
     const product =
   await Product.findById(id)
     .lean();
@@ -28,7 +29,6 @@ export const getProductDetails = async (req, res) => {
     }
 
     /*ORDERS CONTAINING PRODUCT*/
-
     const orders =
   await Order.find({
     "items.product": id,
@@ -55,17 +55,10 @@ export const getProductDetails = async (req, res) => {
 
 
     /*ANALYTICS*/
-
     let totalUnitsSold = 0;
-
     let totalRevenue = 0;
 
-    /*
-
-  VARIANT MAP
-  BUILD FROM PRODUCT FIRST
-
-*/
+    /*VARIANT MAP BUILD FROM PRODUCT FIRST*/
 
     const variantMap = {};
 
@@ -234,6 +227,53 @@ product.lowStockThreshold
       },
     ]);
 
+
+
+// reviews
+
+       const reviews =
+  await Review.find({
+    product: id,
+  })
+
+    .sort({
+      createdAt: -1,
+    })
+
+    .lean();
+
+
+    const reviewStats =
+  await Review.aggregate([
+    {
+      $match: {
+        product:
+          new mongoose.Types.ObjectId(id),
+      },
+    },
+
+    {
+      $group: {
+        _id: "$rating",
+
+        count: {
+          $sum: 1,
+        },
+      },
+    },
+  ]);
+
+
+
+
+
+
+
+
+
+
+
+
     /*
 
         RESPONSE
@@ -260,6 +300,8 @@ product.lowStockThreshold
       recentOrders,
 
       revenueChart,
+       reviews,
+       reviewStats,
     });
   } catch (error) {
     console.error(error);

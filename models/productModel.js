@@ -245,6 +245,23 @@ images: {
       },
     },
 
+averageRating: {
+  type: Number,
+  default: 0,
+},
+
+numReviews: {
+  type: Number,
+  default: 0,
+},
+
+ratingBreakdown: {
+  1: { type: Number, default: 0 },
+  2: { type: Number, default: 0 },
+  3: { type: Number, default: 0 },
+  4: { type: Number, default: 0 },
+  5: { type: Number, default: 0 },
+},
 
     isBestSeller: {
       type: Boolean,
