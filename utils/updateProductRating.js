@@ -7,6 +7,11 @@ export const updateProductRating =
     const reviews =
       await Review.find({
         product: productId,
+
+        adminDeleted: false,
+
+        moderationStatus:
+          "APPROVED",
       });
 
     const numReviews =
@@ -22,12 +27,18 @@ export const updateProductRating =
       5: 0,
     };
 
-    reviews.forEach((review) => {
+    reviews.forEach(
+      (review) => {
 
-      totalRating += review.rating;
+        totalRating +=
+          review.rating;
 
-      breakdown[review.rating]++;
-    });
+        breakdown[
+          review.rating
+        ]++;
+
+      }
+    );
 
     const averageRating =
       numReviews === 0
@@ -50,4 +61,5 @@ export const updateProductRating =
           breakdown,
       }
     );
-};
+
+  };

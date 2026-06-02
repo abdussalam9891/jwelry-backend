@@ -5,10 +5,14 @@ import {
   createNotification,
 } from "../utils/admin/createNotification.js";
 import User from "../models/UserModel.js";
+import Coupon from "../models/couponModel.js";
+import CouponRedemption from "../models/couponRedemptionModel.js";
+
+
 
 export const createOrder = async (req, res) => {
   try {
-    const { addressId, paymentMethod } = req.body;
+    const { addressId, paymentMethod,  couponCode } = req.body;
 
     /* VALIDATE ADDRESS */
 
@@ -80,6 +84,14 @@ export const createOrder = async (req, res) => {
         });
       }
 
+
+
+
+
+
+
+
+
       /* SNAPSHOT ITEM */
 
       let finalPrice = product.price;
@@ -121,13 +133,178 @@ export const createOrder = async (req, res) => {
       itemsPrice += finalPrice * item.quantity;
     }
 
-    /* SHIPPING */
 
-    const shippingPrice = 0;
 
-    /* TOTAL */
+          /* PRICING */
 
-    const totalPrice = itemsPrice + shippingPrice;
+const subtotalPrice = itemsPrice;
+
+const shippingPrice = 0;
+
+const taxPrice = 0;
+
+let discountAmount = 0;
+
+let couponSnapshot = null;
+
+/* COUPON */
+
+let coupon = null;
+
+if (couponCode) {
+
+  coupon = await Coupon.findOne({
+    code: couponCode
+      .toUpperCase()
+      .trim(),
+
+    isActive: true,
+  });
+
+  if (!coupon) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid coupon",
+    });
+  }
+
+  if (
+    coupon.startsAt &&
+    coupon.startsAt > new Date()
+  ) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Coupon not started yet",
+    });
+  }
+
+  if (
+    coupon.expiresAt &&
+    coupon.expiresAt < new Date()
+  ) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Coupon expired",
+    });
+  }
+
+  if (
+    coupon.usageLimit &&
+    coupon.usageCount >=
+      coupon.usageLimit
+  ) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Coupon usage limit reached",
+    });
+  }
+
+  const userRedemptions =
+    await CouponRedemption.countDocuments({
+      coupon: coupon._id,
+      user: req.user._id,
+    });
+
+  if (
+    userRedemptions >=
+    coupon.perUserLimit
+  ) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Coupon usage limit reached",
+    });
+  }
+
+  if (coupon.firstOrderOnly) {
+
+    const previousOrder =
+      await Order.exists({
+        user: req.user._id,
+      });
+
+    if (previousOrder) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Coupon valid only for first order",
+      });
+    }
+
+  }
+
+  if (
+    subtotalPrice <
+    coupon.minOrderAmount
+  ) {
+    return res.status(400).json({
+      success: false,
+      message:
+        `Minimum order ₹${coupon.minOrderAmount}`,
+    });
+  }
+
+  if (
+    coupon.discountType ===
+    "PERCENTAGE"
+  ) {
+
+    discountAmount =
+      (subtotalPrice *
+        coupon.discountValue) /
+      100;
+
+    if (
+      coupon.maxDiscountAmount
+    ) {
+      discountAmount = Math.min(
+        discountAmount,
+        coupon.maxDiscountAmount
+      );
+    }
+
+  } else if (
+    coupon.discountType ===
+    "FIXED"
+  ) {
+
+    discountAmount = Math.min(
+      coupon.discountValue,
+      subtotalPrice
+    );
+
+  }
+
+  couponSnapshot = {
+    couponId:
+      coupon._id,
+
+    code:
+      coupon.code,
+
+    discountType:
+      coupon.discountType,
+
+    discountValue:
+      coupon.discountValue,
+
+    discountAmount,
+  };
+}
+
+
+
+
+const totalPrice = Math.max(
+  0,
+  subtotalPrice -
+    discountAmount +
+    shippingPrice +
+    taxPrice
+);
 
 
 
@@ -183,12 +360,20 @@ const orderNumber =
 
       /* PRICING */
 
-      itemsPrice,
+     subtotalPrice,
 
-      shippingPrice,
+itemsPrice,
 
-      totalPrice,
+discountAmount,
 
+shippingPrice,
+
+taxPrice,
+
+totalPrice,
+
+coupon:
+  couponSnapshot,
 
 // order number
       orderNumber,
@@ -206,6 +391,37 @@ const orderNumber =
 
 
     });
+
+
+
+
+
+
+
+
+
+
+
+
+if (coupon) {
+
+  await CouponRedemption.create({
+  coupon: coupon._id,
+  user: req.user._id,
+  order: order._id,
+  discountAmount,
+});
+
+await Coupon.findByIdAndUpdate(
+  coupon._id,
+  {
+    $inc: {
+      usageCount: 1,
+    },
+  }
+);
+
+}
 
     for (const item of cart.items) {
       const product = item.product;

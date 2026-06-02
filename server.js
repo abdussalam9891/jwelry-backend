@@ -23,6 +23,11 @@ import orderRoutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
+import adminReviewRoutes from "./routes/admin/review.routes.js"
+import couponRoutes
+  from "./routes/couponRoutes.js";
+  import adminCouponRoutes
+  from "./routes/admin/coupon.routes.js";
 
 dbConnection();
 
@@ -56,7 +61,7 @@ app.use(
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
-  })
+  }),
 );
 
 app.set("trust proxy", 1);
@@ -102,6 +107,12 @@ app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/delivery", deliveryRoutes);
 app.use("/api/v1/addresses", addressRoutes);
 app.use("/api/v1/orders", orderRoutes);
+app.use(
+  "/api/v1/coupons",
+  couponRoutes
+);
+
+
 
 // admin
 app.use("/api/v1/admin/products", adminProductsRoutes);
@@ -112,6 +123,11 @@ app.use("/api/v1/admin/media", mediaRoutes);
 app.use("/api/v1/admin/customers", AdminCustomersRoutes);
 app.use("/api/v1/admin/notifications", notificationRoutes);
 app.use("/api/v1/admin/search", adminSearchRoutes);
+app.use("/api/v1/admin/reviews", adminReviewRoutes);
+app.use(
+  "/api/v1/admin/coupons",
+  adminCouponRoutes
+);
 
 const PORT = process.env.PORT || 5000;
 

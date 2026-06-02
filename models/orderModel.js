@@ -176,6 +176,47 @@ const orderSchema = new mongoose.Schema(
       default: 0,
     },
 
+    subtotalPrice: {
+  type: Number,
+  default: 0,
+},
+
+
+    coupon: {
+  code: {
+    type: String,
+    default: null,
+  },
+
+  couponId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Coupon",
+    default: null,
+  },
+
+  discountType: {
+    type: String,
+    enum: [
+      "PERCENTAGE",
+      "FIXED",
+      "FREE_SHIPPING",
+    ],
+    default: null,
+  },
+
+  discountValue: {
+    type: Number,
+    default: 0,
+  },
+
+  discountAmount: {
+    type: Number,
+    default: 0,
+  },
+},
+
+
+
     totalPrice: {
       type: Number,
       required: true,

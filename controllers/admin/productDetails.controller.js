@@ -231,9 +231,14 @@ product.lowStockThreshold
 
 // reviews
 
-       const reviews =
+    const reviews =
   await Review.find({
     product: id,
+
+    adminDeleted: false,
+
+    moderationStatus:
+      "APPROVED",
   })
 
     .sort({
@@ -242,14 +247,18 @@ product.lowStockThreshold
 
     .lean();
 
-
     const reviewStats =
   await Review.aggregate([
     {
       $match: {
-        product:
-          new mongoose.Types.ObjectId(id),
-      },
+  product:
+    new mongoose.Types.ObjectId(id),
+
+  adminDeleted: false,
+
+  moderationStatus:
+    "APPROVED",
+},
     },
 
     {
