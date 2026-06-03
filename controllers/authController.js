@@ -1,12 +1,17 @@
 import jwt from "jsonwebtoken";
 import { generateToken } from "../utils/generateToken.js";
 
-import User from "../models/UserModel.js";
+
 import { ADMIN_COOKIE, USER_COOKIE } from "../utils/cookieOptions.js";
 
 import crypto from "crypto";
 import { sendOtpEmail } from "../utils/sendOtpEmail.js";
 import { sendResetEmail } from "../utils/sendResetEmail.js";
+
+import User from "../models/UserModel.js";
+import Address from "../models/addressModel.js";
+import Wishlist from "../models/wishlistModel.js";
+import Order from "../models/orderModel.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -405,9 +410,61 @@ export const handleUserGoogleCallback = (req, res) => {
 };
 
 // CURRENT USER
+// export const getCurrentUser = async (req, res) => {
+//   try {
+//     let token = req.cookies?.admin_token || req.cookies?.user_token;
+
+//     if (!token) {
+//       return res.status(401).json({
+//         loggedIn: false,
+//       });
+//     }
+
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+//     const user = await User.findById(decoded.id);
+
+//     if (!user) {
+//       return res.status(401).json({
+//         loggedIn: false,
+//       });
+//     }
+
+//     return res.json({
+//       loggedIn: true,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         avatar: user.avatar,
+//         role: user.role,
+//         phone: user.phone,
+//         createdAt: user.createdAt,
+//         lastLoginAt: user.lastLoginAt,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("getCurrentUser error:", err);
+
+//     return res.status(401).json({
+//       loggedIn: false,
+//       error: err.message,
+//     });
+//   }
+// };
+
+
+
+
+
+
+
+
 export const getCurrentUser = async (req, res) => {
   try {
-    let token = req.cookies?.admin_token || req.cookies?.user_token;
+    const token =
+      req.cookies?.admin_token ||
+      req.cookies?.user_token;
 
     if (!token) {
       return res.status(401).json({
@@ -415,9 +472,14 @@ export const getCurrentUser = async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
 
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(
+      decoded.id
+    ).lean();
 
     if (!user) {
       return res.status(401).json({
@@ -425,25 +487,73 @@ export const getCurrentUser = async (req, res) => {
       });
     }
 
-    return res.json({
+    const [
+      addressCount,
+      orderCount,
+      wishlistCount,
+    ] = await Promise.all([
+      Address.countDocuments({
+        user: user._id,
+      }),
+
+      // remove if model not ready
+      Order.countDocuments({
+        user: user._id,
+      }),
+
+      // remove if model not ready
+      Wishlist.countDocuments({
+        user: user._id,
+      }),
+    ]);
+
+    return res.status(200).json({
       loggedIn: true,
+
       user: {
         id: user._id,
+
         name: user.name,
+
         email: user.email,
+
         avatar: user.avatar,
+
         role: user.role,
+
         phone: user.phone,
+
         createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
+
+        lastLoginAt:
+          user.lastLoginAt,
+
+        isEmailVerified:
+          user.isEmailVerified,
+
+        isPhoneVerified:
+          user.isPhoneVerified,
+
+        notificationPreferences:
+          user.notificationPreferences,
+      },
+
+      stats: {
+        addressCount,
+        orderCount,
+        wishlistCount,
       },
     });
   } catch (err) {
-    console.error("getCurrentUser error:", err);
+    console.error(
+      "getCurrentUser error:",
+      err
+    );
 
     return res.status(401).json({
       loggedIn: false,
-      error: err.message,
+      message:
+        "Authentication failed",
     });
   }
 };
