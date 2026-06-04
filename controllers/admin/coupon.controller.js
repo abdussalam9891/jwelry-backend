@@ -116,8 +116,9 @@ export const getCoupons =
   };
 
 
-  export const deleteCoupon =
+  export const toggleCouponStatus =
   async (req, res) => {
+
     try {
 
       const coupon =
@@ -135,14 +136,18 @@ export const getCoupons =
       }
 
       coupon.isActive =
-        false;
+        !coupon.isActive;
 
       await coupon.save();
 
       res.json({
         success: true,
+        isActive:
+          coupon.isActive,
         message:
-          "Coupon disabled",
+          coupon.isActive
+            ? "Coupon enabled"
+            : "Coupon disabled",
       });
 
     } catch (error) {
@@ -153,6 +158,7 @@ export const getCoupons =
       });
 
     }
+
   };
 
 
@@ -361,4 +367,3 @@ export const createCoupon =
 
 
 
- 

@@ -4,7 +4,7 @@ import {
   getCoupons,
   getCoupon,
   updateCoupon,
-  deleteCoupon,
+  toggleCouponStatus,
   getCouponStats,
 } from "../../controllers/admin/coupon.controller.js";
 import { protect, authorize} from "../../middleware/authMiddleware.js";
@@ -38,15 +38,16 @@ router.patch(
   updateCoupon
 );
 
-router.delete(
-  "/:id",
-
-  deleteCoupon
+router.patch(
+  "/:id/toggle-status",
+  toggleCouponStatus
 );
+
+
 
 router.get(
   "/:id/stats",
- 
+
   getCouponStats
 );
 
