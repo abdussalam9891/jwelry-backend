@@ -107,7 +107,7 @@ const getProducts = async (req, res) => {
 
 
 
-      console.log("QUERY:", JSON.stringify(query, null, 2));
+
     // EXECUTE
     const [products, total] = await Promise.all([
       Product.find(query)
@@ -125,7 +125,7 @@ const getProducts = async (req, res) => {
 
 
 
-console.log("PRODUCTS FOUND:", products.length);
+ 
 
     res.json({
       products,

@@ -14,6 +14,11 @@ export const createOrder = async (req, res) => {
   try {
     const { addressId, paymentMethod,  couponCode } = req.body;
 
+    console.log(
+  "couponCode:",
+  req.body.couponCode
+);
+
     /* VALIDATE ADDRESS */
 
     const address = await Address.findOne({

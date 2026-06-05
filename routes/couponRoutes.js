@@ -15,6 +15,7 @@ const router =
 
 router.get(
   "/",
+  protect,
   getAvailableCoupons
 );
 

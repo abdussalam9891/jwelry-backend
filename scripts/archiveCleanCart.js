@@ -17,7 +17,7 @@ async function cleanCart() {
       }
     );
 
-    console.log("✅ Cart cleaned successfully");
+     
     process.exit();
 
   } catch (err) {

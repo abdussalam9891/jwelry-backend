@@ -1,8 +1,9 @@
 
 
 import Coupon from "../models/couponModel.js";
-
 import CouponRedemption from "../models/couponRedemptionModel.js";
+import Order from "../models/orderModel.js";
+import User from "../models/UserModel.js";
 
 export const getAvailableCoupons =
   async (req, res) => {
@@ -10,6 +11,17 @@ export const getAvailableCoupons =
 
       const now =
         new Date();
+
+      const subtotal =
+        Number(
+          req.query.subtotal
+        ) || 0;
+
+      const hasPreviousOrder =
+        await Order.exists({
+          user:
+            req.user._id,
+        });
 
       const coupons =
         await Coupon.find({
@@ -44,13 +56,110 @@ export const getAvailableCoupons =
               ],
             },
           ],
-        }).select(
-          "code name description discountType discountValue minOrderAmount"
+        });
+
+      const applicableCoupons =
+        [];
+
+      const lockedCoupons =
+        [];
+
+      for (
+        const coupon of coupons
+      ) {
+
+        /* GLOBAL LIMIT */
+
+        if (
+          coupon.usageLimit &&
+          coupon.usageCount >=
+            coupon.usageLimit
+        ) {
+          continue;
+        }
+
+        /* FIRST ORDER */
+
+        if (
+          coupon.firstOrderOnly &&
+          hasPreviousOrder
+        ) {
+          continue;
+        }
+
+        /* PER USER LIMIT */
+
+        const userRedemptions =
+          await CouponRedemption.countDocuments({
+            coupon:
+              coupon._id,
+
+            user:
+              req.user._id,
+          });
+
+        if (
+          userRedemptions >=
+          coupon.perUserLimit
+        ) {
+          continue;
+        }
+
+        const couponData = {
+          _id:
+            coupon._id,
+
+          code:
+            coupon.code,
+
+          name:
+            coupon.name,
+
+          description:
+            coupon.description,
+
+          discountType:
+            coupon.discountType,
+
+          discountValue:
+            coupon.discountValue,
+
+          minOrderAmount:
+            coupon.minOrderAmount,
+
+          maxDiscountAmount:
+            coupon.maxDiscountAmount,
+        };
+
+        /* CART VALUE CHECK */
+
+        if (
+          subtotal <
+          coupon.minOrderAmount
+        ) {
+
+          lockedCoupons.push({
+            ...couponData,
+
+            remainingAmount:
+              coupon.minOrderAmount -
+              subtotal,
+          });
+
+          continue;
+        }
+
+        applicableCoupons.push(
+          couponData
         );
+      }
 
       res.json({
         success: true,
-        coupons,
+
+        applicableCoupons,
+
+        lockedCoupons,
       });
 
     } catch (error) {
@@ -59,6 +168,7 @@ export const getAvailableCoupons =
 
       res.status(500).json({
         success: false,
+
         message:
           "Server error",
       });
