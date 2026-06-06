@@ -9,25 +9,26 @@ import dbConnection from "./config/db.js";
 import passport from "./config/passport.js";
 import addressRoutes from "./routes/addressRoutes.js";
 import adminAnalyticsRoutes from "./routes/admin/analytics.routes.js";
+import adminCouponRoutes from "./routes/admin/coupon.routes.js";
 import AdminCustomersRoutes from "./routes/admin/customers.routes.js";
 import adminDashboardRoutes from "./routes/admin/dashboard.routes.js";
 import mediaRoutes from "./routes/admin/media.routes.js";
 import notificationRoutes from "./routes/admin/notification.routes.js";
 import adminOrdersRoutes from "./routes/admin/orders.routes.js";
 import adminProductsRoutes from "./routes/admin/products.routes.js";
+import adminReviewRoutes from "./routes/admin/review.routes.js";
 import adminSearchRoutes from "./routes/admin/search.routes.js";
 import authRoutes from "./routes/auth.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import contactRoutes from "./routes/contactRoutes.js";
+import couponRoutes from "./routes/couponRoutes.js";
 import deliveryRoutes from "./routes/deliveryRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
-import adminReviewRoutes from "./routes/admin/review.routes.js"
-import couponRoutes
-  from "./routes/couponRoutes.js";
-  import adminCouponRoutes
-  from "./routes/admin/coupon.routes.js";
+import adminContactRoutes
+  from "./routes/admin/contact.routes.js";
 
 dbConnection();
 
@@ -40,13 +41,9 @@ const allowedOrigins = [
   process.env.ADMIN_URL?.trim().replace(/\/$/, ""),
 ];
 
-
-
 app.use(
   cors({
     origin: function (origin, callback) {
-
-
       if (!origin) {
         return callback(null, true);
       }
@@ -54,8 +51,6 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-
-      
 
       return callback(new Error("Not allowed by CORS"));
     },
@@ -106,12 +101,8 @@ app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/delivery", deliveryRoutes);
 app.use("/api/v1/addresses", addressRoutes);
 app.use("/api/v1/orders", orderRoutes);
-app.use(
-  "/api/v1/coupons",
-  couponRoutes
-);
-
-
+app.use("/api/v1/coupons", couponRoutes);
+app.use("/api/v1/contact", contactRoutes);
 
 // admin
 app.use("/api/v1/admin/products", adminProductsRoutes);
@@ -123,10 +114,9 @@ app.use("/api/v1/admin/customers", AdminCustomersRoutes);
 app.use("/api/v1/admin/notifications", notificationRoutes);
 app.use("/api/v1/admin/search", adminSearchRoutes);
 app.use("/api/v1/admin/reviews", adminReviewRoutes);
-app.use(
-  "/api/v1/admin/coupons",
-  adminCouponRoutes
-);
+app.use("/api/v1/admin/coupons", adminCouponRoutes);
+app.use("/api/v1/admin/contacts", adminContactRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 
