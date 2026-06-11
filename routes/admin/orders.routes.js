@@ -21,7 +21,7 @@ router.get("/stats", getOrderStats);
 router.get("/export", exportOrdersReport);
 router.get("/:id", getSingleOrder);
 router.patch("/:id/status", updateOrderStatus);
-router.patch("/:id/payment", updatePaymentStatus);
+router.patch("/:id/payment-status", updatePaymentStatus);
 router.delete("/:id", deleteOrder);
 
 export default router;
