@@ -3,6 +3,10 @@ import ExcelJS from "exceljs";
 import Product from "../../models/productModel.js";
 import Order from "../../models/orderModel.js";
 
+
+
+
+
 export const exportProductsReport =
   async (req, res) => {
 
@@ -14,16 +18,20 @@ export const exportProductsReport =
         ==========================================
       */
 
-      const [products, orders] =
-        await Promise.all([
+     const [products, orders] =
+  await Promise.all([
 
-          Product.find(),
+    Product.find()
+      .populate(
+        "collections",
+        "name"
+      ),
 
-          Order.find({
-            paymentStatus: "PAID",
-          }),
+    Order.find({
+      paymentStatus: "PAID",
+    }),
 
-        ]);
+  ]);
 
       /*
         ==========================================
@@ -112,6 +120,11 @@ ${item.variant?.sku || "default"}
           key: "category",
           width: 20,
         },
+        {
+  header: "Collections",
+  key: "collections",
+  width: 30,
+},
 
         {
           header: "SKU",
@@ -233,6 +246,11 @@ ${product.name}-${variant.sku}
 
                   category:
                     product.category,
+
+                     collections:
+    product.collections
+      ?.map((c) => c.name)
+      .join(", ") || "-",
 
                   sku:
                     variant.sku,

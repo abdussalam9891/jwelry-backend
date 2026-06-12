@@ -1,104 +1,104 @@
-import Collection from "../models/collectionModel.js";
-import Product from "../models/productModel.js";
+// import Collection from "../models/collectionModel.js";
+// import Product from "../models/productModel.js";
 
-export const getCollections =
-  async (req, res) => {
+// export const getCollections =
+//   async (req, res) => {
 
-    try {
+//     try {
 
-      const collections =
-        await Collection.find({
+//       const collections =
+//         await Collection.find({
 
-          isActive: true,
+//           isActive: true,
 
-        })
+//         })
 
-          .sort({
-            sortOrder: 1,
-            createdAt: -1,
-          })
+//           .sort({
+//             sortOrder: 1,
+//             createdAt: -1,
+//           })
 
-          .lean();
+//           .lean();
 
-      res.json({
-        success: true,
-        collections,
-      });
+//       res.json({
+//         success: true,
+//         collections,
+//       });
 
-    } catch (error) {
+//     } catch (error) {
 
-      console.error(error);
+//       console.error(error);
 
-      res.status(500).json({
-        message: error.message,
-      });
+//       res.status(500).json({
+//         message: error.message,
+//       });
 
-    }
+//     }
 
-  };
+//   };
 
-export const getCollectionBySlug =
-  async (req, res) => {
+// export const getCollectionBySlug =
+//   async (req, res) => {
 
-    try {
+//     try {
 
-      const collection =
-        await Collection.findOne({
+//       const collection =
+//         await Collection.findOne({
 
-          slug:
-            req.params.slug,
+//           slug:
+//             req.params.slug,
 
-          isActive: true,
+//           isActive: true,
 
-        }).lean();
+//         }).lean();
 
-      if (!collection) {
+//       if (!collection) {
 
-        return res.status(404).json({
-          message:
-            "Collection not found",
-        });
+//         return res.status(404).json({
+//           message:
+//             "Collection not found",
+//         });
 
-      }
+//       }
 
-      const products =
-        await Product.find({
+//       const products =
+//         await Product.find({
 
-          status: "ACTIVE",
+//           status: "ACTIVE",
 
-          collections:
-            collection._id,
+//           collections:
+//             collection._id,
 
-        })
+//         })
 
-          .select(
-            "name price originalPrice images slug isBestSeller isNewProduct"
-          )
+//           .select(
+//             "name price originalPrice images slug isBestSeller isNewProduct"
+//           )
 
-          .sort({
-            createdAt: -1,
-          })
+//           .sort({
+//             createdAt: -1,
+//           })
 
-          .lean();
+//           .lean();
 
-      res.json({
+//       res.json({
 
-        success: true,
+//         success: true,
 
-        collection,
+//         collection,
 
-        products,
+//         products,
 
-      });
+//       });
 
-    } catch (error) {
+//     } catch (error) {
 
-      console.error(error);
+//       console.error(error);
 
-      res.status(500).json({
-        message: error.message,
-      });
+//       res.status(500).json({
+//         message: error.message,
+//       });
 
-    }
+//     }
 
-  };
+//   };

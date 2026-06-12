@@ -8,6 +8,8 @@ const getProducts = async (req, res) => {
 
       subcategory,
 
+
+
       material,
 
       targetAudience,
@@ -41,6 +43,8 @@ const getProducts = async (req, res) => {
     // basic filters
     if (category) conditions.push({ category });
     if (subcategory) conditions.push({ subcategory });
+
+
 
     if (material) {
       conditions.push({
@@ -133,11 +137,15 @@ const getProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findOne({
-      _id: req.params.id,
-
-      status: "ACTIVE",
-    }).lean();
+   const product = await Product.findOne({
+  _id: req.params.id,
+  status: "ACTIVE",
+})
+.populate(
+   
+  "name slug"
+)
+.lean();
 
     if (!product) {
       return res.status(404).json({
@@ -158,11 +166,15 @@ const getProductById = async (req, res) => {
 // GET SINGLE PRODUCT (SLUG BASED)
 const getProductBySlug = async (req, res) => {
   try {
-    const product = await Product.findOne({
-      slug: req.params.slug,
+   const product = await Product.findOne({
+  slug: req.params.slug,
+  status: "ACTIVE",
+})
+.populate(
 
-      status: "ACTIVE",
-    }).lean();
+  "name slug"
+)
+.lean();
 
     if (!product) {
       return res.status(404).json({

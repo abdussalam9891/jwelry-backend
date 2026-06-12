@@ -18,8 +18,12 @@ export const getProductDetails = async (req, res) => {
     }
 
     /*products*/
-    const product =
+  const product =
   await Product.findById(id)
+    .populate(
+      "collections",
+      "name slug"
+    )
     .lean();
 
     if (!product) {

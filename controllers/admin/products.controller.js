@@ -168,16 +168,16 @@ export const getAdminProducts =
 
       // PRODUCTS
 
-      const products =
-        await Product.find(query)
+     const products =
+  await Product.find(query)
+    .populate(
 
-          .sort(sortOption)
-
-          .skip(skip)
-
-          .limit(limit)
-
-          .lean();
+      "name slug"
+    )
+    .sort(sortOption)
+    .skip(skip)
+    .limit(limit)
+    .lean();
 
 
 
@@ -367,6 +367,7 @@ export const createProduct = async (req, res) => {
       originalPrice,
       category,
       subcategory,
+
       targetAudience,
       description,
       variants,
@@ -448,12 +449,14 @@ export const createProduct = async (req, res) => {
       originalPrice:
         originalPrice || 0,
 
-      category,
+    category,
 
-      subcategory,
+subcategory,
 
-      targetAudience:
-        targetAudience || "women",
+
+
+targetAudience:
+  targetAudience || "women",
 
       images,
 
@@ -707,6 +710,8 @@ export const updateProduct =
   "category",
 
   "subcategory",
+
+  
 
   "targetAudience",
 
