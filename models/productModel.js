@@ -152,6 +152,15 @@ const productSchema = new mongoose.Schema(
       index: true,
     },
 
+    collections: [
+  {
+    type:
+      mongoose.Schema.Types.ObjectId,
+
+    ref: "Collection",
+  },
+],
+
    category: {
   type: String,
   required: true,

@@ -2,6 +2,10 @@ import Order from "../../models/orderModel.js";
 import Product from "../../models/productModel.js";
 
 
+import {
+  sendOrderStatusEmail,
+} from "../../utils/sendOrderStatusEmail.js";
+
 /* GET ALL ORDERS */
 
 export const getAdminOrders =
@@ -313,6 +317,7 @@ export const getSingleOrder =
 
   /* UPDATE ORDER STATUS */
 
+
 export const updateOrderStatus =
   async (req, res) => {
 
@@ -324,10 +329,6 @@ export const updateOrderStatus =
       const {
         orderStatus,
       } = req.body;
-
-
-
-      /* VALIDATION */
 
       const allowedStatuses = [
 
@@ -342,8 +343,6 @@ export const updateOrderStatus =
         "CANCELLED",
 
       ];
-
-
 
       if (
         !allowedStatuses.includes(
@@ -360,47 +359,8 @@ export const updateOrderStatus =
 
       }
 
-
-
-      /* FIND ORDER */
-
       const order =
         await Order.findById(id);
-
-        const previousStatus = order.orderStatus;
-
-/*
-  RESTORE INVENTORY
-  ONLY WHEN ORDER IS
-  CANCELLED FOR FIRST TIME
-*/
-
-if (
-  previousStatus !== "CANCELLED" &&
-  orderStatus === "CANCELLED"
-) {
-  for (const item of order.items) {
-    const product = await Product.findById(
-      item.product
-    );
-
-    if (!product) continue;
-
-    const variant = product.variants.find(
-      (v) =>
-        v._id.toString() ===
-        item.variant?.variantId?.toString()
-    );
-
-    if (variant) {
-      variant.stock += item.quantity;
-    }
-
-    await product.save();
-  }
-}
-
-
 
       if (!order) {
 
@@ -413,16 +373,83 @@ if (
 
       }
 
+      const previousStatus =
+        order.orderStatus;
 
+      // no-op update
+      if (
+        previousStatus ===
+        orderStatus
+      ) {
 
-      /* UPDATE STATUS */
+        return res.status(400).json({
+
+          message:
+            "Order already has this status",
+
+        });
+
+      }
+
+      /*
+        RESTORE INVENTORY
+        ONLY FIRST TIME
+        CANCELLED
+      */
+
+      if (
+
+        previousStatus !==
+          "CANCELLED" &&
+
+        orderStatus ===
+          "CANCELLED"
+
+      ) {
+
+        for (
+          const item of order.items
+        ) {
+
+          const product =
+            await Product.findById(
+              item.product
+            );
+
+          if (!product)
+            continue;
+
+          const variant =
+            product.variants.find(
+              (v) =>
+                v._id.toString() ===
+                item.variant?.variantId?.toString()
+            );
+
+          if (variant) {
+
+            variant.stock +=
+              item.quantity;
+
+          } else {
+
+            product.stock +=
+              item.quantity;
+
+          }
+
+          await product.save();
+
+        }
+
+      }
+
+      /*
+        UPDATE STATUS
+      */
 
       order.orderStatus =
         orderStatus;
-
-
-
-      /* AUTO DATES */
 
       if (
         orderStatus ===
@@ -434,23 +461,58 @@ if (
 
       }
 
-
-
-      /* STATUS HISTORY */
-
       order.statusHistory.push({
 
-        status: orderStatus,
+        status:
+          orderStatus,
 
-        changedAt: new Date(),
+        changedAt:
+          new Date(),
 
       });
 
-
-
       await order.save();
 
+      /*
+        SEND EMAIL
+      */
 
+      if (
+
+        order.customerEmail &&
+
+        order.customerEmail.trim()
+
+      ) {
+
+        try {
+
+          await sendOrderStatusEmail({
+
+            email:
+              order.customerEmail,
+
+            customerName:
+              order.customerName,
+
+            orderNumber:
+              order.orderNumber,
+
+            status:
+              orderStatus,
+
+          });
+
+        } catch (err) {
+
+          console.error(
+            "Status email failed:",
+            err
+          );
+
+        }
+
+      }
 
       res.json({
 
@@ -467,8 +529,6 @@ if (
 
       console.error(error);
 
-
-
       res.status(500).json({
 
         message:
@@ -479,7 +539,6 @@ if (
     }
 
   };
-
 
 
 

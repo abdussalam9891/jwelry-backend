@@ -11,19 +11,11 @@ CONNECT DB
 */
 
 const connectDB = async () => {
+  console.log("🔌 Connecting to DB...");
 
-  console.log(
-    "🔌 Connecting to DB..."
-  );
+  await mongoose.connect(MONGO_URI);
 
-  await mongoose.connect(
-    MONGO_URI
-  );
-
-  console.log(
-    "✅ MongoDB Connected"
-  );
-
+  console.log("✅ MongoDB Connected");
 };
 
 /*
@@ -32,16 +24,10 @@ IMAGE HELPER
 ==========================================
 */
 
-const getImages = (
-  type,
-  materialFolder,
-  index
-) => [
-
+const getImages = (type, materialFolder, index) => [
   `/uploads/products/${type}/${materialFolder}/${index}.webp`,
 
   `/uploads/products/${type}/${materialFolder}/${index}-2.webp`,
-
 ];
 
 /*
@@ -51,7 +37,6 @@ MATERIALS
 */
 
 const MATERIALS = [
-
   "18K Gold",
 
   "22K Gold",
@@ -67,7 +52,6 @@ const MATERIALS = [
   "Platinum",
 
   "Gemstone",
-
 ];
 
 /*
@@ -77,7 +61,6 @@ SUBCATEGORIES / STYLES
 */
 
 const SUBCATEGORIES = [
-
   "engagement",
 
   "bridal",
@@ -89,7 +72,6 @@ const SUBCATEGORIES = [
   "casual",
 
   "wedding",
-
 ];
 
 /*
@@ -100,70 +82,42 @@ VARIANTS WITH SIZE
 */
 
 const generateVariantsWithSize = ({
-
   sizes,
 
   basePrice,
 
   type,
-
 }) => {
-
   const variants = [];
 
   sizes.forEach((size) => {
-
-    MATERIALS.forEach(
-      (material) => {
-
-        const extra =
-
-          material === "22K Gold"
-            ? 3000
-
+    MATERIALS.forEach((material) => {
+      const extra =
+        material === "22K Gold"
+          ? 3000
           : material === "Platinum"
             ? 5000
+            : material === "Diamond"
+              ? 8000
+              : material === "Gemstone"
+                ? 4000
+                : 0;
 
-          : material === "Diamond"
-            ? 8000
+      variants.push({
+        size,
 
-          : material === "Gemstone"
-            ? 4000
+        material,
 
-          : 0;
+        price: basePrice + extra + Math.floor(Math.random() * 1000),
 
-        variants.push({
+        stock: Math.floor(Math.random() * 5) + 1,
 
-          size,
-
-          material,
-
-          price:
-            basePrice +
-            extra +
-            Math.floor(
-              Math.random() * 1000
-            ),
-
-          stock:
-            Math.floor(
-              Math.random() * 5
-            ) + 1,
-
-          sku:
-            `${type}-${size}-${material}`
-              .replace(/\s+/g, "-")
-              .toUpperCase(),
-
-        });
-
-      }
-    );
-
+        sku: `${type}-${size}-${material}`.replace(/\s+/g, "-").toUpperCase(),
+      });
+    });
   });
 
   return variants;
-
 };
 
 /*
@@ -174,67 +128,35 @@ VARIANTS WITHOUT SIZE
 */
 
 const generateVariantsNoSize = ({
-
   basePrice,
 
   type,
-
 }) => {
-
-  return MATERIALS.map(
-    (material) => {
-
-      const extra =
-
-        material === "22K Gold"
-          ? 3000
-
+  return MATERIALS.map((material) => {
+    const extra =
+      material === "22K Gold"
+        ? 3000
         : material === "Platinum"
           ? 5000
+          : material === "Diamond"
+            ? 8000
+            : material === "Gemstone"
+              ? 4000
+              : 0;
 
-        : material === "Diamond"
-          ? 8000
+    return {
+      size: null,
 
-        : material === "Gemstone"
-          ? 4000
+      material,
 
-        : 0;
+      price: basePrice + extra,
 
-      return {
+      stock: Math.floor(Math.random() * 5) + 1,
 
-        size: null,
-
-        material,
-
-        price:
-          basePrice + extra,
-
-        stock:
-          Math.floor(
-            Math.random() * 5
-          ) + 1,
-
-        sku:
-          `${type}-${material}`
-            .replace(/\s+/g, "-")
-            .toUpperCase(),
-
-      };
-
-    }
-  );
-
+      sku: `${type}-${material}`.replace(/\s+/g, "-").toUpperCase(),
+    };
+  });
 };
-
-
-
-
-
-
-
-
-
-
 
 /*
 ==========================================
@@ -242,47 +164,19 @@ PRODUCTS ARRAY
 ==========================================
 */
 
-
-
-const getMinPrice = (
-  variants
-) => {
-
-  return Math.min(
-
-    ...variants.map(
-      (variant) =>
-        variant.price
-    )
-
-  );
-
+const getMinPrice = (variants) => {
+  return Math.min(...variants.map((variant) => variant.price));
 };
 
-const getTotalStock = (
-  variants
-) => {
-
+const getTotalStock = (variants) => {
   return variants.reduce(
-
     (total, variant) => {
-
-      return (
-        total +
-        variant.stock
-      );
-
+      return total + variant.stock;
     },
 
-    0
+    0,
   );
-
 };
-
-
-
-
-
 
 const products = [];
 
@@ -293,7 +187,6 @@ RINGS
 */
 
 const RING_NAMES = [
-
   "Aurora Ring",
 
   "Celeste Ring",
@@ -313,98 +206,68 @@ const RING_NAMES = [
   "Aria Ring",
 
   "Elysia Ring",
-
 ];
 
 for (let i = 1; i <= 10; i++) {
-
-  const subcategory =
-    SUBCATEGORIES[
-      i % SUBCATEGORIES.length
-    ];
+  const subcategory = SUBCATEGORIES[i % SUBCATEGORIES.length];
 
   /*
     PRODUCT NAME
   */
 
-  const productName =
-    RING_NAMES[i - 1];
+  const productName = RING_NAMES[i - 1];
 
   /*
     AUTO SLUG
   */
 
-  const slug =
-    productName
+  const slug = productName
 
-      .toLowerCase()
+    .toLowerCase()
 
-      .replace(/\s+/g, "-");
+    .replace(/\s+/g, "-");
 
   /*
     GENERATE VARIANTS
   */
 
-  const variants =
-    generateVariantsWithSize({
+  const variants = generateVariantsWithSize({
+    sizes: ["6", "7", "8"],
 
-      sizes: [
-        "6",
-        "7",
-        "8",
-      ],
+    basePrice: 25000 + i * 1000,
 
-      basePrice:
-        25000 + i * 1000,
-
-      type:
-        `RING${i}`,
-
-    });
+    type: `RING${i}`,
+  });
 
   /*
     PUSH PRODUCT
   */
 
   products.push({
-
-    name:
-      productName,
+    name: productName,
 
     slug,
 
-    category:
-      "rings",
+    category: "rings",
 
     subcategory,
 
-    gender:
-      i % 3 === 0
-        ? "kids"
-        : i % 2 === 0
-        ? "her"
-        : "him",
+    gender: i % 3 === 0 ? "kids" : i % 2 === 0 ? "her" : "him",
 
-    images:
-      getImages(
+    images: getImages(
+      "rings",
 
-        "rings",
+      "gold",
 
-        "gold",
-
-        (i % 2) + 1
-      ),
+      (i % 2) + 1,
+    ),
 
     description: {
+      short: "A timeless ring crafted for modern elegance.",
 
-      short:
-        "A timeless ring crafted for modern elegance.",
-
-      design:
-        "Features precision-set stones with a refined finish.",
+      design: "Features precision-set stones with a refined finish.",
 
       details: [
-
         "Premium jewelry craftsmanship",
 
         "Luxury polished finish",
@@ -412,19 +275,14 @@ for (let i = 1; i <= 10; i++) {
         "Comfort fit design",
 
         "Certified quality",
-
       ],
 
-      styling:
-        "Perfect for daily wear and special occasions.",
-
+      styling: "Perfect for daily wear and special occasions.",
     },
 
-    isBestSeller:
-      i % 4 === 0,
+    isBestSeller: i % 4 === 0,
 
-    isNewProduct:
-      i % 5 === 0,
+    isNewProduct: i % 5 === 0,
 
     /*
       VARIANTS
@@ -436,25 +294,16 @@ for (let i = 1; i <= 10; i++) {
       DERIVED INVENTORY
     */
 
-    stock:
-      getTotalStock(
-        variants
-      ),
+    stock: getTotalStock(variants),
 
     /*
       MINIMUM VARIANT PRICE
     */
 
-    price:
-      getMinPrice(
-        variants
-      ),
+    price: getMinPrice(variants),
 
-    originalPrice:
-      28000 + i * 1000,
-
+    originalPrice: 28000 + i * 1000,
   });
-
 }
 
 /*
@@ -463,7 +312,6 @@ BRACELETS
 ==========================================
 */
 const BRACELET_NAMES = [
-
   "Celeste Bracelet",
 
   "Aurora Bracelet",
@@ -483,96 +331,68 @@ const BRACELET_NAMES = [
   "Serena Bracelet",
 
   "Elysia Bracelet",
-
 ];
 
 for (let i = 1; i <= 10; i++) {
-
-  const subcategory =
-    SUBCATEGORIES[
-      i % SUBCATEGORIES.length
-    ];
+  const subcategory = SUBCATEGORIES[i % SUBCATEGORIES.length];
 
   /*
     PRODUCT NAME
   */
 
-  const productName =
-    BRACELET_NAMES[i - 1];
+  const productName = BRACELET_NAMES[i - 1];
 
   /*
     AUTO SLUG
   */
 
-  const slug =
-    productName
+  const slug = productName
 
-      .toLowerCase()
+    .toLowerCase()
 
-      .replace(/\s+/g, "-");
+    .replace(/\s+/g, "-");
 
   /*
     GENERATE VARIANTS
   */
 
-  const variants =
-    generateVariantsWithSize({
+  const variants = generateVariantsWithSize({
+    sizes: ["S", "M", "L"],
 
-      sizes: [
-        "S",
-        "M",
-        "L",
-      ],
+    basePrice: 12000 + i * 800,
 
-      basePrice:
-        12000 + i * 800,
-
-      type:
-        `BRACELET${i}`,
-
-    });
+    type: `BRACELET${i}`,
+  });
 
   /*
     PUSH PRODUCT
   */
 
   products.push({
-
-    name:
-      productName,
+    name: productName,
 
     slug,
 
-    category:
-      "bracelets",
+    category: "bracelets",
 
     subcategory,
 
-    gender:
-      i % 3 === 0
-        ? "kids"
-        : "her",
+    gender: i % 3 === 0 ? "kids" : "her",
 
-    images:
-      getImages(
+    images: getImages(
+      "bracelets",
 
-        "bracelets",
+      "gold",
 
-        "gold",
-
-        (i % 2) + 1
-      ),
+      (i % 2) + 1,
+    ),
 
     description: {
+      short: "An elegant bracelet designed for everyday luxury.",
 
-      short:
-        "An elegant bracelet designed for everyday luxury.",
-
-      design:
-        "Crafted with smooth edges and premium finishing.",
+      design: "Crafted with smooth edges and premium finishing.",
 
       details: [
-
         "Luxury jewelry finish",
 
         "Comfort fit design",
@@ -580,19 +400,14 @@ for (let i = 1; i <= 10; i++) {
         "Premium polish",
 
         "Durable craftsmanship",
-
       ],
 
-      styling:
-        "Pairs beautifully with ethnic and western outfits.",
-
+      styling: "Pairs beautifully with ethnic and western outfits.",
     },
 
-    isBestSeller:
-      i % 3 === 0,
+    isBestSeller: i % 3 === 0,
 
-    isNewProduct:
-      i % 4 === 0,
+    isNewProduct: i % 4 === 0,
 
     /*
       VARIANTS
@@ -604,25 +419,16 @@ for (let i = 1; i <= 10; i++) {
       DERIVED STOCK
     */
 
-    stock:
-      getTotalStock(
-        variants
-      ),
+    stock: getTotalStock(variants),
 
     /*
       MINIMUM VARIANT PRICE
     */
 
-    price:
-      getMinPrice(
-        variants
-      ),
+    price: getMinPrice(variants),
 
-    originalPrice:
-      15000 + i * 800,
-
+    originalPrice: 15000 + i * 800,
   });
-
 }
 
 /*
@@ -632,7 +438,6 @@ EARRINGS
 */
 
 const EARRING_NAMES = [
-
   "Aria Earrings",
 
   "Nyra Earrings",
@@ -652,90 +457,66 @@ const EARRING_NAMES = [
   "Serena Earrings",
 
   "Elysia Earrings",
-
 ];
 
 for (let i = 1; i <= 10; i++) {
-
-  const subcategory =
-    SUBCATEGORIES[
-      i % SUBCATEGORIES.length
-    ];
+  const subcategory = SUBCATEGORIES[i % SUBCATEGORIES.length];
 
   /*
     PRODUCT NAME
   */
 
-  const productName =
-    EARRING_NAMES[i - 1];
+  const productName = EARRING_NAMES[i - 1];
 
   /*
     AUTO SLUG
   */
 
-  const slug =
-    productName
+  const slug = productName
 
-      .toLowerCase()
+    .toLowerCase()
 
-      .replace(/\s+/g, "-");
+    .replace(/\s+/g, "-");
 
   /*
     GENERATE VARIANTS
   */
 
-  const variants =
-    generateVariantsNoSize({
+  const variants = generateVariantsNoSize({
+    basePrice: 8000 + i * 500,
 
-      basePrice:
-        8000 + i * 500,
-
-      type:
-        `EARRING${i}`,
-
-    });
+    type: `EARRING${i}`,
+  });
 
   /*
     PUSH PRODUCT
   */
 
   products.push({
-
-    name:
-      productName,
+    name: productName,
 
     slug,
 
-    category:
-      "earrings",
+    category: "earrings",
 
     subcategory,
 
-    gender:
-      i % 4 === 0
-        ? "kids"
-        : "her",
+    gender: i % 4 === 0 ? "kids" : "her",
 
-    images:
-      getImages(
+    images: getImages(
+      "earrings",
 
-        "earrings",
+      "gold",
 
-        "gold",
-
-        (i % 2) + 1
-      ),
+      (i % 2) + 1,
+    ),
 
     description: {
+      short: "Stylish earrings to elevate your everyday look.",
 
-      short:
-        "Stylish earrings to elevate your everyday look.",
-
-      design:
-        "Minimal yet elegant design with premium detailing.",
+      design: "Minimal yet elegant design with premium detailing.",
 
       details: [
-
         "Lightweight construction",
 
         "Premium shine",
@@ -743,19 +524,14 @@ for (let i = 1; i <= 10; i++) {
         "Secure closure",
 
         "Luxury finish",
-
       ],
 
-      styling:
-        "Perfect for office wear and casual outings.",
-
+      styling: "Perfect for office wear and casual outings.",
     },
 
-    isBestSeller:
-      i % 2 === 0,
+    isBestSeller: i % 2 === 0,
 
-    isNewProduct:
-      i % 3 === 0,
+    isNewProduct: i % 3 === 0,
 
     /*
       VARIANTS
@@ -767,25 +543,16 @@ for (let i = 1; i <= 10; i++) {
       DERIVED STOCK
     */
 
-    stock:
-      getTotalStock(
-        variants
-      ),
+    stock: getTotalStock(variants),
 
     /*
       MINIMUM VARIANT PRICE
     */
 
-    price:
-      getMinPrice(
-        variants
-      ),
+    price: getMinPrice(variants),
 
-    originalPrice:
-      10000 + i * 500,
-
+    originalPrice: 10000 + i * 500,
   });
-
 }
 
 /*
@@ -795,7 +562,6 @@ NECKLACES
 */
 
 const NECKLACE_NAMES = [
-
   "Aurelia Necklace",
 
   "Celestia Necklace",
@@ -815,90 +581,66 @@ const NECKLACE_NAMES = [
   "Luna Necklace",
 
   "Elysia Necklace",
-
 ];
 
 for (let i = 1; i <= 10; i++) {
-
-  const subcategory =
-    SUBCATEGORIES[
-      i % SUBCATEGORIES.length
-    ];
+  const subcategory = SUBCATEGORIES[i % SUBCATEGORIES.length];
 
   /*
     PRODUCT NAME
   */
 
-  const productName =
-    NECKLACE_NAMES[i - 1];
+  const productName = NECKLACE_NAMES[i - 1];
 
   /*
     AUTO SLUG
   */
 
-  const slug =
-    productName
+  const slug = productName
 
-      .toLowerCase()
+    .toLowerCase()
 
-      .replace(/\s+/g, "-");
+    .replace(/\s+/g, "-");
 
   /*
     GENERATE VARIANTS
   */
 
-  const variants =
-    generateVariantsNoSize({
+  const variants = generateVariantsNoSize({
+    basePrice: 30000 + i * 1500,
 
-      basePrice:
-        30000 + i * 1500,
-
-      type:
-        `NECKLACE${i}`,
-
-    });
+    type: `NECKLACE${i}`,
+  });
 
   /*
     PUSH PRODUCT
   */
 
   products.push({
-
-    name:
-      productName,
+    name: productName,
 
     slug,
 
-    category:
-      "necklaces",
+    category: "necklaces",
 
     subcategory,
 
-    gender:
-      i % 5 === 0
-        ? "kids"
-        : "her",
+    gender: i % 5 === 0 ? "kids" : "her",
 
-    images:
-      getImages(
+    images: getImages(
+      "necklaces",
 
-        "necklaces",
+      "gold",
 
-        "gold",
-
-        (i % 2) + 1
-      ),
+      (i % 2) + 1,
+    ),
 
     description: {
+      short: "A luxurious necklace crafted to make a statement.",
 
-      short:
-        "A luxurious necklace crafted to make a statement.",
-
-      design:
-        "Intricate craftsmanship with a modern aesthetic.",
+      design: "Intricate craftsmanship with a modern aesthetic.",
 
       details: [
-
         "Luxury finish",
 
         "Adjustable chain",
@@ -906,19 +648,14 @@ for (let i = 1; i <= 10; i++) {
         "Skin-friendly material",
 
         "Premium polish",
-
       ],
 
-      styling:
-        "Ideal for weddings and festive occasions.",
-
+      styling: "Ideal for weddings and festive occasions.",
     },
 
-    isBestSeller:
-      i % 2 === 0,
+    isBestSeller: i % 2 === 0,
 
-    isNewProduct:
-      i % 3 === 0,
+    isNewProduct: i % 3 === 0,
 
     /*
       VARIANTS
@@ -930,25 +667,16 @@ for (let i = 1; i <= 10; i++) {
       DERIVED STOCK
     */
 
-    stock:
-      getTotalStock(
-        variants
-      ),
+    stock: getTotalStock(variants),
 
     /*
       MINIMUM VARIANT PRICE
     */
 
-    price:
-      getMinPrice(
-        variants
-      ),
+    price: getMinPrice(variants),
 
-    originalPrice:
-      35000 + i * 1500,
-
+    originalPrice: 35000 + i * 1500,
   });
-
 }
 
 /*
@@ -957,44 +685,26 @@ SEED DATABASE
 ==========================================
 */
 
-const seedProducts =
-  async () => {
+const seedProducts = async () => {
+  try {
+    await connectDB();
 
-    try {
+    console.log("🧹 Clearing old products...");
 
-      await connectDB();
+    await Product.deleteMany({});
 
-      console.log(
-        "🧹 Clearing old products..."
-      );
+    console.log("📦 Seeding products...");
 
-      await Product.deleteMany({});
+    await Product.insertMany(products);
 
-      console.log(
-        "📦 Seeding products..."
-      );
+    console.log(`  ${products.length} Products Seeded`);
 
-      await Product.insertMany(
-        products
-      );
+    process.exit();
+  } catch (err) {
+    console.error("❌ ERROR:", err);
 
-      console.log(
-        `🔥 ${products.length} Products Seeded`
-      );
-
-      process.exit();
-
-    } catch (err) {
-
-      console.error(
-        "❌ ERROR:",
-        err
-      );
-
-      process.exit(1);
-
-    }
-
-  };
+    process.exit(1);
+  }
+};
 
 seedProducts();

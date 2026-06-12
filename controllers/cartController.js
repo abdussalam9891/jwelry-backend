@@ -25,7 +25,7 @@ export const getCart = async (req, res) => {
       });
     }
 
-    // 🔥 DO NOT FILTER ITEMS
+    //   DO NOT FILTER ITEMS
     const items = cart.items || [];
 
     let total = 0;
@@ -60,7 +60,7 @@ export const getCart = async (req, res) => {
       variantDetails: item.variantDetails || null,
     }));
 
-    // 🔥 FINAL RESPONSE
+    //   FINAL RESPONSE
     res.json({
       items: formattedItems,
       summary: {
@@ -91,7 +91,7 @@ export const addToCart = async (req, res) => {
 
     let selectedVariant = null;
 
-    // 🔥 HANDLE VARIANT PRODUCTS
+    //   HANDLE VARIANT PRODUCTS
     if (product.variants && product.variants.length > 0) {
       if (!variantId) {
         return res.status(400).json({ message: "Variant required" });
@@ -107,7 +107,7 @@ export const addToCart = async (req, res) => {
         return res.status(400).json({ message: "Variant out of stock" });
       }
     } else {
-      // 🔥 NON-VARIANT PRODUCT
+      //   NON-VARIANT PRODUCT
       if (product.stock < 1) {
         return res.status(400).json({ message: "Out of stock" });
       }
@@ -119,7 +119,7 @@ export const addToCart = async (req, res) => {
       cart = await Cart.create({ user: userId, items: [] });
     }
 
-    // 🔥 FIND EXISTING ITEM (product + variant combo)
+    //   FIND EXISTING ITEM (product + variant combo)
     const existingItem = cart.items.find(
       (item) =>
         item.product.toString() === productId &&
@@ -150,10 +150,9 @@ export const addToCart = async (req, res) => {
         product: product._id,
         variantId: selectedVariant?._id || null,
 
-        // 🔥 STORE SNAPSHOT (Fix 3)
+        //   STORE SNAPSHOT (Fix 3)
         name: product.name,
-       image:
-  product.images?.[0]?.url || null,
+        image: product.images?.[0]?.url || null,
 
         price,
         originalPrice: product.originalPrice || price,
@@ -201,7 +200,6 @@ export const removeFromCart = async (req, res) => {
 
 // UPDATE quantity
 
-
 export const updateQuantity = async (req, res) => {
   try {
     const { itemId } = req.params;
@@ -209,7 +207,7 @@ export const updateQuantity = async (req, res) => {
 
     const qty = parseInt(quantity, 10);
 
-    // 🔥 validation
+    //   validation
     const MAX_CART_QTY = 3;
 
     if (isNaN(qty) || qty < 1 || qty > MAX_CART_QTY) {
@@ -218,7 +216,7 @@ export const updateQuantity = async (req, res) => {
       });
     }
 
-    // 🔥 find cart
+    //   find cart
     const cart = await Cart.findOne({ user: req.user._id });
 
     if (!cart) {
@@ -227,7 +225,7 @@ export const updateQuantity = async (req, res) => {
       });
     }
 
-    // 🔥 find cart item
+    //   find cart item
     const item = cart.items.id(itemId);
 
     if (!item) {
@@ -236,7 +234,7 @@ export const updateQuantity = async (req, res) => {
       });
     }
 
-    // 🔥 fetch full product
+    //   fetch full product
     const product = await Product.findById(item.product);
 
     if (!product) {
@@ -247,7 +245,7 @@ export const updateQuantity = async (req, res) => {
 
     let availableStock = product.stock;
 
-    // 🔥 variant stock handling
+    //   variant stock handling
     if (item.variantId) {
       const variant = product.variants.id(item.variantId);
 
@@ -260,14 +258,14 @@ export const updateQuantity = async (req, res) => {
       availableStock = variant.stock;
     }
 
-    // 🔥 stock validation
+    //   stock validation
     if (availableStock < qty) {
       return res.status(400).json({
         message: `Only ${availableStock} item(s) available`,
       });
     }
 
-    // 🔥 update quantity
+    //   update quantity
     item.quantity = qty;
 
     await cart.save();

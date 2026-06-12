@@ -7,17 +7,15 @@ import {
 import User from "../models/UserModel.js";
 import Coupon from "../models/couponModel.js";
 import CouponRedemption from "../models/couponRedemptionModel.js";
-
-
+ import {
+   sendOrderStatusEmail,
+ } from "../utils/sendOrderStatusEmail.js";
 
 export const createOrder = async (req, res) => {
   try {
     const { addressId, paymentMethod,  couponCode } = req.body;
 
-    console.log(
-  "couponCode:",
-  req.body.couponCode
-);
+
 
     /* VALIDATE ADDRESS */
 
@@ -320,6 +318,9 @@ const totalPrice = Math.max(
 const orderNumber =
   `ORD-${Date.now()}`;
 
+
+
+
     /* CREATE ORDER */
 
     const order = await Order.create({
@@ -331,7 +332,10 @@ const orderNumber =
 
       customerName: req.user.name,
 
-      customerEmail: req.user.email,
+  customerEmail:
+  req.user.email ||
+  address.email ||
+  "",
 
       customerPhone: address.phone,
 
@@ -397,8 +401,48 @@ coupon:
 
     });
 
+const email =
+  order.customerEmail;
 
+if (
+  order.customerEmail &&
+  order.customerEmail.trim()
+) {
 
+  try {
+
+    console.log({
+  email: order.customerEmail,
+  customerName: order.customerName,
+  orderNumber: order.orderNumber,
+});
+
+    await sendOrderStatusEmail({
+
+      email:
+        order.customerEmail,
+
+      customerName:
+        order.customerName,
+
+      orderNumber:
+        order.orderNumber,
+
+      status:
+        "PLACED",
+
+    });
+
+  } catch (err) {
+
+    console.error(
+      "Order confirmation email failed:",
+      err
+    );
+
+  }
+
+}
 
 
 
@@ -506,6 +550,10 @@ if (admin) {
     });
   }
 };
+
+
+
+
 
 export const getMyOrders = async (req, res) => {
   try {

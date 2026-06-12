@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-// 🔥 Cart Item Schema
+//   Cart Item Schema
 const cartItemSchema = new mongoose.Schema(
   {
     product: {
@@ -9,13 +9,13 @@ const cartItemSchema = new mongoose.Schema(
       required: true,
     },
 
-    // 🔥 FUTURE-PROOF (important)
+    //   FUTURE-PROOF (important)
     variantId: {
       type: mongoose.Schema.Types.ObjectId,
       default: null,
     },
 
-      variantDetails: {
+    variantDetails: {
       size: String,
       material: String,
       sku: String,
@@ -28,7 +28,7 @@ const cartItemSchema = new mongoose.Schema(
       max: [10, "Quantity cannot exceed 10"],
     },
 
-    // 🔥 SNAPSHOT (correct)
+    //   SNAPSHOT (correct)
     price: {
       type: Number,
       required: true,
@@ -41,10 +41,10 @@ const cartItemSchema = new mongoose.Schema(
     name: String,
     image: String,
   },
-  { _id: true } // ✅ FIXED
+  { _id: true }, // ✅ FIXED
 );
 
-// 🔥 Cart Schema
+//   Cart Schema
 const cartSchema = new mongoose.Schema(
   {
     user: {
@@ -57,7 +57,7 @@ const cartSchema = new mongoose.Schema(
 
     items: [cartItemSchema],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Cart = mongoose.models.Cart || mongoose.model("Cart", cartSchema);

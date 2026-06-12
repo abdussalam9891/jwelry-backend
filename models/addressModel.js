@@ -8,11 +8,13 @@ const addressSchema = new mongoose.Schema(
       required: true,
     },
 
-    fullName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+   fullName: {
+  type: String,
+  required: true,
+  trim: true,
+  minlength: 3,
+  maxlength: 50,
+},
 
     phone: {
       type: String,
@@ -20,22 +22,32 @@ const addressSchema = new mongoose.Schema(
       match: [/^[0-9]{10}$/, "Please enter a valid 10-digit phone number"],
     },
 
+   email: {
+  type: String,
+  trim: true,
+  lowercase: true,
+  match: [
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    "Please enter a valid email address",
+  ],
+},
+
     pincode: {
       type: String,
       required: true,
       match: [/^[0-9]{6}$/, "Please enter a valid 6-digit pincode"],
     },
 
-    state: {
-      type: String,
-      required: true,
-    },
-
-    city: {
-      type: String,
-      required: true,
-    },
-
+   state: {
+  type: String,
+  required: true,
+  trim: true,
+},
+city: {
+  type: String,
+  required: true,
+  trim: true,
+},
     addressLine1: {
       type: String,
       required: true,

@@ -32,11 +32,11 @@ const getProducts = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     //  BUILD CONDITIONS CLEANLY
-   const conditions = [
-  {
-    status: "ACTIVE",
-  },
-];
+    const conditions = [
+      {
+        status: "ACTIVE",
+      },
+    ];
 
     // basic filters
     if (category) conditions.push({ category });
@@ -58,7 +58,7 @@ const getProducts = async (req, res) => {
       conditions.push({ price: priceQuery });
     }
 
-    // 🔥 TAG FILTER (FIXED)
+    //   TAG FILTER (FIXED)
     if (tag === "trending") {
       conditions.push({ isBestSeller: true });
     }
@@ -67,7 +67,7 @@ const getProducts = async (req, res) => {
       conditions.push({ isNewProduct: true });
     }
 
-    // 🔥 SEARCH
+    //   SEARCH
     if (typeof search === "string" && search.trim()) {
       const keywords = search.trim().split(/\s+/);
 
@@ -105,9 +105,6 @@ const getProducts = async (req, res) => {
     if (sort === "price_desc") sortOption = { price: -1, _id: -1 };
     if (sort === "newest") sortOption = { createdAt: -1, _id: -1 };
 
-
-
-
     // EXECUTE
     const [products, total] = await Promise.all([
       Product.find(query)
@@ -121,11 +118,6 @@ const getProducts = async (req, res) => {
 
       Product.countDocuments(query),
     ]);
-
-
-
-
- 
 
     res.json({
       products,
@@ -141,77 +133,50 @@ const getProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
   try {
-
     const product = await Product.findOne({
       _id: req.params.id,
 
       status: "ACTIVE",
     }).lean();
 
-
-
     if (!product) {
-
       return res.status(404).json({
         message: "Product not found",
       });
-
     }
 
-
-
     res.json(product);
-
   } catch (error) {
-
     console.error(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
 
 // GET SINGLE PRODUCT (SLUG BASED)
- const getProductBySlug = async (
-  req,
-  res
-) => {
-
+const getProductBySlug = async (req, res) => {
   try {
+    const product = await Product.findOne({
+      slug: req.params.slug,
 
-    const product =
-      await Product.findOne({
-
-        slug: req.params.slug,
-
-        status: "ACTIVE",
-
-      }).lean();
-
-
+      status: "ACTIVE",
+    }).lean();
 
     if (!product) {
-
       return res.status(404).json({
         message: "Product not found",
       });
-
     }
 
-
-
     res.json(product);
-
   } catch (error) {
-
     console.error(error);
 
     res.status(500).json({
       message: "Server error",
     });
-
   }
 };
 
