@@ -15,7 +15,7 @@ for (const product of products) {
     product.productType = "necklace";
   }
 
-  // rings
+  // ringsss
 
   if (
     product.category === "rings" &&
