@@ -3,118 +3,273 @@ import Product from "../models/productModel.js";
 // GET PRODUCTS (FILTER + PAGINATION + SORT)
 const getProducts = async (req, res) => {
   try {
-    const {
-      category,
+   const {
+  category,
+  productType,
+style,
+  material,
+  targetAudience,
+  minPrice,
+  maxPrice,
+  sort,
+  page = 1,
+  limit = 12,
+  tag,
+  search,
+  inStock,
+} = req.query;
 
-      subcategory,
+   const pageNum = Math.max(
+  1,
+  parseInt(page, 10) || 1
+);
 
+const limitNum = Math.min(
+  50,
+  parseInt(limit, 10) || 12
+);
 
+const skip =
+  (pageNum - 1) * limitNum;
 
+/* CONDITIONS */
+
+const conditions = [
+  {
+    status: "ACTIVE",
+  },
+];
+
+/* CATEGORY */
+
+if (category) {
+  conditions.push({
+    category,
+  });
+}
+
+/* PRODUCT TYPE */
+
+if (productType) {
+  conditions.push({
+    productType,
+  });
+}
+
+/* STYLE */
+
+if (style) {
+  conditions.push({
+    styles: style,
+  });
+}
+
+/* MATERIAL */
+
+if (material) {
+  conditions.push({
+    "variants.material":
       material,
+  });
+}
 
-      targetAudience,
+/* TARGET AUDIENCE */
 
-      minPrice,
+if (targetAudience) {
+  conditions.push({
+    targetAudience,
+  });
+}
 
-      maxPrice,
+/* IN STOCK */
 
-      sort,
+if (inStock === "true") {
+  conditions.push({
+    stock: {
+      $gt: 0,
+    },
+  });
+}
 
-      page = 1,
+/* PRICE RANGE */
 
-      limit = 12,
+if (
+  minPrice ||
+  maxPrice
+) {
+  const priceQuery = {};
 
-      tag,
+  if (minPrice) {
+    priceQuery.$gte =
+      Number(minPrice);
+  }
 
-      search,
-    } = req.query;
+  if (maxPrice) {
+    priceQuery.$lte =
+      Number(maxPrice);
+  }
 
-    const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.min(50, parseInt(limit, 10) || 12);
-    const skip = (pageNum - 1) * limitNum;
+  conditions.push({
+    price: priceQuery,
+  });
+}
 
-    //  BUILD CONDITIONS CLEANLY
-    const conditions = [
-      {
-        status: "ACTIVE",
-      },
-    ];
+/* TAGS */
 
-    // basic filters
-    if (category) conditions.push({ category });
-    if (subcategory) conditions.push({ subcategory });
+if (tag === "trending") {
+  conditions.push({
+    isBestSeller: true,
+  });
+}
 
+if (tag === "new") {
+  conditions.push({
+    isNewProduct: true,
+  });
+}
 
+/* SEARCH */
 
-    if (material) {
+if (
+  typeof search === "string" &&
+  search.trim()
+) {
+  const keywords =
+    search
+      .trim()
+      .split(/\s+/);
+
+  keywords.forEach(
+    (word) => {
       conditions.push({
-        "variants.material": material,
+        $or: [
+          {
+            name: {
+              $regex: word,
+              $options: "i",
+            },
+          },
+
+          {
+            "description.short": {
+              $regex: word,
+              $options: "i",
+            },
+          },
+
+          {
+            category: {
+              $regex: word,
+              $options: "i",
+            },
+          },
+
+          {
+            productType: {
+              $regex: word,
+              $options: "i",
+            },
+          },
+
+          {
+            styles: {
+              $regex: word,
+              $options: "i",
+            },
+          },
+
+          {
+            searchTags: {
+              $regex: word,
+              $options: "i",
+            },
+          },
+
+          {
+            "variants.material": {
+              $regex: word,
+              $options: "i",
+            },
+          },
+        ],
       });
     }
+  );
+}
 
-    if (targetAudience) conditions.push({ targetAudience });
+/* FINAL QUERY */
 
-    // price filter
-    if (minPrice || maxPrice) {
-      const priceQuery = {};
-      if (minPrice) priceQuery.$gte = Number(minPrice);
-      if (maxPrice) priceQuery.$lte = Number(maxPrice);
-      conditions.push({ price: priceQuery });
-    }
+const query = {
+  $and: conditions,
+};
 
-    //   TAG FILTER (FIXED)
-    if (tag === "trending") {
-      conditions.push({ isBestSeller: true });
-    }
 
-    if (tag === "new") {
-      conditions.push({ isNewProduct: true });
-    }
-
-    //   SEARCH
-    if (typeof search === "string" && search.trim()) {
-      const keywords = search.trim().split(/\s+/);
-
-      keywords.forEach((word) => {
-        conditions.push({
-          $or: [
-            { name: { $regex: word, $options: "i" } },
-            {
-              "description.short": {
-                $regex: word,
-
-                $options: "i",
-              },
-            },
-            { subcategory: { $regex: word, $options: "i" } },
-            { category: { $regex: word, $options: "i" } },
-            {
-              "variants.material": {
-                $regex: word,
-
-                $options: "i",
-              },
-            },
-          ],
-        });
-      });
-    }
-
-    // FINAL QUERY
-    const query = conditions.length ? { $and: conditions } : {};
 
     // SORTING
-    let sortOption = { createdAt: -1 };
-    if (sort === "price_asc") sortOption = { price: 1, _id: 1 };
-    if (sort === "price_desc") sortOption = { price: -1, _id: -1 };
-    if (sort === "newest") sortOption = { createdAt: -1, _id: -1 };
+   let sortOption = {
+  createdAt: -1,
+};
+
+if (sort === "price_asc") {
+  sortOption = {
+    price: 1,
+    _id: 1,
+  };
+}
+
+if (sort === "price_desc") {
+  sortOption = {
+    price: -1,
+    _id: -1,
+  };
+}
+
+if (sort === "newest") {
+  sortOption = {
+    createdAt: -1,
+    _id: -1,
+  };
+}
+
+if (sort === "highest_rated") {
+  sortOption = {
+    averageRating: -1,
+    numReviews: -1,
+  };
+}
+
+if (sort === "best_selling") {
+  sortOption = {
+    soldCount: -1,
+    averageRating: -1,
+  };
+}
+
+if (sort === "featured") {
+  sortOption = {
+    isBestSeller: -1,
+    averageRating: -1,
+    createdAt: -1,
+  };
+}
+
 
     // EXECUTE
     const [products, total] = await Promise.all([
       Product.find(query)
-        .select(
-          "name price originalPrice images slug isBestSeller isNewProduct",
-        )
+ .select(`
+  name
+  price
+  originalPrice
+  images
+  slug
+  category
+  productType
+  averageRating
+  numReviews
+  isBestSeller
+  isNewProduct
+`)
         .sort(sortOption)
         .skip(skip)
         .limit(limitNum)
@@ -141,10 +296,7 @@ const getProductById = async (req, res) => {
   _id: req.params.id,
   status: "ACTIVE",
 })
-.populate(
-   
-  "name slug"
-)
+
 .lean();
 
     if (!product) {
@@ -170,10 +322,7 @@ const getProductBySlug = async (req, res) => {
   slug: req.params.slug,
   status: "ACTIVE",
 })
-.populate(
 
-  "name slug"
-)
 .lean();
 
     if (!product) {

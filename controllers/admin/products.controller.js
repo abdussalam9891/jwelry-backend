@@ -31,35 +31,79 @@ export const getAdminProducts =
 
 
 
-      const sort =
-        req.query.sort ||
-        "-createdAt";
+
+
+        let sortOption = {
+  createdAt: -1,
+};
 
 
 
-      const allowedSorts = [
-        "-createdAt",
-        "createdAt",
-        "price",
-        "-price",
-        "name",
-        "-name",
-      ];
+
+
+switch (req.query.sort) {
+ case "price_asc":
+  sortOption = {
+    price: 1,
+    _id: 1,
+  };
+  break;
+
+case "price_desc":
+  sortOption = {
+    price: -1,
+    _id: -1,
+  };
+  break;
+
+case "highest_rated":
+  sortOption = {
+    averageRating: -1,
+    numReviews: -1,
+  };
+  break;
+
+case "best_selling":
+  sortOption = {
+    soldCount: -1,
+    averageRating: -1,
+  };
+  break;
+
+  case "name_asc":
+    sortOption = {
+      name: 1,
+    };
+    break;
+
+  case "name_desc":
+    sortOption = {
+      name: -1,
+    };
+    break;
+
+  default:
+    sortOption = {
+      createdAt: -1,
+    };
+}
 
 
 
-      const sortOption =
-        allowedSorts.includes(sort)
-          ? sort
-          : "-createdAt";
 
 
 
       const category =
         req.query.category;
 
-      const subcategory =
-        req.query.subcategory;
+       const productType =
+  req.query.productType;
+
+const targetAudience =
+  req.query.targetAudience;
+
+const style =
+  req.query.style;
 
       const material =
         req.query.material;
@@ -85,35 +129,74 @@ export const getAdminProducts =
 
 
 
-      // SEARCH
+      
 
-      if (search) {
+   // SEARCH
 
-        query.$or = [
+if (
+  typeof search === "string" &&
+  search.trim()
+) {
+  const keywords =
+    search
+      .trim()
+      .split(/\s+/);
 
-          {
-            name: {
-              $regex: search,
-              $options: "i",
-            },
+  query.$and = keywords.map(
+    (word) => ({
+      $or: [
+        {
+          name: {
+            $regex: word,
+            $options: "i",
           },
+        },
 
-          {
-            slug: {
-              $regex: search,
-              $options: "i",
-            },
+        {
+          category: {
+            $regex: word,
+            $options: "i",
           },
+        },
 
-          {
-            sku: {
-              $regex: search,
-              $options: "i",
-            },
+        {
+          productType: {
+            $regex: word,
+            $options: "i",
           },
+        },
 
-        ];
-      }
+        {
+          searchTags: {
+            $regex: word,
+            $options: "i",
+          },
+        },
+
+        {
+          "variants.material": {
+            $regex: word,
+            $options: "i",
+          },
+        },
+
+        {
+          slug: {
+            $regex: word,
+            $options: "i",
+          },
+        },
+
+        {
+          sku: {
+            $regex: word,
+            $options: "i",
+          },
+        },
+      ],
+    })
+  );
+}
 
 
 
@@ -127,26 +210,23 @@ export const getAdminProducts =
 
 
 
-      // SUBCATEGORY
-
-      if (subcategory) {
-
-        query.subcategory =
-          subcategory;
-
-      }
 
 
+    if (productType) {
+  query.productType =
+    productType;
+}
 
-      // MATERIAL
+if (targetAudience) {
+  query.targetAudience =
+    targetAudience;
+}
 
-      if (material) {
+if (style) {
+  query.styles = style;
+}
 
-        query[
-          "variants.material"
-        ] = material;
 
-      }
 
 
 
@@ -170,10 +250,7 @@ export const getAdminProducts =
 
      const products =
   await Product.find(query)
-    .populate(
 
-      "name slug"
-    )
     .sort(sortOption)
     .skip(skip)
     .limit(limit)
@@ -242,106 +319,112 @@ export const getAdminProducts =
 
   };
 
-export const getProductStats =
-  async (req, res) => {
+export const getProductStats = async (req, res) => {
+  try {
+    const products = await Product.find({
+      status: { $ne: "ARCHIVED" },
+    })
+      .select(
+        `
+        category
+        productType
+        variants
+        stock
+        lowStockThreshold
+        soldCount
+        averageRating
+      `
+      )
+      .lean();
 
-    try {
+    let lowStockProducts = 0;
+    let outOfStockProducts = 0;
 
-      const products =
-        await Product.find({
+    const categories = new Set();
+    const productTypes = new Set();
 
-          status: {
-            $ne: "ARCHIVED",
-          },
+    let totalRating = 0;
 
-        })
-
-          .select(
-            "category variants stock lowStockThreshold"
-          )
-
-          .lean();
-
-
-
-      let lowStockProducts = 0;
-
-      let outOfStockProducts = 0;
-
-
-
-      for (const product of products) {
-
-        const {
-          totalStock,
-        } =
-          getInventoryData(
-            product
-          );
-
-
-
-        if (
-          totalStock > 0 &&
-          totalStock <=
-            product.lowStockThreshold
-        ) {
-
-          lowStockProducts++;
-
-        }
-
-
-
-        if (totalStock === 0) {
-
-          outOfStockProducts++;
-
-        }
+    for (const product of products) {
+      // Unique categories
+      if (product.category) {
+        categories.add(product.category);
       }
 
+      // Unique product types
+      if (product.productType) {
+        productTypes.add(product.productType);
+      }
 
+      // Inventory stats
+      const { totalStock } =
+        getInventoryData(product);
 
-      const totalCategories =
-        new Set(
+      if (
+        totalStock > 0 &&
+        totalStock <= product.lowStockThreshold
+      ) {
+        lowStockProducts++;
+      }
 
-          products.map(
-            (product) =>
-              product.category
-          )
+      if (totalStock === 0) {
+        outOfStockProducts++;
+      }
 
-        ).size;
-
-
-
-      res.json({
-
-        totalProducts:
-          products.length,
-
-        lowStockProducts,
-
-        outOfStockProducts,
-
-        totalCategories,
-
-      });
-
-    } catch (error) {
-
-      console.error(error);
-
-      res.status(500).json({
-
-        message:
-          error.message,
-
-      });
-
+      totalRating +=
+        product.averageRating || 0;
     }
 
-  };
+    const totalProducts =
+      products.length;
 
+    const inStockProducts =
+      totalProducts -
+      outOfStockProducts;
+
+    const bestSellerProducts =
+      products.filter(
+        (product) =>
+          product.soldCount > 0
+      ).length;
+
+    const averageStoreRating =
+      totalProducts > 0
+        ? Number(
+            (
+              totalRating /
+              totalProducts
+            ).toFixed(1)
+          )
+        : 0;
+
+    res.json({
+      totalProducts,
+
+      totalCategories:
+        categories.size,
+
+      totalProductTypes:
+        productTypes.size,
+
+      inStockProducts,
+
+      lowStockProducts,
+
+      outOfStockProducts,
+
+      bestSellerProducts,
+
+      averageStoreRating,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 
 
 
@@ -360,24 +443,31 @@ export const createProduct = async (req, res) => {
 
   try {
 
-    const {
-      name,
-      slug,
-      price,
-      originalPrice,
-      category,
-      subcategory,
+   const {
+  name,
+  slug,
+  price,
+  originalPrice,
 
-      targetAudience,
-      description,
-      variants,
-      stock,
-      status,
-      isBestSeller,
-      isNewProduct,
-      lowStockThreshold,
-       images,
-    } = req.body;
+  category,
+  productType,
+  styles,
+
+  searchTags,
+
+  targetAudience,
+
+  description,
+  variants,
+  stock,
+  status,
+
+  isBestSeller,
+  isNewProduct,
+
+  lowStockThreshold,
+  images,
+} = req.body;
 
 
 
@@ -386,8 +476,9 @@ export const createProduct = async (req, res) => {
    if (
   !name ||
   !slug ||
-  price == null ||
-  !category
+
+  !category ||
+  !productType
 ) {
 
       return res.status(400).json({
@@ -438,63 +529,73 @@ export const createProduct = async (req, res) => {
 
     // CREATE PRODUCT
 
-    const product = await Product.create({
+  const product = await Product.create({
+  name,
 
-      name,
+  slug,
 
-      slug,
+  price,
 
-      price,
+  originalPrice:
+    originalPrice || 0,
 
-      originalPrice:
-        originalPrice || 0,
+  category,
 
-    category,
+  productType,
 
-subcategory,
+  styles:
+    styles || [],
 
 
 
-targetAudience:
-  targetAudience || "women",
+  searchTags:
+    searchTags || [],
 
-      images,
+  targetAudience:
+    targetAudience || "women",
 
-      description: {
+  images,
 
-        short:
-          description?.short || "",
+  description: {
+    short:
+      description?.short || "",
 
-        design:
-          description?.design || "",
+    design:
+      description?.design || "",
 
-        details:
-          description?.details || [],
+    details:
+      description?.details || [],
 
-        styling:
-          description?.styling || "",
-      },
+    styling:
+      description?.styling || "",
+  },
 
-      variants:
-        variants || [],
+  variants:
+    variants || [],
 
-      stock:
-        stock || 0,
+  stock:
+    stock || 0,
 
-      status:
-        status || "ACTIVE",
+  status:
+    status || "ACTIVE",
 
-      isBestSeller:
-        isBestSeller || false,
+  isBestSeller:
+    isBestSeller || false,
 
-      isNewProduct:
-        isNewProduct || false,
+  isNewProduct:
+    isNewProduct || false,
 
-      lowStockThreshold:
-        lowStockThreshold || 5,
+  lowStockThreshold:
+    lowStockThreshold || 5,
 
-      sku,
-    });
+  soldCount: 0,
+
+  averageRating: 0,
+
+  numReviews: 0,
+
+  sku,
+});
 
 
 
@@ -697,8 +798,7 @@ export const updateProduct =
 
       // UPDATE FIELDS
 
-    const allowedFields = [
-
+const allowedFields = [
   "name",
 
   "slug",
@@ -709,9 +809,13 @@ export const updateProduct =
 
   "category",
 
-  "subcategory",
+  "productType",
 
-  
+  "styles",
+
+
+
+  "searchTags",
 
   "targetAudience",
 
@@ -730,7 +834,6 @@ export const updateProduct =
   "lowStockThreshold",
 
   "images",
-
 ];
 
 

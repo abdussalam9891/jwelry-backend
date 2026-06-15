@@ -23,7 +23,7 @@ export const exportProductsReport =
 
     Product.find()
       .populate(
-        "collections",
+         
         "name"
       ),
 

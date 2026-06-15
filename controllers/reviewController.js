@@ -147,6 +147,7 @@ export const getReviewsByProduct = async (req, res) => {
         adminDeleted: false,
         moderationStatus: "APPROVED",
       })
+
         .sort(sortOption)
 
         .skip(skip)
@@ -210,6 +211,46 @@ res.json({
 });
   } catch (error) {
     console.error(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+
+export const getTestimonials = async (
+  req,
+  res
+) => {
+  try {
+    const reviews = await Review.find({
+      adminDeleted: false,
+      moderationStatus: "APPROVED",
+    })
+      .populate(
+        "product",
+        "name slug"
+      )
+      .sort({
+        createdAt: -1,
+      })
+      .limit(6)
+      .select(`
+        userName
+        rating
+        comment
+        verifiedPurchase
+        product
+      `)
+      .lean();
+
+    res.json(reviews);
+  } catch (error) {
+    console.error(
+      "GET TESTIMONIALS ERROR:",
+      error
+    );
 
     res.status(500).json({
       message: "Server error",

@@ -7,7 +7,7 @@ const variantSchema =
 
       /*
         ONLY USED FOR:
-        rings / bracelets
+        rings/bracelets
       */
 
       size: {
@@ -152,9 +152,7 @@ const productSchema = new mongoose.Schema(
       index: true,
     },
 
-     
-
-   category: {
+category: {
   type: String,
   required: true,
   index: true,
@@ -162,24 +160,77 @@ const productSchema = new mongoose.Schema(
   enum: [
     "rings",
     "earrings",
-    "necklaces",
+    "neckwears",
     "bracelets",
+    "bangles",
+    "anklets",
+    "nose-jewellery",
+    "sets",
   ],
 },
-    subcategory: [
-      {
-        type: String,
 
-        enum: [
-          "engagement",
-          "wedding",
-          "casual",
-          "luxury",
-          "bridal",
-          "minimal",
-        ],
-      },
+productType: {
+  type: String,
+  required: true,
+  index: true,
+
+  enum: [
+
+    "engagement-ring",
+    "wedding-ring",
+    "statement-ring",
+
+
+    "stud",
+    "hoop",
+    "drop",
+    "dangler",
+    "jhumka",
+    "huggie",
+
+
+    "pendant",
+    "chain",
+    "necklace",
+    "choker",
+    "mangalsutra",
+
+
+    "bracelet",
+    "cuff",
+
+
+    "bangle",
+
+
+    "anklet",
+
+
+    "nose-pin",
+    "nose-ring",
+
+
+    "jewellery-set",
+  ],
+},
+
+styles: [
+  {
+    type: String,
+
+    enum: [
+      "minimal",
+      "bridal",
+      "luxury",
+      "traditional",
+      "modern",
+      "casual",
+      "office",
+      "party",
+      "vintage",
     ],
+  },
+],
 
      targetAudience: {
       type: String,
@@ -247,14 +298,19 @@ images: {
       },
     },
 
+
+
 averageRating: {
   type: Number,
   default: 0,
+  min: 0,
+  max: 5,
 },
 
 numReviews: {
   type: Number,
   default: 0,
+  min: 0,
 },
 
 ratingBreakdown: {
@@ -264,6 +320,21 @@ ratingBreakdown: {
   4: { type: Number, default: 0 },
   5: { type: Number, default: 0 },
 },
+
+soldCount: {
+  type: Number,
+  default: 0,
+  min: 0,
+  index: true,
+},
+
+searchTags: [
+  {
+    type: String,
+    lowercase: true,
+    trim: true,
+  },
+],
 
     isBestSeller: {
       type: Boolean,
@@ -343,6 +414,33 @@ productSchema.pre("save", async function (next) {
 //  INDEXES
 productSchema.index({ price: 1 });
 productSchema.index({ createdAt: -1 });
+productSchema.index({
+  name: "text",
+  category: "text",
+  productType: "text",
+  searchTags: "text",
+});
+productSchema.index({
+  category: 1,
+  productType: 1,
+});
+
+productSchema.index({
+  styles: 1,
+});
+
+productSchema.index({
+  averageRating: -1,
+});
+
+productSchema.index({
+  soldCount: -1,
+});
+
+
+productSchema.index({
+  stock: 1,
+});
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;

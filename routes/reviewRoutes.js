@@ -1,6 +1,6 @@
 import express from "express";
 
-import { getReviewsByProduct, createReview, updateReview, deleteReview} from "../controllers/reviewController.js";
+import { getReviewsByProduct, createReview, getTestimonials, updateReview, deleteReview} from "../controllers/reviewController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import upload, {
   setUploadFolder,
@@ -8,6 +8,12 @@ import upload, {
 
 
 const router = express.Router();
+
+
+router.get(
+  "/testimonials",
+  getTestimonials
+);
 
 
 router.get(
