@@ -5,6 +5,7 @@ export const getOrderAnalytics =
     startDate,
     endDate
   ) => {
+
     const [
       totalOrders,
       cancelledOrders,
@@ -43,10 +44,12 @@ export const getOrderAnalytics =
               },
             },
           },
+
           {
             $group: {
               _id:
                 "$orderStatus",
+
               count: {
                 $sum: 1,
               },
@@ -69,17 +72,73 @@ export const getOrderAnalytics =
           .limit(5),
       ]);
 
+    /* ---------------- FUNNEL ---------------- */
+
+    const statusMap = {
+      PLACED: 0,
+      CONFIRMED: 0,
+      SHIPPED: 0,
+      DELIVERED: 0,
+      CANCELLED: 0,
+    };
+
+    statusBreakdown.forEach(
+      (item) => {
+        statusMap[
+          item._id
+        ] =
+          item.count;
+      }
+    );
+
+    const funnel = [
+      {
+        stage:
+          "PLACED",
+        value:
+          statusMap.PLACED,
+      },
+
+      {
+        stage:
+          "CONFIRMED",
+        value:
+          statusMap.CONFIRMED,
+      },
+
+      {
+        stage:
+          "SHIPPED",
+        value:
+          statusMap.SHIPPED,
+      },
+
+      {
+        stage:
+          "DELIVERED",
+        value:
+          statusMap.DELIVERED,
+      },
+    ];
+
     return {
       totalOrders,
+
       cancelledOrders,
+
       orderStatus:
         statusBreakdown.map(
           (item) => ({
-            name: item._id,
+            name:
+              item._id,
+
             value:
               item.count,
           })
         ),
+
+      funnel,
+
       recentOrders,
     };
   };

@@ -6,6 +6,8 @@ import { getCustomerAnalytics } from "../../service/analytics/customers.service.
 import { getPaymentAnalytics } from "../../service/analytics/payments.service.js";
 import { getInventoryAnalytics } from "../../service/analytics/inventory.service.js";
 import { getGeoRevenue } from "../../service/analytics/geo.service.js";
+import { getMaterialAnalytics } from "../../service/analytics/materialAnalytics.service.js";
+import { getCategoryAnalytics } from "../../service/analytics/categoryAnalytics.service.js";
 
 import { parseDateRange } from "../../utils/admin/analytics/parseDateRange.js";
 
@@ -82,6 +84,95 @@ export const getRevenueData =
         });
     }
   };
+
+
+
+  /* ---------------- MATERIALS ---------------- */
+
+export const getMaterialsData =
+  async (req, res) => {
+    try {
+      const {
+        startDate,
+        endDate,
+      } =
+        parseDateRange(
+          req.query
+        );
+
+      const data =
+        await getMaterialAnalytics(
+          startDate,
+          endDate
+        );
+
+      res.json({
+        success: true,
+        materialAnalytics:
+          data,
+      });
+    } catch (error) {
+      console.error(
+        error
+      );
+
+      res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            error.message,
+        });
+    }
+  };
+
+
+
+  /* ---------------- CATEGORIES ---------------- */
+
+export const getCategoriesData =
+  async (req, res) => {
+    try {
+      const {
+        startDate,
+        endDate,
+      } =
+        parseDateRange(
+          req.query
+        );
+
+      const data =
+        await getCategoryAnalytics(
+          startDate,
+          endDate
+        );
+
+      res.json({
+        success: true,
+        categoryAnalytics:
+          data,
+      });
+    } catch (error) {
+      console.error(
+        error
+      );
+
+      res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            error.message,
+        });
+    }
+  };
+
+
+
+
+
+
+
 
 /* ---------------- ORDERS ---------------- */
 export const getOrdersData =

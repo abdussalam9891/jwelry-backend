@@ -1,25 +1,54 @@
-export const parseDateRange = (query = {}) => {
-  const { from, to } = query;
+export const parseDateRange = (
+  query = {}
+) => {
 
-  const now = new Date();
+  const {
+    startDate,
+    endDate,
+    from,
+    to,
+  } = query;
 
-  let startDate;
-  let endDate;
+  const start =
+    startDate || from;
 
-  if (from && to) {
-    startDate = new Date(from);
-    endDate = new Date(to);
+  const end =
+    endDate || to;
+
+  const now =
+    new Date();
+
+  let parsedStartDate;
+  let parsedEndDate;
+
+  if (
+    start &&
+    end
+  ) {
+
+    parsedStartDate =
+      new Date(start);
+
+    parsedEndDate =
+      new Date(end);
+
   } else {
-    startDate = new Date();
-    startDate.setMonth(
+
+    parsedStartDate =
+      new Date();
+
+    parsedStartDate.setMonth(
       now.getMonth() - 12
     );
 
-    endDate = now;
+    parsedEndDate =
+      new Date();
+
   }
 
   /* START OF DAY */
-  startDate.setHours(
+
+  parsedStartDate.setHours(
     0,
     0,
     0,
@@ -27,7 +56,8 @@ export const parseDateRange = (query = {}) => {
   );
 
   /* END OF DAY */
-  endDate.setHours(
+
+  parsedEndDate.setHours(
     23,
     59,
     59,
@@ -35,7 +65,11 @@ export const parseDateRange = (query = {}) => {
   );
 
   return {
-    startDate,
-    endDate,
+    startDate:
+      parsedStartDate,
+
+    endDate:
+      parsedEndDate,
   };
+
 };

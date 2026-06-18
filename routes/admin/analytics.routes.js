@@ -1,14 +1,16 @@
 import express from "express";
 
 import {
-  getCustomersData,
   getDashboardData,
-  getGeoData,
-  getInventoryData,
-  getOrdersData,
-  getPaymentsData,
-  getProductsData,
   getRevenueData,
+  getOrdersData,
+  getProductsData,
+  getCustomersData,
+  getPaymentsData,
+  getInventoryData,
+  getGeoData,
+  getMaterialsData,
+  getCategoriesData,
 } from "../../controllers/admin/analytics.controller.js";
 
 import { authorize, protect } from "../../middleware/authMiddleware.js";
@@ -26,5 +28,14 @@ router.get("/customers", getCustomersData);
 router.get("/payments", getPaymentsData);
 router.get("/inventory", getInventoryData);
 router.get("/geo", getGeoData);
+router.get(
+  "/materials",
+  getMaterialsData
+);
+
+router.get(
+  "/categories",
+  getCategoriesData
+);
 
 export default router;
