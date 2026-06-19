@@ -6,6 +6,7 @@ import {
   updateCoupon,
   toggleCouponStatus,
   getCouponStats,
+  duplicateCoupon,
 } from "../../controllers/admin/coupon.controller.js";
 import { protect, authorize} from "../../middleware/authMiddleware.js";
 
@@ -36,6 +37,13 @@ router.patch(
   "/:id",
 
   updateCoupon
+);
+
+
+router.get(
+  "/:id/duplicate",
+
+  duplicateCoupon
 );
 
 router.patch(

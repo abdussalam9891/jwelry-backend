@@ -3,28 +3,163 @@ import Coupon from "../../models/couponModel.js";
 import CouponRedemption from "../../models/couponRedemptionModel.js";
 import Order from "../../models/orderModel.js";
 
-export const getCoupons =
-  async (req, res) => {
-    try {
+export const getCoupons = async (req, res) => {
+  try {
+    const {
+      search = "",
+      status = "ALL",
+      discountType = "ALL",
+      sort = "Newest",
+      page = 1,
+      limit = 12,
+    } = req.query;
 
-      const coupons =
-        await Coupon
-          .find()
-          .sort({
-            createdAt: -1,
-          });
+    const query = {};
+    const now = new Date();
 
-      res.json(coupons);
+    /* SEARCH */
 
-    } catch (error) {
-
-      res.status(500).json({
-        message:
-          "Server error",
-      });
-
+    if (search) {
+      query.$or = [
+        {
+          code: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          name: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
     }
-  };
+
+    /* STATUS FILTERS */
+
+    if (status === "ACTIVE") {
+      query.isActive = true;
+
+      query.$and = [
+        {
+          $or: [
+            {
+              startsAt: {
+                $exists: false,
+              },
+            },
+            {
+              startsAt: null,
+            },
+            {
+              startsAt: {
+                $lte: now,
+              },
+            },
+          ],
+        },
+
+        {
+          $or: [
+            {
+              expiresAt: {
+                $exists: false,
+              },
+            },
+            {
+              expiresAt: null,
+            },
+            {
+              expiresAt: {
+                $gte: now,
+              },
+            },
+          ],
+        },
+      ];
+    }
+
+    if (status === "INACTIVE") {
+      query.isActive = false;
+    }
+
+    if (status === "EXPIRED") {
+      query.expiresAt = {
+        $lt: now,
+      };
+    }
+
+    /* DISCOUNT TYPE FILTER */
+
+    if (discountType !== "ALL") {
+      query.discountType =
+        discountType;
+    }
+
+    /* SORTING */
+
+    const sortOptions = {
+      Newest: {
+        createdAt: -1,
+      },
+
+      Oldest: {
+        createdAt: 1,
+      },
+
+      "Highest Discount": {
+        discountValue: -1,
+      },
+
+      "Most Used": {
+        usageCount: -1,
+      },
+    };
+
+    const total =
+      await Coupon.countDocuments(
+        query
+      );
+
+    const coupons =
+      await Coupon.find(query)
+        .sort(
+          sortOptions[sort] ||
+            sortOptions.Newest
+        )
+        .skip(
+          (Number(page) - 1) *
+            Number(limit)
+        )
+        .limit(Number(limit));
+
+    res.status(200).json({
+      coupons,
+
+      pagination: {
+        total,
+
+        page:
+          Number(page),
+
+        pages: Math.ceil(
+          total /
+            Number(limit)
+        ),
+
+        limit:
+          Number(limit),
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 
 
 
@@ -69,51 +204,68 @@ export const getCoupons =
 
 
 
-  export const updateCoupon =
-  async (req, res) => {
-    try {
+ export const updateCoupon = async (req, res) => {
+  try {
+    const coupon = await Coupon.findById(
+      req.params.id
+    );
 
-      const coupon =
-        await Coupon.findById(
-          req.params.id
-        );
-
-      if (!coupon) {
-        return res
-          .status(404)
-          .json({
-            message:
-              "Coupon not found",
-          });
-      }
-
-      Object.assign(
-        coupon,
-        req.body
-      );
-
-      if (
-        coupon.code
-      ) {
-        coupon.code =
-          coupon.code
-            .toUpperCase()
-            .trim();
-      }
-
-      await coupon.save();
-
-      res.json(coupon);
-
-    } catch (error) {
-
-      res.status(500).json({
-        message:
-          "Server error",
+    if (!coupon) {
+      return res.status(404).json({
+        message: "Coupon not found",
       });
-
     }
-  };
+
+    const now = new Date();
+
+    const isExpired =
+      coupon.expiresAt &&
+      new Date(coupon.expiresAt) < now;
+
+    if (isExpired) {
+      return res.status(400).json({
+        message:
+          "Expired coupons cannot be edited. Duplicate the coupon instead.",
+      });
+    }
+
+    Object.assign(
+      coupon,
+      req.body
+    );
+
+    if (coupon.code) {
+      coupon.code = coupon.code
+        .toUpperCase()
+        .trim();
+    }
+
+    if (
+      coupon.startsAt &&
+      coupon.expiresAt &&
+      new Date(coupon.startsAt) >=
+        new Date(coupon.expiresAt)
+    ) {
+      return res.status(400).json({
+        message:
+          "Expiry date must be after start date",
+      });
+    }
+
+    await coupon.save();
+
+    res.json(coupon);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+
+
 
 
   export const toggleCouponStatus =
@@ -269,6 +421,23 @@ export const createCoupon =
         });
       }
 
+
+
+      const now = new Date();
+
+if (
+  startsAt &&
+  new Date(startsAt) < now
+) {
+  return res.status(400).json({
+    message:
+      "Start date cannot be in the past",
+  });
+}
+
+
+
+
       if (
         startsAt &&
         expiresAt &&
@@ -363,7 +532,72 @@ export const createCoupon =
   };
 
 
+export const duplicateCoupon =
+  async (req, res) => {
+    try {
 
+      const original =
+        await Coupon.findById(
+          req.params.id
+        );
+
+      if (!original) {
+        return res
+          .status(404)
+          .json({
+            message:
+              "Coupon not found",
+          });
+      }
+
+      res.status(200).json({
+        code: "",
+
+        name:
+          original.name,
+
+        description:
+          original.description,
+
+        discountType:
+          original.discountType,
+
+        discountValue:
+          original.discountValue,
+
+        minOrderAmount:
+          original.minOrderAmount,
+
+        maxDiscountAmount:
+          original.maxDiscountAmount,
+
+        usageLimit:
+          original.usageLimit,
+
+        perUserLimit:
+          original.perUserLimit,
+
+        firstOrderOnly:
+          original.firstOrderOnly,
+
+        startsAt: null,
+
+        expiresAt: null,
+
+        isActive: false,
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      res.status(500).json({
+        message:
+          "Server error",
+      });
+
+    }
+  };
 
 
 
