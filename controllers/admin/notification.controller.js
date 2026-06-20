@@ -19,12 +19,13 @@ getNotifications =
           createdAt: -1,
         })
 
-        .limit(20);
+        .limit(10);
 
-      const unreadCount =
-        notifications.filter(
-          (n) => !n.read
-        ).length;
+     const unreadCount =
+  await Notification.countDocuments({
+    user: req.user._id,
+    read: false,
+  });
 
       res.json({
 
@@ -54,9 +55,10 @@ export const markAsRead =
     try {
 
       const notification =
-        await Notification.findById(
-          req.params.id
-        );
+  await Notification.findOne({
+    _id: req.params.id,
+    user: req.user._id,
+  });
 
       if (!notification) {
 
@@ -91,3 +93,77 @@ export const markAsRead =
     }
 
 };
+
+
+export const markAllRead =
+  async (req, res) => {
+    try {
+      await Notification.updateMany(
+        {
+          user: req.user._id,
+          read: false,
+        },
+        {
+          $set: {
+            read: true,
+          },
+        }
+      );
+
+      res.json({
+        success: true,
+      });
+    } catch {
+      res.status(500).json({
+        message:
+          "Failed to update notifications",
+      });
+    }
+  };
+
+
+
+export const clearNotifications =
+  async (req, res) => {
+    try {
+      await Notification.deleteMany({
+        user: req.user._id,
+      });
+
+      res.json({
+        success: true,
+      });
+    } catch {
+      res.status(500).json({
+        message:
+          "Failed to clear notifications",
+      });
+    }
+  };
+
+
+  export const deleteNotification =
+  async (req, res) => {
+    try {
+     const notification =
+  await Notification.findOneAndDelete({
+    _id: req.params.id,
+    user: req.user._id,
+  });
+
+if (!notification) {
+  return res.status(404).json({
+    message: "Notification not found",
+  });
+}
+
+res.json({
+  success: true,
+});
+    } catch {
+      res.status(500).json({
+        message:
+          "Failed to delete notification",
+      });
+    }
+  };
