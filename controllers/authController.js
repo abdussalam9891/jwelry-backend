@@ -12,6 +12,7 @@ import User from "../models/UserModel.js";
 import Address from "../models/addressModel.js";
 import Wishlist from "../models/wishlistModel.js";
 import Order from "../models/orderModel.js";
+import { createNotification } from "../utils/admin/createNotification.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -68,15 +69,21 @@ export const registerUser = async (req, res) => {
     }
 
     /* BRAND NEW USER */
-    user = await User.create({
-      name,
-      email,
-      password,
-      provider: "email",
-      isEmailVerified: false,
-      emailOtp: otp,
-      emailOtpExpires: Date.now() + 10 * 60 * 1000,
-    });
+   user = await User.create({
+  name,
+  email,
+  password,
+  provider: "email",
+  isEmailVerified: false,
+  emailOtp: otp,
+  emailOtpExpires: Date.now() + 10 * 60 * 1000,
+});
+
+
+
+
+
+
 
     await sendOtpEmail(email, otp);
 
@@ -138,6 +145,14 @@ export const verifyEmailOtp = async (req, res) => {
     user.emailOtpExpires = null;
 
     await user.save();
+
+
+
+
+    await notifyNewCustomer(user);
+
+
+
 
     /* NOW LOGIN */
     const token = generateToken(user);
@@ -628,35 +643,7 @@ export const updateAvatar = async (req, res) => {
   }
 };
 
-export const updateNotificationPreferences = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    user.notificationPreferences = {
-      ...user.notificationPreferences,
-
-      ...req.body,
-    };
-
-    await user.save();
-
-    res.json({
-      success: true,
-
-      notificationPreferences: user.notificationPreferences,
-    });
-  } catch {
-    res.status(500).json({
-      message: "Failed to update preferences",
-    });
-  }
-};
 
 // LOGOUT
 export const logoutUser = (req, res) => {
@@ -704,6 +691,8 @@ export const firebaseLogin = async (req, res) => {
       phone: normalizedPhone,
     });
 
+    let isNewUser = false;
+
     if (!user) {
       user = await User.create({
         phone: normalizedPhone,
@@ -711,6 +700,8 @@ export const firebaseLogin = async (req, res) => {
         provider: "phone",
         isPhoneVerified: true,
       });
+
+       isNewUser = true;
     }
 
     user.lastLoginAt = new Date();
@@ -718,6 +709,13 @@ export const firebaseLogin = async (req, res) => {
     user.isPhoneVerified = true;
 
     await user.save();
+
+     if (isNewUser) {
+       console.log("NEW USER CREATED");
+  await notifyNewCustomer(user);
+}
+
+
 
     const token = generateToken(user);
 
@@ -736,3 +734,61 @@ export const firebaseLogin = async (req, res) => {
     });
   }
 };
+
+
+
+
+export const updateNotificationPreferences = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    user.notificationPreferences = {
+      ...user.notificationPreferences,
+
+      ...req.body,
+    };
+
+    await user.save();
+
+    res.json({
+      success: true,
+
+      notificationPreferences: user.notificationPreferences,
+    });
+  } catch {
+    res.status(500).json({
+      message: "Failed to update preferences",
+    });
+  }
+};
+
+
+
+export const notifyNewCustomer = async(user) => {
+
+  const admin = await User.findOne({
+    role: "admin",
+  });
+
+  if (!admin) return;
+
+   
+
+const provider =
+  user.provider?.[0] || "unknown";
+
+await createNotification({
+  userId: admin._id,
+  type: "customer",
+  title: "New Customer Registered",
+  message: `New customer registered via ${provider}`,
+  link: `/admin/customers/${user._id}`,
+});
+
+}

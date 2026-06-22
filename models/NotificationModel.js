@@ -75,6 +75,11 @@ const notificationSchema =
 
       },
 
+      isDeleted: {
+  type: Boolean,
+  default: false,
+},
+
 
       metadata: {
 

@@ -25,7 +25,7 @@ const couponSchema =
         enum: [
           "PERCENTAGE",
           "FIXED",
-          "FREE_SHIPPING",
+           
         ],
         required: true,
       },

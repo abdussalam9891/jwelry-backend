@@ -6,6 +6,8 @@ import {
 
 import User from "../models/UserModel.js";
 
+import {notifyNewCustomer} from "../controllers/authController.js"
+
 
 async function resolveGoogleUser(profile) {
   const email =
@@ -66,6 +68,8 @@ async function resolveGoogleUser(profile) {
           ?.value || "",
       isVerified: true,
     });
+
+    await notifyNewCustomer(user);
 
   return user;
 }

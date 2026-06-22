@@ -495,27 +495,22 @@ await Coupon.findByIdAndUpdate(
 
 
     // order creation notification
-const admin =
-  await User.findOne({
-    role: "admin",
-  });
+const admin = await User.findOne({
+  role: "admin",
+});
 
 if (admin) {
 
   await createNotification({
 
-    userId:
-      admin._id,
+    userId: admin._id,
 
     type: "order",
 
-    title:
-      "New Order Received",
+    title: "New Order Received",
 
     message:
-      `${req.user.name}
-       placed
-       ${order.orderNumber}`,
+      `${req.user.name} placed ${order.orderNumber}`,
 
     link:
       `/admin/orders/${order._id}`,
@@ -523,7 +518,6 @@ if (admin) {
   });
 
 }
-
 
 
 

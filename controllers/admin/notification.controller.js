@@ -12,6 +12,7 @@ getNotifications =
 
           user:
             req.user._id,
+            isDeleted: false,
 
         })
 
@@ -25,6 +26,7 @@ getNotifications =
   await Notification.countDocuments({
     user: req.user._id,
     read: false,
+    isDeleted: false,
   });
 
       res.json({
@@ -126,9 +128,10 @@ export const markAllRead =
 export const clearNotifications =
   async (req, res) => {
     try {
-      await Notification.deleteMany({
-        user: req.user._id,
-      });
+      await Notification.updateMany(
+  { user: req.user._id },
+  { $set: { isDeleted: true } }
+);
 
       res.json({
         success: true,
