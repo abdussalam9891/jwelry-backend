@@ -418,7 +418,8 @@ productSchema.index({
   name: "text",
   category: "text",
   productType: "text",
-  searchTags: "text",
+   searchTags: "text",
+  "description.short": "text",
 });
 productSchema.index({
   category: 1,

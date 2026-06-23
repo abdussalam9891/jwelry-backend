@@ -341,4 +341,52 @@ const getProductBySlug = async (req, res) => {
   }
 };
 
+
+
+export const getSearchSuggestions =
+  async (req, res) => {
+    try {
+      const q =
+        req.query.q?.trim();
+
+      if (!q) {
+        return res.json([]);
+      }
+
+      const escapedQ =
+        q.replace(
+          /[.*+?^${}()|[\]\\]/g,
+          "\\$&"
+        );
+
+      const suggestions =
+        await Product.find({
+          status: "ACTIVE",
+
+          name: {
+            $regex: `\\b${escapedQ}`,
+            $options: "i",
+          },
+        })
+          .select(
+            "name slug"
+          )
+          .limit(8)
+          .lean();
+
+      res.json(
+        suggestions
+      );
+    } catch (error) {
+      console.error(
+        error
+      );
+
+      res.status(500).json({
+        message:
+          "Failed to fetch suggestions",
+      });
+    }
+  };
+
 export { getProductById, getProductBySlug, getProducts };

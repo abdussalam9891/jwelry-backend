@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   getProducts,
+  getSearchSuggestions,
   getProductById,
   getProductBySlug,
 } from "../controllers/productController.js";
@@ -12,7 +13,14 @@ const router = express.Router();
 
 router.get("/", getProducts);
 
+router.get(
+  "/search-suggestions",
+  getSearchSuggestions
+);
+
 router.get("/slug/:slug", getProductBySlug);
+
+
 
 router.get("/:id", getProductById);
 
