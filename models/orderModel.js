@@ -199,7 +199,7 @@ const orderSchema = new mongoose.Schema(
     enum: [
       "PERCENTAGE",
       "FIXED",
-      "FREE_SHIPPING",
+
     ],
     default: null,
   },
@@ -225,18 +225,19 @@ const orderSchema = new mongoose.Schema(
 
     /* BUSINESS STATUS */
 
-    orderStatus: {
-      type: String,
-      enum: [
-        "PLACED",
-        "CONFIRMED",
-        "SHIPPED",
-        "DELIVERED",
-        "CANCELLED",
-      ],
-      default: "PLACED",
-      index: true,
-    },
+   orderStatus: {
+  type: String,
+  enum: [
+    "PENDING",
+    "PLACED",
+    "CONFIRMED",
+    "SHIPPED",
+    "DELIVERED",
+    "CANCELLED",
+  ],
+  default: "PENDING",
+  index: true,
+},
 
     statusHistory: [
 
@@ -268,6 +269,25 @@ const orderSchema = new mongoose.Schema(
       default: "PENDING",
       index: true,
     },
+
+
+
+    paymentGatewayOrderId: {
+  type: String,
+  default: "",
+},
+
+paymentGatewayPaymentId: {
+  type: String,
+  default: "",
+},
+
+paymentGatewaySignature: {
+  type: String,
+  default: "",
+},
+
+
 
     /* SHIPPING */
 

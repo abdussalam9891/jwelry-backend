@@ -9,6 +9,7 @@ import dbConnection from "./config/db.js";
 import passport from "./config/passport.js";
 import addressRoutes from "./routes/addressRoutes.js";
 import adminAnalyticsRoutes from "./routes/admin/analytics.routes.js";
+import adminContactRoutes from "./routes/admin/contact.routes.js";
 import adminCouponRoutes from "./routes/admin/coupon.routes.js";
 import AdminCustomersRoutes from "./routes/admin/customers.routes.js";
 import adminDashboardRoutes from "./routes/admin/dashboard.routes.js";
@@ -24,12 +25,10 @@ import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import deliveryRoutes from "./routes/deliveryRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
-import adminContactRoutes
-  from "./routes/admin/contact.routes.js";
- 
 
 dbConnection();
 
@@ -104,7 +103,7 @@ app.use("/api/v1/addresses", addressRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/coupons", couponRoutes);
 app.use("/api/v1/contact", contactRoutes);
-
+app.use("/api/v1/payment", paymentRoutes);
 
 // admin
 app.use("/api/v1/admin/products", adminProductsRoutes);
@@ -118,7 +117,6 @@ app.use("/api/v1/admin/search", adminSearchRoutes);
 app.use("/api/v1/admin/reviews", adminReviewRoutes);
 app.use("/api/v1/admin/coupons", adminCouponRoutes);
 app.use("/api/v1/admin/contacts", adminContactRoutes);
-
 
 const PORT = process.env.PORT || 5000;
 
