@@ -8,41 +8,29 @@ import {
   getCouponStats,
   duplicateCoupon,
 } from "../../controllers/admin/coupon.controller.js";
-import { protect, authorize} from "../../middleware/authMiddleware.js";
+import {
+  protect,
+  authorize,
+} from "../../middleware/authMiddleware.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
-  router.use(protect, authorize("admin"));
-
-router.get(
-  "/",
-
-  getCoupons
+router.use(
+  protect,
+  authorize("admin")
 );
 
-router.get(
-  "/:id",
+/* Collection Routes */
 
-  getCoupon
-);
+router
+  .route("/")
+  .get(getCoupons)
+  .post(createCoupon);
 
-router.post(
-  "/",
-
-  createCoupon
-);
-
-router.patch(
-  "/:id",
-
-  updateCoupon
-);
-
+/* Specific Action Routes */
 
 router.get(
   "/:id/duplicate",
-
   duplicateCoupon
 );
 
@@ -51,13 +39,16 @@ router.patch(
   toggleCouponStatus
 );
 
-
-
 router.get(
   "/:id/stats",
-
   getCouponStats
 );
 
+/* Resource Routes */
+
+router
+  .route("/:id")
+  .get(getCoupon)
+  .patch(updateCoupon);
 
 export default router;

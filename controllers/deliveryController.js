@@ -2,7 +2,7 @@ export const checkDelivery = async (req, res) => {
   try {
     const { pincode } = req.params;
 
-    // 🛡️ validation
+    // validation
     if (!/^[1-9][0-9]{5}$/.test(pincode)) {
       return res.status(400).json({
         available: false,
@@ -32,7 +32,7 @@ export const checkDelivery = async (req, res) => {
       });
     }
 
-    // 📦 delivery time based on region
+    // delivery time based on region
     let baseDays = 3;
 
     if (firstDigit <= 3) baseDays = 2;        // North (fast)

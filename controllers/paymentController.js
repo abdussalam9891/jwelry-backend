@@ -32,11 +32,15 @@ export async function verifyPayment(
   try {
 
     const {
+
       orderId,
       razorpayOrderId,
       razorpayPaymentId,
       razorpaySignature,
     } = req.body;
+
+
+    
 
     const order =
       await getOrderById({
@@ -55,12 +59,13 @@ export async function verifyPayment(
         });
     }
 
-    const checkoutContext = {
-      order,
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature,
-    };
+   const checkoutContext = {
+  user: req.user,
+  order,
+  razorpayOrderId,
+  razorpayPaymentId,
+  razorpaySignature,
+};
 
     await completeCheckout(
       checkoutContext
@@ -138,4 +143,3 @@ export async function paymentFailed(
   }
 }
 
- 
