@@ -239,6 +239,24 @@ const orderSchema = new mongoose.Schema(
   index: true,
 },
 
+invoice: {
+
+    invoiceNumber: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
+
+    url: String,
+
+    cloudinaryPublicId: String,
+
+    generatedAt: Date,
+
+    emailedAt: Date,
+
+},
+
     statusHistory: [
 
   {

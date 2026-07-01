@@ -1,10 +1,10 @@
 import Order from "../../models/orderModel.js";
 import Product from "../../models/productModel.js";
 
+import { sendOrderStatusEmail } from "../../service/email/sendOrderStatusEmail.js";
+import { sendDeliveredEmail } from "../../service/email/sendDeliveredEmail.js";
 
-import {
-  sendOrderStatusEmail,
-} from "../../utils/sendOrderStatusEmail.js";
+import { generateInvoice } from "../../service/invoice/invoice.service.js";
 
 /* GET ALL ORDERS */
 
@@ -471,48 +471,70 @@ export const updateOrderStatus =
 
       });
 
+
+
+
       await order.save();
 
-      /*
-        SEND EMAIL
-      */
+/*
+  GENERATE INVOICE
+  ONLY FIRST DELIVERY
+*/
 
-      if (
+if (
+  orderStatus === "DELIVERED" &&
+  !order.invoice?.generatedAt
+) {
+  try {
+    await generateInvoice(order);
+  } catch (err) {
+    console.error(
+      "Invoice generation failed:",
+      err
+    );
+  }
+}
 
-        order.customerEmail &&
 
-        order.customerEmail.trim()
 
-      ) {
+/*
+  SEND EMAIL
+*/
 
-        try {
+if (
+  order.customerEmail &&
+  order.customerEmail.trim()
+) {
+  try {
+    if (orderStatus === "DELIVERED") {
+      await sendDeliveredEmail({
+        order,
+      });
 
-          await sendOrderStatusEmail({
+      order.invoice.emailedAt = new Date();
 
-            email:
-              order.customerEmail,
+      await order.save();
+    } else {
 
-            customerName:
-              order.customerName,
+      console.log("Before sendOrderStatusEmail");
+      await sendOrderStatusEmail({
+        email: order.customerEmail,
+        customerName: order.customerName,
+        orderNumber: order.orderNumber,
+        status: orderStatus,
+      });
 
-            orderNumber:
-              order.orderNumber,
+      console.log("After sendOrderStatusEmail");
+    }
+  } catch (err) {
+    console.error("Email failed:", err);
+  }
+}
 
-            status:
-              orderStatus,
 
-          });
 
-        } catch (err) {
 
-          console.error(
-            "Status email failed:",
-            err
-          );
 
-        }
-
-      }
 
       res.json({
 
@@ -602,4 +624,49 @@ export const updatePaymentStatus =
   };
 
 
+export const downloadAdminInvoice =
+  async (req, res) => {
 
+    try {
+
+      const order =
+        await Order.findById(
+          req.params.id
+        );
+
+      if (!order) {
+
+        return res.status(404).json({
+
+          message: "Order not found",
+
+        });
+
+      }
+
+      if (!order.invoice?.url) {
+
+        return res.status(404).json({
+
+          message:
+            "Invoice not generated",
+
+        });
+
+      }
+
+      return res.redirect(
+        order.invoice.url
+      );
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message: err.message,
+
+      });
+
+    }
+
+  };

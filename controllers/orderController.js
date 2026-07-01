@@ -128,12 +128,61 @@ export const getOrderById =
 
 
 
+export const downloadInvoice =
+  async (req, res) => {
+
+    try {
+
+      const order =
+        await Order.findOne({
+
+          _id: req.params.id,
+
+          user: req.user._id,
+
+        });
+
+      if (!order) {
+
+        return res.status(404).json({
+
+          message: "Order not found",
+
+        });
+
+      }
+
+      if (!order.invoice?.url) {
+
+        return res.status(404).json({
+
+          message:
+            "Invoice not available",
+
+        });
+
+      }
+
+      return res.redirect(
+        order.invoice.url
+      );
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message: err.message,
+
+      });
+
+    }
+
+  };
 
 
 
 
 
- 
 
 
 

@@ -6,6 +6,7 @@ import {
   getOrderStats,
   getSingleOrder,
   updateOrderStatus,
+  downloadAdminInvoice,
   updatePaymentStatus,
 } from "../../controllers/admin/orders.controller.js";
 
@@ -22,6 +23,10 @@ router.get("/export", exportOrdersReport);
 router.get("/:id", getSingleOrder);
 router.patch("/:id/status", updateOrderStatus);
 router.patch("/:id/payment-status", updatePaymentStatus);
+router.get(
+  "/:id/invoice",
+  downloadAdminInvoice
+);
 router.delete("/:id", deleteOrder);
 
 export default router;

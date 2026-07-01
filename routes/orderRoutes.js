@@ -4,6 +4,7 @@ import {
   createOrder,
   getMyOrders,
   getOrderById,
+  downloadInvoice,
 } from "../controllers/orderController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -18,5 +19,11 @@ router.post("/", createOrder);
 router.get("/my-orders", getMyOrders);
 
 router.get("/:id", getOrderById);
+
+router.get(
+  "/:id/invoice",
+  protect,
+  downloadInvoice
+);
 
 export default router;

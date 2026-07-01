@@ -1,4 +1,4 @@
-import { sendOrderStatusEmail } from "../../utils/sendOrderStatusEmail.js";
+import { sendOrderStatusEmail } from "../../service/email/sendOrderStatusEmail.js";
 
 export async function sendOrderStatus(
   checkoutContext,
