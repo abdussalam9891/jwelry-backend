@@ -98,6 +98,8 @@ content="width=device-width,initial-scale=1"
 
 Invoice ${invoiceNumber}
 
+
+
 </title>
 
 <style>
@@ -136,10 +138,9 @@ ${INVOICE_CONFIG.tagline}
 
 <div class="invoice-meta">
 
-<div class="invoice-title">
-
-TAX INVOICE
-
+<div class="invoice-title">TAX INVOICE</div>
+<div style="font-size:11px;color:#666;margin-top:2px;">
+Original for Recipient
 </div>
 
 <div class="meta-row">
@@ -178,33 +179,9 @@ ${order.orderNumber}
 
 </div>
 
-<div class="meta-row">
 
-<strong>
 
-Order Status:
 
-</strong>
-
-${orderStatusBadge(
-  order.orderStatus
-)}
-
-</div>
-
-<div class="meta-row">
-
-<strong>
-
-Payment:
-
-</strong>
-
-${paymentStatusBadge(
-  order.paymentStatus
-)}
-
-</div>
 
 </div>
 
@@ -240,27 +217,19 @@ ${companyAddress()}
 
 <br><br>
 
-GSTIN:
-
-${INVOICE_CONFIG.gstin}
-
-<br>
-
 Email:
 
 ${INVOICE_CONFIG.email}
 
 <br>
 
-Phone:
+GSTIN:
 
-${INVOICE_CONFIG.phone}
+${INVOICE_CONFIG.gstin}
 
-<br>
 
-Website:
 
-${INVOICE_CONFIG.website}
+
 
 </div>
 
@@ -474,489 +443,114 @@ ${formatCurrency(
 
 </td>
 
+
 </tr>
 
 </table>
 
-<!-- ========================= -->
 
-<!-- PAYMENT INFORMATION -->
 
-<!-- ========================= -->
-
-<div class="section">
-
-<div class="section-title">
-
-Payment Information
-
-</div>
-
-<div class="grid">
-
-<div class="card">
-
-<p>
-
-<strong>
-
-Payment Method
-
-</strong>
-
-</p>
-
-<p>
-
-${safe(
-  order.paymentMethod
-)}
-
-</p>
-
-</div>
-
-<div class="card">
-
-<p>
-
-<strong>
-
-Payment Status
-
-</strong>
-
-</p>
-
-<p>
-
-${paymentStatusBadge(
-  order.paymentStatus
-)}
-
-</p>
-
-</div>
-
-</div>
-
-</div>
 
 <!-- ========================= -->
-
-<!-- ORDER SUMMARY -->
-
-<!-- ========================= -->
-
-<div class="section">
-
-<div class="section-title">
-
-Order Summary
-
-</div>
-
-<div class="grid">
-
-<div class="card">
-
-<p>
-
-<strong>
-
-Order Number
-
-</strong>
-
-</p>
-
-<p>
-
-${order.orderNumber}
-
-</p>
-
-</div>
-
-<div class="card">
-
-<p>
-
-<strong>
-
-Order Status
-
-</strong>
-
-</p>
-
-<p>
-
-${orderStatusBadge(
-  order.orderStatus
-)}
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- ========================= -->
-
-<!-- COUPON -->
-
-<!-- ========================= -->
-
-${
-order.coupon
-
-? `
-
-<div class="section">
-
-<div class="section-title">
-
-Coupon Applied
-
-</div>
-
-<div class="card">
-
-<p>
-
-<strong>
-
-Coupon Code
-
-</strong>
-
-</p>
-
-<p>
-
-${safe(
-order.coupon.code
-)}
-
-</p>
-
-<br>
-
-<p>
-
-<strong>
-
-Savings
-
-</strong>
-
-</p>
-
-<p>
-
-${formatCurrency(
-calculateSavings(order)
-)}
-
-</p>
-
-</div>
-
-</div>
-
-`
-
-: ""
-
-}
-
-<!-- ========================= -->
-
-<!-- WARRANTY -->
-
-<!-- ========================= -->
-
-<div class="notice">
-
-<h3 style="
-
-margin-bottom:12px;
-
-color:${INVOICE_CONFIG.primary};
-
-">
-
-Warranty Information
-
-</h3>
-
-<p>
-
-Your Gemora jewellery is covered under our
-manufacturing warranty.
-
-</p>
-
-<br>
-
-<ul style="
-
-padding-left:18px;
-
-line-height:1.9;
-
-">
-
-<li>
-
-Manufacturing defects are covered.
-
-</li>
-
-<li>
-
-Stone setting defects are covered.
-
-</li>
-
-<li>
-
-Please retain this invoice for future warranty claims.
-
-</li>
-
-<li>
-
-Physical damage, accidental damage and normal wear & tear are not covered.
-
-</li>
-
-</ul>
-
-</div>
-
-<!-- ========================= -->
-
-<!-- IMPORTANT INFORMATION -->
-
-<!-- ========================= -->
-
-<div class="section">
-
-<div class="section-title">
-
-Important Information
-
-</div>
-
-<div class="card">
-
-<ul style="
-padding-left:18px;
-line-height:1.9;
-">
-
-<li>
-
-Please retain this invoice for warranty and future reference.
-
-</li>
-
-<li>
-
-Returns or exchanges, if applicable, are subject to Gemora's return policy.
-
-</li>
-
-<li>
-
-Products showing signs of misuse, accidental damage, alterations, or normal wear & tear are not eligible for warranty claims.
-
-</li>
-
-<li>
-
-For any assistance, please contact our support team using the details below.
-
-</li>
-
-</ul>
-
-</div>
-
-</div>
-
-<!-- ========================= -->
-
-<!-- CUSTOMER SUPPORT -->
-
-<!-- ========================= -->
-
-<div class="support">
-
-<div class="section-title">
-
-Need Help?
-
-</div>
-
-<div class="grid">
-
-<div>
-
-<p>
-
-<strong>Email</strong>
-
-</p>
-
-<p>
-
-${INVOICE_CONFIG.email}
-
-</p>
-
-</div>
-
-<div>
-
-<p>
-
-<strong>Phone</strong>
-
-</p>
-
-<p>
-
-${INVOICE_CONFIG.phone}
-
-</p>
-
-</div>
-
-</div>
-
-<br>
-
-<p>
-
-<strong>Website</strong>
-
-</p>
-
-<p>
-
-${INVOICE_CONFIG.website}
-
-</p>
-
-<br>
-
-<p>
-
-<strong>Business Hours</strong>
-
-</p>
-
-<p>
-
-${INVOICE_CONFIG.businessHours}
-
-</p>
-
-</div>
-
-<!-- ========================= -->
-
-<!-- THANK YOU -->
-
-<!-- ========================= -->
-
-<div class="notice">
-
-<h3 style="
-margin-bottom:12px;
-color:${INVOICE_CONFIG.primary};
-">
-
-Thank You
-
-</h3>
-
-<p>
-
-Thank you for choosing
-<strong>${INVOICE_CONFIG.brand}</strong>.
-
-</p>
-
-<p style="margin-top:10px;">
-
-We truly appreciate your trust in us and hope your jewellery becomes a cherished part of your collection.
-
-</p>
-
-</div>
-
-<!-- ========================= -->
-
 <!-- SIGNATURE -->
-
 <!-- ========================= -->
 
 <div
-style="
-margin-top:70px;
-display:flex;
-justify-content:flex-end;
-"
+  style="
+    margin-top:70px;
+    display:flex;
+    justify-content:flex-end;
+  "
 >
+  <div
+    style="
+      width:240px;
+      text-align:center;
+    "
+  >
 
-<div
-style="
-width:240px;
-text-align:center;
-"
->
 
-<div
-style="
-height:60px;
-"
->
-
+    <div
+      style="
+        border-top:1px solid #999;
+        padding-top:8px;
+        font-weight:bold;
+      "
+    >
+      Authorized Signatory
+    </div>
+  </div>
 </div>
 
-<div
-style="
-border-top:1px solid #999;
-padding-top:8px;
-font-weight:bold;
-"
->
 
-Authorized Signatory
 
+
+
+
+
+ <!-- ========================= -->
+<!-- WARRANTY & RETURNS -->
+<!-- ========================= -->
+
+<div>
+  <strong>Warranty & Returns:</strong>
+  For warranty information, please visit
+  <a
+    href="http://localhost:5500/pages/warranty.html"
+    style="color:${INVOICE_CONFIG.primary}; text-decoration:none; font-weight:600;"
+  >
+    Warranty Policy
+  </a>.
+  For return and refund details, please visit
+  <a
+    href="http://localhost:5500/pages/returns.html"
+    style="color:${INVOICE_CONFIG.primary}; text-decoration:none; font-weight:600;"
+  >
+    Return Policy
+  </a>.
+</divss=>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- ========================= -->
+<!-- CUSTOMER SUPPORT -->
+<!-- ========================= -->
+
+<div>
+  <strong>Need Help?</strong>
+  Contact us at
+  <a
+    href="mailto:${INVOICE_CONFIG.email}"
+    style="color:${INVOICE_CONFIG.primary}; text-decoration:none; font-weight:600;"
+  >
+    ${INVOICE_CONFIG.email}
+  </a>
+  or visit
+  <a
+    href="${INVOICE_CONFIG.website}"
+    style="color:${INVOICE_CONFIG.primary}; text-decoration:none; font-weight:600;"
+  >
+    ${INVOICE_CONFIG.website}
+  </a>
+  for support and assistance.
 </div>
 
-<div
-style="
-font-size:12px;
-color:#777;
-margin-top:4px;
-"
->
 
-${INVOICE_CONFIG.companyName}
 
-</div>
 
-</div>
 
-</div>
+
+
 
 <!-- ========================= -->
 
@@ -989,3 +583,18 @@ ${INVOICE_CONFIG.copyright}
 `;
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

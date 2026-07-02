@@ -3,355 +3,239 @@ import { INVOICE_CONFIG } from "./invoiceConfig.js";
 export const invoiceStyles = `
 
 *{
-
-margin:0;
-
-padding:0;
-
-box-sizing:border-box;
-
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
 body{
-
-font-family:Arial,sans-serif;
-
-font-size:13px;
-
-line-height:1.6;
-
-background:${INVOICE_CONFIG.background};
-
-color:${INVOICE_CONFIG.text};
-
-padding:36px;
-
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:10px;
+  line-height:1.25;
+  background:${INVOICE_CONFIG.background};
+  color:${INVOICE_CONFIG.text};
+  padding:16px;
 }
 
-/* ---------------- HEADER ---------------- */
+/* ================= HEADER ================= */
 
 .header{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:flex-start;
-
-padding-bottom:24px;
-
-border-bottom:2px solid ${INVOICE_CONFIG.primary};
-
-margin-bottom:32px;
-
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  border-bottom:1px solid ${INVOICE_CONFIG.border};
+  padding-bottom:12px;
+  margin-bottom:16px;
 }
 
 .brand{
-
-max-width:50%;
-
+  max-width:50%;
 }
 
 .logo{
-
-font-size:34px;
-
-font-weight:bold;
-
-letter-spacing:5px;
-
-color:${INVOICE_CONFIG.primary};
-
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:4px;
+  color:${INVOICE_CONFIG.text};
 }
 
 .tagline{
-
-margin-top:6px;
-
-font-size:14px;
-
-color:${INVOICE_CONFIG.accent};
-
+  margin-top:2px;
+  font-size:10px;
+  color:${INVOICE_CONFIG.muted};
 }
 
 .invoice-meta{
-
-text-align:right;
-
+  text-align:right;
 }
 
 .invoice-title{
-
-font-size:28px;
-
-font-weight:bold;
-
-color:${INVOICE_CONFIG.primary};
-
-margin-bottom:10px;
-
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:26px;
+  font-weight:700;
+  color:${INVOICE_CONFIG.text};
+  margin-bottom:6px;
 }
 
 .meta-row{
-
-margin-bottom:6px;
-
+  margin-bottom:2px;
 }
 
-/* ---------------- SECTION ---------------- */
+/* ================= SECTION ================= */
 
 .section{
-
-margin-top:30px;
-
+  margin-top:14px;
 }
 
 .section-title{
-
-font-size:15px;
-
-font-weight:bold;
-
-color:${INVOICE_CONFIG.primary};
-
-margin-bottom:12px;
-
-padding-bottom:6px;
-
-border-bottom:1px solid ${INVOICE_CONFIG.border};
-
+  font-size:10px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:${INVOICE_CONFIG.accent};
+  border-bottom:1px solid ${INVOICE_CONFIG.border};
+  padding-bottom:4px;
+  margin-bottom:8px;
 }
 
-/* ---------------- GRID ---------------- */
+/* ================= GRID ================= */
 
 .grid{
-
-display:grid;
-
-grid-template-columns:1fr 1fr;
-
-gap:36px;
-
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
 }
 
 .card{
-
-background:${INVOICE_CONFIG.lightBackground};
-
-padding:18px;
-
-border:1px solid ${INVOICE_CONFIG.border};
-
-border-radius:10px;
-
+  border:1px solid ${INVOICE_CONFIG.border};
+  background:#fff;
+  padding:10px;
 }
 
 .address{
-
-line-height:1.8;
-
+  line-height:1.4;
 }
 
-/* ---------------- TABLE ---------------- */
+/* ================= TABLE ================= */
 
 table{
-
-width:100%;
-
-border-collapse:collapse;
-
-margin-top:18px;
-
+  width:100%;
+  border-collapse:collapse;
+  margin-top:8px;
+  border:1px solid ${INVOICE_CONFIG.border};
 }
 
 thead{
-
-background:${INVOICE_CONFIG.primary};
-
-color:white;
-
+  background:${INVOICE_CONFIG.lightBackground};
+  color:${INVOICE_CONFIG.text};
 }
 
 th{
-
-padding:12px;
-
-font-size:13px;
-
-text-align:left;
-
+  padding:8px 6px;
+  text-align:left;
+  font-size:10px;
+  font-weight:700;
+  border-bottom:1px solid ${INVOICE_CONFIG.border};
 }
 
 td{
-
-padding:12px;
-
-border-bottom:1px solid ${INVOICE_CONFIG.border};
-
-vertical-align:top;
-
+  padding:7px 6px;
+  border-bottom:1px solid ${INVOICE_CONFIG.border};
+  vertical-align:top;
 }
 
 tbody tr:nth-child(even){
-
-background:#FCFCFC;
-
+  background:${INVOICE_CONFIG.lightBackground};
 }
 
-/* ---------------- TOTALS ---------------- */
+/* ================= TOTALS ================= */
 
 .totals{
-
-width:340px;
-
-margin-left:auto;
-
-margin-top:28px;
-
+  width:280px;
+  margin-top:14px;
+  margin-left:auto;
+  border:none;
 }
 
 .totals td{
-
-border:none;
-
-padding:8px;
-
+  border:none;
+  padding:5px 6px;
 }
 
 .total-label{
-
-font-weight:500;
-
+  font-weight:600;
 }
 
 .grand{
-
-font-size:16px;
-
-font-weight:bold;
-
-color:${INVOICE_CONFIG.primary};
-
-border-top:2px solid ${INVOICE_CONFIG.primary};
-
+  font-size:14px;
+  font-weight:700;
+  color:${INVOICE_CONFIG.text};
+  border-top:2px solid ${INVOICE_CONFIG.text};
 }
 
 .grand td{
-
-padding-top:14px;
-
+  background:${INVOICE_CONFIG.lightBackground};
+  padding-top:10px;
 }
 
-/* ---------------- BADGES ---------------- */
+/* ================= BADGES ================= */
 
 .badge{
-
-display:inline-block;
-
-padding:5px 12px;
-
-border-radius:50px;
-
-font-size:12px;
-
-font-weight:bold;
-
+  display:inline-block;
+  padding:4px 10px;
+  border:1px solid ${INVOICE_CONFIG.border};
+  background:${INVOICE_CONFIG.lightBackground};
+  color:${INVOICE_CONFIG.text};
+  border-radius:20px;
+  font-size:11px;
+  font-weight:600;
 }
 
-.success{
-
-background:#EAF7EC;
-
-color:${INVOICE_CONFIG.success};
-
-}
-
+.success,
 .danger{
-
-background:#FCECEC;
-
-color:${INVOICE_CONFIG.danger};
-
+  background:${INVOICE_CONFIG.lightBackground};
+  color:${INVOICE_CONFIG.text};
 }
 
-/* ---------------- NOTICE ---------------- */
+/* ================= NOTICE ================= */
 
 .notice{
-
-margin-top:36px;
-
-padding:18px;
-
-background:#FFF8EF;
-
-border-left:4px solid ${INVOICE_CONFIG.accent};
-
-line-height:1.8;
-
+  margin-top:22px;
+  padding:14px;
+  
+  line-height:1.7;
 }
 
-/* ---------------- SUPPORT ---------------- */
+/* ================= SUPPORT ================= */
 
 .support{
-
-margin-top:36px;
-
-padding-top:18px;
-
-border-top:1px solid ${INVOICE_CONFIG.border};
-
-font-size:13px;
-
-line-height:1.8;
-
+  margin-top:20px;
+  padding-top:14px;
+  border-top:1px solid ${INVOICE_CONFIG.border};
+  font-size:12px;
+  line-height:1.6;
 }
 
-/* ---------------- FOOTER ---------------- */
+/* ================= FOOTER ================= */
 
 .footer{
-
-margin-top:50px;
-
-padding-top:18px;
-
-border-top:1px solid ${INVOICE_CONFIG.border};
-
-font-size:12px;
-
-text-align:center;
-
-color:${INVOICE_CONFIG.muted};
-
-line-height:1.8;
-
+  margin-top:18px;
+  padding-top:10px;
+  border-top:1px solid ${INVOICE_CONFIG.border};
+  text-align:center;
+  font-size:10px;
+  color:${INVOICE_CONFIG.muted};
+  line-height:1.6;
 }
 
-/* ---------------- PRINT ---------------- */
+/* ================= LINKS ================= */
+
+a{
+  color:${INVOICE_CONFIG.text};
+  text-decoration:none;
+}
+
+a:hover{
+  text-decoration:underline;
+}
+
+/* ================= PRINT ================= */
 
 @page{
-
-size:A4;
-
-margin:24mm;
-
+  size:A4;
+  margin:10mm;
 }
 
 @media print{
 
-body{
+  body{
+    padding:0;
+  }
 
-padding:0;
-
-}
-
-thead{
-
--webkit-print-color-adjust:exact;
-
-print-color-adjust:exact;
+  *{
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
 
 }
-
-}
-
 `;

@@ -11,10 +11,13 @@ export const INVOICE_CONFIG = {
 
   companyName: "Gemora",
 
-  address: [
-    "Your Company Address",
-    "New Delhi, India - 110001",
-  ],
+address: [
+  "Gemora Jewellery Pvt. Ltd.",
+  "4th Floor, Tower B",
+  "Plot No. 27, Sector 18",
+  "Gurugram, Haryana 122015",
+  "India",
+],
 
   gstin: "27ABCDE1234F1Z5",
 
@@ -25,28 +28,22 @@ export const INVOICE_CONFIG = {
   phone: "+91 9006143335",
 
   businessHours:
-    "Monday – Saturday | 10:00 AM – 7:00 PM",
+    "Monday –Saturday | 10:00 AM – 7:00 PM",
 
-  /* COLORS */
 
-  primary: "#6B1A2A",
 
-  accent: "#C8963E",
+/* COLORS - Style */
 
-  background: "#FFFFFF",
+primary: "#111111",          // Main headings
+accent: "#2F2F2F",           // Secondary headings
+background: "#FFFFFF",       // Page background
+lightBackground: "#F7F7F7",  // Table headers / subtle sections
+border: "#CFCFCF",           // Thin borders
+text: "#1F1F1F",             // Normal text
+muted: "#6B6B6B",            // Secondary text
 
-  lightBackground: "#FAFAFA",
-
-  border: "#E5E5E5",
-
-  text: "#222222",
-
-  muted: "#666666",
-
-  success: "#2E7D32",
-
-  danger: "#C62828",
-
+success: "#111111",          // Keep monochrome
+danger: "#111111",
   /* FOOTER */
 
   footerNote:

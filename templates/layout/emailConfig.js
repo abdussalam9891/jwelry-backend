@@ -13,7 +13,7 @@ export const EMAIL_CONFIG = {
 
   supportPhone: "+91 9006143335",
 
-  website: "https://gemora.com",
+  website: "http://localhost:5500/index.html",
 
   hours: "Monday – Saturday | 10:00 AM – 7:00 PM",
 
