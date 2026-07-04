@@ -1,5 +1,6 @@
 import Cart from "../models/cartModel.js";
 import Product from "../models/productModel.js";
+import { getPurchasableProduct } from "../utils/productPurchase.js";
 
 const MAX_CART_ITEMS = 20;
 
@@ -81,89 +82,92 @@ export const addToCart = async (req, res) => {
   try {
     const { productId } = req.params;
     const { variantId } = req.body;
+
     const userId = req.user._id;
 
-    const product = await Product.findById(productId);
+    const {
+      product,
+      variant,
+      price,
+      originalPrice,
+      stock,
+    } = await getPurchasableProduct({
+      productId,
+      variantId,
+      quantity: 1,
+    });
 
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    let selectedVariant = null;
-
-    //   HANDLE VARIANT PRODUCTS
-    if (product.variants && product.variants.length > 0) {
-      if (!variantId) {
-        return res.status(400).json({ message: "Variant required" });
-      }
-
-      selectedVariant = product.variants.id(variantId);
-
-      if (!selectedVariant) {
-        return res.status(400).json({ message: "Invalid variant" });
-      }
-
-      if (selectedVariant.stock < 1) {
-        return res.status(400).json({ message: "Variant out of stock" });
-      }
-    } else {
-      //   NON-VARIANT PRODUCT
-      if (product.stock < 1) {
-        return res.status(400).json({ message: "Out of stock" });
-      }
-    }
-
-    let cart = await Cart.findOne({ user: userId });
+    let cart = await Cart.findOne({
+      user: userId,
+    });
 
     if (!cart) {
-      cart = await Cart.create({ user: userId, items: [] });
+      cart = await Cart.create({
+        user: userId,
+        items: [],
+      });
     }
 
-    //   FIND EXISTING ITEM (product + variant combo)
     const existingItem = cart.items.find(
       (item) =>
-        item.product.toString() === productId &&
-        String(item.variantId || "") === String(variantId || ""),
+        item.product.toString() ===
+          productId &&
+        String(item.variantId || "") ===
+          String(variant?._id || "")
     );
-
-    const price = selectedVariant ? selectedVariant.price : product.price;
-    const stock = selectedVariant ? selectedVariant.stock : product.stock;
 
     if (existingItem) {
       if (existingItem.quantity >= 10) {
-        return res.status(400).json({ message: "Max quantity reached" });
+        return res.status(400).json({
+          message: "Max quantity reached",
+        });
       }
 
-      if (existingItem.quantity + 1 > stock) {
-        return res.status(400).json({ message: "Not enough stock" });
+      if (
+        existingItem.quantity + 1 >
+        stock
+      ) {
+        return res.status(400).json({
+          message: "Not enough stock",
+        });
       }
 
       existingItem.quantity += 1;
     } else {
-      if (cart.items.length >= MAX_CART_ITEMS) {
+      if (
+        cart.items.length >=
+        MAX_CART_ITEMS
+      ) {
         return res.status(400).json({
-          message: "Cart is full (max 20 items)",
+          message:
+            "Cart is full (max 20 items)",
         });
       }
 
       cart.items.push({
         product: product._id,
-        variantId: selectedVariant?._id || null,
 
-        //   STORE SNAPSHOT (Fix 3)
+        variantId:
+          variant?._id || null,
+
         name: product.name,
-        image: product.images?.[0]?.url || null,
+
+        image:
+          product.images?.[0]?.url ||
+          null,
 
         price,
-        originalPrice: product.originalPrice || price,
+
+        originalPrice,
 
         quantity: 1,
 
-        variantDetails: selectedVariant
+        variantDetails: variant
           ? {
-              size: selectedVariant.size,
-              material: selectedVariant.material,
-              sku: selectedVariant.sku,
+              size: variant.size,
+              material:
+                variant.material,
+              sku: variant.sku,
             }
           : null,
       });
@@ -176,8 +180,31 @@ export const addToCart = async (req, res) => {
       cart,
     });
   } catch (err) {
-    console.error("ADD TO CART ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error(
+      "ADD TO CART ERROR:",
+      err
+    );
+
+    const clientErrors = [
+      "Product is required",
+      "Product not found",
+      "Variant required",
+      "Invalid variant",
+      "Invalid quantity",
+    ];
+
+    if (
+      clientErrors.includes(err.message) ||
+      err.message.includes("Only")
+    ) {
+      return res.status(400).json({
+        message: err.message,
+      });
+    }
+
+    res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 

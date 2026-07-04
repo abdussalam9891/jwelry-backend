@@ -1,4 +1,5 @@
 import Cart from "../../models/cartModel.js";
+import { getPurchasableProduct } from "../../utils/productPurchase.js";
 
 /* GET USER CART */
 
@@ -17,6 +18,62 @@ export async function getValidatedCart(
 
   return cart;
 }
+
+
+
+
+
+
+
+export async function getValidatedBuyNow(checkoutContext) {
+
+  const preview =
+    await getPurchasableProduct({
+
+      productId:
+        checkoutContext.buyNow.productId,
+
+      variantId:
+        checkoutContext.buyNow.variantId,
+
+      quantity:
+        checkoutContext.buyNow.quantity,
+
+    });
+
+  checkoutContext.cart = {
+
+    items: [
+
+      {
+
+        product:
+          preview.product,
+
+        variantId:
+          preview.variant?._id || null,
+
+        quantity:
+          preview.quantity,
+
+      },
+
+    ],
+
+  };
+
+  return checkoutContext;
+}
+
+
+
+
+
+
+
+
+
+
 
 /* BUILD ORDER SNAPSHOT */
 
@@ -92,7 +149,7 @@ export function buildOrderItems(
 /* CLEAR CART */
 
 
- 
+
 
 export async function clearCart(
   checkoutContext

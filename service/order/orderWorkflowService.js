@@ -43,11 +43,13 @@ import {
 export async function processCheckout(
   checkoutContext
 ) {
-  /* CART */
+ /* CART / BUY NOW */
 
-  await getValidatedCart(
-    checkoutContext
-  );
+if (checkoutContext.buyNow) {
+  await getValidatedBuyNow(checkoutContext);
+} else {
+  await getValidatedCart(checkoutContext);
+}
 
   /* STOCK */
 
@@ -103,9 +105,9 @@ export async function processCheckout(
       checkoutContext
     );
 
-    await clearCart(
-      checkoutContext
-    );
+   if (!checkoutContext.buyNow) {
+  await clearCart(checkoutContext);
+}
 
     await sendOrderStatus(
   checkoutContext,
@@ -169,13 +171,13 @@ export async function completeCheckout(
     checkoutContext
   );
 
-  await deductStock(
-    checkoutContext
-  );
+  
 
-  await clearCart(
-    checkoutContext
-  );
+ await deductStock(checkoutContext);
+
+if (!checkoutContext.buyNow) {
+  await clearCart(checkoutContext);
+}
 
 await sendOrderStatus(
   checkoutContext,
