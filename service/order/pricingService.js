@@ -1,33 +1,20 @@
-export function calculatePricing(
-  checkoutContext
-) {
-  const itemsPrice =
-    checkoutContext.itemsPrice || 0;
+export function calculatePricing(checkoutContext) {
+  const {
+    itemsPrice = 0,
+    savings = 0,
+    shippingPrice = 0,
+    taxPrice = 0,
+    discountAmount = 0,
+    platformFee = 0,
+    giftWrapCharge = 0,
+    insuranceCharge = 0,
+    itemCount = 0,
+    couponSnapshot = null,
+  } = checkoutContext;
 
-  const shippingPrice =
-    checkoutContext.shippingPrice || 0;
-
-  const taxPrice =
-    checkoutContext.taxPrice || 0;
-
-  const discountAmount =
-    checkoutContext.discountAmount || 0;
-
-  const platformFee =
-    checkoutContext.platformFee || 0;
-
-  const giftWrapCharge =
-    checkoutContext.giftWrapCharge || 0;
-
-  const insuranceCharge =
-    checkoutContext.insuranceCharge || 0;
-
-  const subtotalPrice =
-    itemsPrice;
-
-  const totalPrice = Math.max(
+  const total = Math.max(
     0,
-    subtotalPrice -
+    itemsPrice -
       discountAmount +
       shippingPrice +
       taxPrice +
@@ -36,15 +23,133 @@ export function calculatePricing(
       insuranceCharge
   );
 
-  checkoutContext.pricing = {
-    itemsPrice,
-    subtotalPrice,
-    shippingPrice,
-    taxPrice,
-    discountAmount,
+  return {
+    subtotal: itemsPrice,
+    savings,
+    shipping: shippingPrice,
+    tax: taxPrice,
+    discount: discountAmount,
     platformFee,
-    giftWrapCharge,
-    insuranceCharge,
-    totalPrice,
+    giftWrap: giftWrapCharge,
+    insurance: insuranceCharge,
+    itemCount,
+    coupon: couponSnapshot,
+    total,
   };
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// export function calculatePricing(checkoutContext) {
+//   const subtotal = checkoutContext.itemsPrice || 0;
+
+//   const savings = checkoutContext.savings || 0;
+
+//   const shipping = checkoutContext.shippingPrice || 0;
+
+//   const tax = checkoutContext.taxPrice || 0;
+
+//   const discount = checkoutContext.discountAmount || 0;
+
+//   const platformFee =
+//     checkoutContext.platformFee || 0;
+
+//   const giftWrap =
+//     checkoutContext.giftWrapCharge || 0;
+
+//   const insurance =
+//     checkoutContext.insuranceCharge || 0;
+
+//   const itemCount =
+//     checkoutContext.itemCount || 0;
+
+//   const coupon =
+//     checkoutContext.couponSnapshot || null;
+
+//   const total = Math.max(
+//     0,
+//     subtotal -
+//       discount +
+//       shipping +
+//       tax +
+//       platformFee +
+//       giftWrap +
+//       insurance
+//   );
+
+//   return {
+//     subtotal,
+
+//     savings,
+
+//     shipping,
+
+//     tax,
+
+//     discount,
+
+//     platformFee,
+
+//     giftWrap,
+
+//     insurance,
+
+//     itemCount,
+
+//     coupon,
+
+//     total,
+//   };
+// }

@@ -1,19 +1,16 @@
 import Order from "../../models/orderModel.js";
 
-export async function createOrder(
-  checkoutContext
-) {
+export async function createOrder(checkoutContext) {
   const {
     user,
     address,
     orderItems,
     pricing,
     paymentMethod,
-    couponSnapshot,
   } = checkoutContext;
 
- const orderNumber =
-  `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const orderNumber =
+    `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
   const order = await Order.create({
     /* USER */
@@ -44,43 +41,56 @@ export async function createOrder(
       pincode: address.pincode,
       state: address.state,
       city: address.city,
-      addressLine1:
-        address.addressLine1,
-      addressLine2:
-        address.addressLine2,
-      landmark:
-        address.landmark,
+      addressLine1: address.addressLine1,
+      addressLine2: address.addressLine2,
+      landmark: address.landmark,
     },
 
     /* PAYMENT */
 
     paymentMethod,
 
-    paymentStatus:
-      "PENDING",
+    paymentStatus: "PENDING",
 
     orderStatus:
-      "PENDING",
+      paymentMethod === "COD"
+        ? "PLACED"
+        : "PENDING",
 
     /* PRICING */
 
-    ...pricing,
+    itemsPrice: pricing.subtotal,
 
-    coupon:
-      couponSnapshot,
+    subtotalPrice: pricing.subtotal,
+
+    shippingPrice: pricing.shipping,
+
+    taxPrice: pricing.tax,
+
+    discountAmount:
+      pricing.discount,
+
+    totalPrice: pricing.total,
+
+    /* COUPON */
+
+    coupon: pricing.coupon,
+
+    /* ORDER */
 
     orderNumber,
 
     statusHistory: [
       {
         status:
-          "PENDING",
+          paymentMethod === "COD"
+            ? "PLACED"
+            : "PENDING",
       },
     ],
   });
 
-  checkoutContext.order =
-    order;
+  checkoutContext.order = order;
 
   return order;
 }

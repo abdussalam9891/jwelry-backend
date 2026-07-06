@@ -18,32 +18,30 @@ export const getCart = async (req, res) => {
     if (!cart) {
       return res.json({
         items: [],
-        summary: {
-          total: 0,
+        pricing: {
+          subtotal: 0,
           savings: 0,
           itemCount: 0,
         },
       });
     }
 
-    //   DO NOT FILTER ITEMS
     const items = cart.items || [];
 
-    let total = 0;
+    let subtotal = 0;
     let savings = 0;
     let itemCount = 0;
 
     for (const item of items) {
       const price = item.price;
-      const original = item.originalPrice || price;
+      const originalPrice = item.originalPrice || price;
       const qty = item.quantity;
 
-      total += price * qty;
-      savings += (original - price) * qty;
+      subtotal += price * qty;
+      savings += (originalPrice - price) * qty;
       itemCount += qty;
     }
 
-    // FORMAT DATA FOR FRONTEND
     const formattedItems = items.map((item) => ({
       _id: item._id,
 
@@ -61,18 +59,19 @@ export const getCart = async (req, res) => {
       variantDetails: item.variantDetails || null,
     }));
 
-    //   FINAL RESPONSE
     res.json({
       items: formattedItems,
-      summary: {
-        total,
+      pricing: {
+        subtotal,
         savings,
         itemCount,
       },
     });
   } catch (err) {
     console.error("GET CART ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 
@@ -234,7 +233,6 @@ export const updateQuantity = async (req, res) => {
 
     const qty = parseInt(quantity, 10);
 
-    //   validation
     const MAX_CART_QTY = 3;
 
     if (isNaN(qty) || qty < 1 || qty > MAX_CART_QTY) {
@@ -243,8 +241,9 @@ export const updateQuantity = async (req, res) => {
       });
     }
 
-    //   find cart
-    const cart = await Cart.findOne({ user: req.user._id });
+    const cart = await Cart.findOne({
+      user: req.user._id,
+    });
 
     if (!cart) {
       return res.status(404).json({
@@ -252,7 +251,6 @@ export const updateQuantity = async (req, res) => {
       });
     }
 
-    //   find cart item
     const item = cart.items.id(itemId);
 
     if (!item) {
@@ -261,7 +259,6 @@ export const updateQuantity = async (req, res) => {
       });
     }
 
-    //   fetch full product
     const product = await Product.findById(item.product);
 
     if (!product) {
@@ -272,7 +269,6 @@ export const updateQuantity = async (req, res) => {
 
     let availableStock = product.stock;
 
-    //   variant stock handling
     if (item.variantId) {
       const variant = product.variants.id(item.variantId);
 
@@ -285,23 +281,41 @@ export const updateQuantity = async (req, res) => {
       availableStock = variant.stock;
     }
 
-    //   stock validation
     if (availableStock < qty) {
       return res.status(400).json({
         message: `Only ${availableStock} item(s) available`,
       });
     }
 
-    //   update quantity
     item.quantity = qty;
 
     await cart.save();
+
+    // Recalculate cart pricing
+    let subtotal = 0;
+    let savings = 0;
+    let itemCount = 0;
+
+    for (const cartItem of cart.items) {
+      const price = cartItem.price;
+      const originalPrice = cartItem.originalPrice || price;
+      const quantity = cartItem.quantity;
+
+      subtotal += price * quantity;
+      savings += (originalPrice - price) * quantity;
+      itemCount += quantity;
+    }
 
     res.json({
       message: "Quantity updated",
       item: {
         _id: item._id,
         quantity: item.quantity,
+      },
+      pricing: {
+        subtotal,
+        savings,
+        itemCount,
       },
     });
   } catch (err) {

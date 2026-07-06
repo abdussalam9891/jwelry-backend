@@ -40,106 +40,75 @@ import {
 
 
 
-export async function processCheckout(
-  checkoutContext
-) {
- /* CART / BUY NOW */
+export async function processCheckout(checkoutContext) {
+  /* CART / BUY NOW */
 
-if (checkoutContext.buyNow) {
-  await getValidatedBuyNow(checkoutContext);
-} else {
-  await getValidatedCart(checkoutContext);
-}
+  if (checkoutContext.buyNow) {
+    await getValidatedBuyNow(checkoutContext);
+  } else {
+    await getValidatedCart(checkoutContext);
+  }
 
   /* STOCK */
 
-  await checkStock(
-    checkoutContext
-  );
+  await checkStock(checkoutContext);
 
-  /* BUILD SNAPSHOT */
+  /* BUILD ORDER ITEMS */
 
-  buildOrderItems(
-    checkoutContext
-  );
+  buildOrderItems(checkoutContext);
 
-  /* INITIAL PRICING */
+  /* VALIDATE COUPON */
 
-  calculatePricing(
-    checkoutContext
-  );
+  await validateCoupon(checkoutContext);
 
-  /* COUPON */
+  /* CALCULATE FINAL PRICING */
 
-  await validateCoupon(
-    checkoutContext
-  );
-
-  /* RECALCULATE */
-
-  calculatePricing(
-    checkoutContext
-  );
+  checkoutContext.pricing =
+    calculatePricing(checkoutContext);
 
   /* CREATE ORDER */
 
-  await createOrder(
-    checkoutContext
-  );
+  await createOrder(checkoutContext);
 
+  /* COD FLOW */
 
+  if (checkoutContext.paymentMethod === "COD") {
+    await finalizeCODOrder(checkoutContext);
 
-  if (
-    checkoutContext.paymentMethod ===
-    "COD"
-  ) {
-    await finalizeCODOrder(
-      checkoutContext
-    );
+    await redeemCoupon(checkoutContext);
 
-    await redeemCoupon(
-      checkoutContext
-    );
+    await deductStock(checkoutContext);
 
-    await deductStock(
-      checkoutContext
-    );
-
-   if (!checkoutContext.buyNow) {
-  await clearCart(checkoutContext);
-}
+    if (!checkoutContext.buyNow) {
+      await clearCart(checkoutContext);
+    }
 
     await sendOrderStatus(
-  checkoutContext,
-  "PLACED"
-);
-
-    await notifyNewOrder(
-      checkoutContext
+      checkoutContext,
+      "PLACED"
     );
 
+    await notifyNewOrder(checkoutContext);
+
     return {
-      order:
-        checkoutContext.order,
+      order: checkoutContext.order,
+      pricing: checkoutContext.pricing,
     };
   }
 
+  /* ONLINE PAYMENT */
 
-
-  await createRazorpayOrder(
-    checkoutContext
-  );
+  await createRazorpayOrder(checkoutContext);
 
   return {
-    order:
-      checkoutContext.order,
+    order: checkoutContext.order,
+
+    pricing: checkoutContext.pricing,
 
     razorpayOrder:
       checkoutContext.razorpayOrder,
 
-    key:
-      process.env
-        .RAZORPAY_KEY_ID,
+    key: process.env.RAZORPAY_KEY_ID,
   };
 }
 
@@ -171,7 +140,7 @@ export async function completeCheckout(
     checkoutContext
   );
 
-  
+
 
  await deductStock(checkoutContext);
 

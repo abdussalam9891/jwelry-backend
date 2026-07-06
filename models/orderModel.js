@@ -181,6 +181,10 @@ const orderSchema = new mongoose.Schema(
   default: 0,
 },
 
+discountAmount: {
+  type: Number,
+  default: 0,
+},
 
     coupon: {
   code: {
@@ -303,6 +307,11 @@ paymentGatewayPaymentId: {
 paymentGatewaySignature: {
   type: String,
   default: "",
+},
+
+paymentAttempts: {
+  type: Number,
+  default: 0,
 },
 
 

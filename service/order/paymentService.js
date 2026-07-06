@@ -77,12 +77,9 @@ export async function finalizeCODOrder(
   const { order } =
     checkoutContext;
 
-  checkoutContext.status =
-    "PLACED";
 
-  await updateOrderStatus(
-    checkoutContext
-  );
+
+ 
 
   /**
    * COD isn't paid yet.
@@ -131,9 +128,12 @@ export async function finalizeOnlinePayment(
   order.paidAt =
     new Date();
 
-  order.statusHistory.push({
-    status: "PLACED",
-  });
+
+
+    // update order status would handle it
+  // order.statusHistory.push({
+  //   status: "PLACED",
+  // });
 
   await order.save();
 

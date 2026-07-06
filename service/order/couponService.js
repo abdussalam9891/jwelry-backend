@@ -4,15 +4,10 @@ import Order from "../../models/orderModel.js";
 
 /* VALIDATE COUPON */
 
-export async function validateCoupon(
-  checkoutContext
-) {
-  const {
-    couponCode,
-    user,
-    pricing,
-  } = checkoutContext;
+export async function validateCoupon(checkoutContext) {
+  const { couponCode, user } = checkoutContext;
 
+  // No coupon applied
   if (!couponCode) {
     checkoutContext.coupon = null;
     checkoutContext.couponSnapshot = null;
@@ -20,35 +15,29 @@ export async function validateCoupon(
     return;
   }
 
-  const subtotalPrice =
-    pricing.subtotalPrice;
+  // Cart / Buy Now subtotal before discount
+  const subtotal = checkoutContext.itemsPrice;
 
-  const coupon =
-    await Coupon.findOne({
-      code: couponCode
-        .trim()
-        .toUpperCase(),
-      isActive: true,
-    });
+  const coupon = await Coupon.findOne({
+    code: couponCode.trim().toUpperCase(),
+    isActive: true,
+  });
 
   if (!coupon) {
     throw new Error("Invalid coupon");
   }
 
-  if (
-    coupon.startsAt &&
-    coupon.startsAt > new Date()
-  ) {
+  // Start date
+  if (coupon.startsAt && coupon.startsAt > new Date()) {
     throw new Error("Coupon not started yet");
   }
 
-  if (
-    coupon.expiresAt &&
-    coupon.expiresAt < new Date()
-  ) {
+  // Expiry
+  if (coupon.expiresAt && coupon.expiresAt < new Date()) {
     throw new Error("Coupon expired");
   }
 
+  // Global usage limit
   if (
     coupon.usageLimit &&
     coupon.usageCount >= coupon.usageLimit
@@ -56,26 +45,22 @@ export async function validateCoupon(
     throw new Error("Coupon usage limit reached");
   }
 
+  // Per user limit
   const userRedemptions =
     await CouponRedemption.countDocuments({
       coupon: coupon._id,
       user: user._id,
     });
 
-  if (
-    userRedemptions >=
-    coupon.perUserLimit
-  ) {
-    throw new Error(
-      "Coupon usage limit reached"
-    );
+  if (userRedemptions >= coupon.perUserLimit) {
+    throw new Error("Coupon usage limit reached");
   }
 
+  // First order only
   if (coupon.firstOrderOnly) {
-    const previousOrder =
-      await Order.exists({
-        user: user._id,
-      });
+    const previousOrder = await Order.exists({
+      user: user._id,
+    });
 
     if (previousOrder) {
       throw new Error(
@@ -84,54 +69,50 @@ export async function validateCoupon(
     }
   }
 
-  if (
-    subtotalPrice <
-    coupon.minOrderAmount
-  ) {
+  // Minimum order value
+  if (subtotal < coupon.minOrderAmount) {
     throw new Error(
       `Minimum order ₹${coupon.minOrderAmount}`
     );
   }
 
-  let discountAmount = 0;
+let discountAmount = 0;
 
-  if (
-    coupon.discountType ===
-    "PERCENTAGE"
-  ) {
+switch (coupon.discountType) {
+  case "PERCENTAGE":
     discountAmount =
-      (subtotalPrice *
-        coupon.discountValue) /
-      100;
+      (subtotal * coupon.discountValue) / 100;
 
-    if (
-      coupon.maxDiscountAmount
-    ) {
+    if (coupon.maxDiscountAmount) {
       discountAmount = Math.min(
         discountAmount,
         coupon.maxDiscountAmount
       );
     }
-  } else {
+    break;
+
+  case "FIXED":
     discountAmount = Math.min(
       coupon.discountValue,
-      subtotalPrice
+      subtotal
     );
-  }
+    break;
 
-  checkoutContext.coupon =
-    coupon;
+  default:
+    throw new Error(
+      "Invalid coupon type"
+    );
+}
 
-  checkoutContext.discountAmount =
-    discountAmount;
+  checkoutContext.coupon = coupon;
+
+  checkoutContext.discountAmount = discountAmount;
 
   checkoutContext.couponSnapshot = {
     couponId: coupon._id,
     code: coupon.code,
-    discountType:
-      coupon.discountType,
-    discountValue:
-      coupon.discountValue,
+    discountType: coupon.discountType,
+    discountValue: coupon.discountValue,
     discountAmount,
   };
 }

@@ -77,12 +77,14 @@ export async function getValidatedBuyNow(checkoutContext) {
 
 /* BUILD ORDER SNAPSHOT */
 
-export function buildOrderItems(
-  checkoutContext
-) {
+export function buildOrderItems(checkoutContext) {
   const orderItems = [];
 
   let itemsPrice = 0;
+
+  let savings = 0;
+
+  let itemCount = 0;
 
   const cart = checkoutContext.cart;
 
@@ -96,6 +98,10 @@ export function buildOrderItems(
     }
 
     let finalPrice = product.price;
+
+    let originalPrice =
+      product.originalPrice ||
+      product.price;
 
     let variantSnapshot = null;
 
@@ -113,6 +119,10 @@ export function buildOrderItems(
 
       finalPrice = variant.price;
 
+      originalPrice =
+        variant.originalPrice ||
+        variant.price;
+
       variantSnapshot = {
         variantId: variant._id,
         sku: variant.sku,
@@ -123,18 +133,29 @@ export function buildOrderItems(
 
     orderItems.push({
       product: product._id,
+
       slug: product.slug,
+
       name: product.name,
+
       image:
-        product.images?.[0]?.url ||
-        "",
+        product.images?.[0]?.url || "",
+
       price: finalPrice,
+
       quantity: item.quantity,
+
       variant: variantSnapshot,
     });
 
     itemsPrice +=
       finalPrice * item.quantity;
+
+    savings +=
+      (originalPrice - finalPrice) *
+      item.quantity;
+
+    itemCount += item.quantity;
   }
 
   checkoutContext.orderItems =
@@ -143,13 +164,20 @@ export function buildOrderItems(
   checkoutContext.itemsPrice =
     itemsPrice;
 
+  checkoutContext.savings =
+    savings;
+
+  checkoutContext.itemCount =
+    itemCount;
+
   return checkoutContext;
 }
 
+
+
+
+
 /* CLEAR CART */
-
-
-
 
 export async function clearCart(
   checkoutContext
