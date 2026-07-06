@@ -1,5 +1,6 @@
 import {
   getValidatedCart,
+  getValidatedBuyNow,
   buildOrderItems,
   clearCart,
 } from "./cartService.js";
@@ -40,39 +41,33 @@ import {
 
 
 
-export async function processCheckout(checkoutContext) {
-  /* CART / BUY NOW */
-
+export async function prepareCheckout(checkoutContext) {
   if (checkoutContext.buyNow) {
     await getValidatedBuyNow(checkoutContext);
   } else {
     await getValidatedCart(checkoutContext);
   }
 
-  /* STOCK */
-
   await checkStock(checkoutContext);
-
-  /* BUILD ORDER ITEMS */
 
   buildOrderItems(checkoutContext);
 
-  /* VALIDATE COUPON */
-
   await validateCoupon(checkoutContext);
-
-  /* CALCULATE FINAL PRICING */
 
   checkoutContext.pricing =
     calculatePricing(checkoutContext);
 
-  /* CREATE ORDER */
+  return checkoutContext;
+}
+
+export async function processCheckout(checkoutContext) {
+
+  await prepareCheckout(checkoutContext);
 
   await createOrder(checkoutContext);
 
-  /* COD FLOW */
-
   if (checkoutContext.paymentMethod === "COD") {
+
     await finalizeCODOrder(checkoutContext);
 
     await redeemCoupon(checkoutContext);
@@ -96,23 +91,30 @@ export async function processCheckout(checkoutContext) {
     };
   }
 
-  /* ONLINE PAYMENT */
-
   await createRazorpayOrder(checkoutContext);
 
   return {
     order: checkoutContext.order,
-
     pricing: checkoutContext.pricing,
-
     razorpayOrder:
       checkoutContext.razorpayOrder,
-
     key: process.env.RAZORPAY_KEY_ID,
   };
 }
 
+export async function previewCheckoutService(checkoutContext) {
 
+  await prepareCheckout(checkoutContext);
+
+  return {
+
+    items: checkoutContext.orderItems,
+
+    pricing: checkoutContext.pricing,
+
+  };
+
+}
 
 export async function completeCheckout(
   checkoutContext

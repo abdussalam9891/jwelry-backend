@@ -2,25 +2,80 @@ import Order from "../models/orderModel.js";
 
 import { getAddress } from "../service/order/addressService.js";
 
-import { processCheckout } from "../service/order/orderWorkflowService.js";
+import { processCheckout, previewCheckoutService } from "../service/order/orderWorkflowService.js";
+
+
+
+
+
+
+export const previewCheckout = async (req, res) => {
+  try {
+    const checkoutContext = {
+      user: req.user,
+      couponCode: req.body.couponCode,
+
+      buyNow:
+        req.body.mode === "buyNow"
+          ? {
+              productId: req.body.productId,
+              variantId: req.body.variantId,
+              quantity: req.body.quantity,
+            }
+          : null,
+    };
+
+    const preview = await previewCheckoutService (checkoutContext);
+
+    return res.json({
+      success: true,
+      ...preview,
+    });
+
+  } catch (err) {
+
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};
+
+
+
+
+
 
 export const createOrder = async (
   req,
   res
 ) => {
   try {
-    const {
-      addressId,
-      paymentMethod,
-      couponCode,
-    } = req.body;
+   const {
+  mode,
+  productId,
+  variantId,
+  quantity,
+  addressId,
+  paymentMethod,
+  couponCode,
+} = req.body;
 
-    const checkoutContext = {
-      user: req.user,
-      paymentMethod,
-      couponCode,
-    };
+   const checkoutContext = {
+  user: req.user,
+  paymentMethod,
+  couponCode,
 
+  buyNow:
+    mode === "buyNow"
+      ? {
+          productId,
+          variantId,
+          quantity,
+        }
+      : null,
+};
     checkoutContext.address =
       await getAddress({
         userId: req.user._id,

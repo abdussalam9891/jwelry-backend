@@ -19,10 +19,15 @@ export const getCart = async (req, res) => {
       return res.json({
         items: [],
         pricing: {
-          subtotal: 0,
-          savings: 0,
-          itemCount: 0,
-        },
+  subtotal,
+  savings,
+  itemCount,
+  discount: 0,
+  shipping: 0,
+  tax: 0,
+  total: subtotal,
+  coupon: null,
+},
       });
     }
 

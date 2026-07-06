@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  previewCheckout,
   createOrder,
   getMyOrders,
   getOrderById,
@@ -11,6 +12,17 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 router.use(protect);
+
+
+
+
+router.post(
+    "/preview",
+
+    previewCheckout
+);
+
+
 
 //  create order
 router.post("/", createOrder);
@@ -24,7 +36,7 @@ router.get("/:id", getOrderById);
 
 router.get(
   "/:id/invoice",
-   
+
   downloadInvoice
 );
 

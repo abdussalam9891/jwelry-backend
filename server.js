@@ -20,7 +20,7 @@ import adminProductsRoutes from "./routes/admin/products.routes.js";
 import adminReviewRoutes from "./routes/admin/review.routes.js";
 import adminSearchRoutes from "./routes/admin/search.routes.js";
 import authRoutes from "./routes/auth.js";
-import buyNowRoutes from "./routes/buyNowRoutes.js";
+ 
 import cartRoutes from "./routes/cartRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
@@ -98,7 +98,7 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/wishlist", wishlistRoutes);
 app.use("/api/v1/cart", cartRoutes);
-app.use("/api/v1/buy-now", buyNowRoutes);
+
 app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/delivery", deliveryRoutes);
 app.use("/api/v1/addresses", addressRoutes);
