@@ -20,7 +20,7 @@ import adminProductsRoutes from "./routes/admin/products.routes.js";
 import adminReviewRoutes from "./routes/admin/review.routes.js";
 import adminSearchRoutes from "./routes/admin/search.routes.js";
 import authRoutes from "./routes/auth.js";
- 
+
 import cartRoutes from "./routes/cartRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
@@ -30,6 +30,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
+import newsLetterRoutes from "./routes/newsLetterRoutes.js"
 
 dbConnection();
 
@@ -106,6 +107,7 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/coupons", couponRoutes);
 app.use("/api/v1/contact", contactRoutes);
 app.use("/api/v1/payment", paymentRoutes);
+app.use("/api/v1/newsLetter", newsLetterRoutes);
 
 // admin
 app.use("/api/v1/admin/products", adminProductsRoutes);
