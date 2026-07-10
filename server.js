@@ -21,16 +21,26 @@ import adminReviewRoutes from "./routes/admin/review.routes.js";
 import adminSearchRoutes from "./routes/admin/search.routes.js";
 import authRoutes from "./routes/auth.js";
 
+
+
 import cartRoutes from "./routes/cartRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import deliveryRoutes from "./routes/deliveryRoutes.js";
+import newsLetterRoutes from "./routes/newsLetterRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
-import newsLetterRoutes from "./routes/newsLetterRoutes.js"
+
+import announcementRoutes from "./routes/announcementRoutes.js";
+import cmsRoutes from "./routes/cmsRoutes.js";
+import siteSettingsRoutes from "./routes/siteSettingsRoutes.js";
+
+import adminAnnouncementRoutes from "./routes/admin/announcement.routes.js";
+import adminCmsRoutes from "./routes/admin/cms.routes.js";
+import adminSiteSettingsRoutes from "./routes/admin/siteSettings.routes.js";
 
 dbConnection();
 
@@ -108,6 +118,9 @@ app.use("/api/v1/coupons", couponRoutes);
 app.use("/api/v1/contact", contactRoutes);
 app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/newsLetter", newsLetterRoutes);
+app.use("/api/v1/site-settings", siteSettingsRoutes);
+app.use("/api/v1/cms", cmsRoutes);
+app.use("/api/v1/announcement", announcementRoutes);
 
 // admin
 app.use("/api/v1/admin/products", adminProductsRoutes);
@@ -121,6 +134,9 @@ app.use("/api/v1/admin/search", adminSearchRoutes);
 app.use("/api/v1/admin/reviews", adminReviewRoutes);
 app.use("/api/v1/admin/coupons", adminCouponRoutes);
 app.use("/api/v1/admin/contacts", adminContactRoutes);
+app.use("/api/v1/admin/site-settings", adminSiteSettingsRoutes);
+app.use("/api/v1/admin/cms", adminCmsRoutes);
+app.use("/api/v1/admin/announcement", adminAnnouncementRoutes);
 
 const PORT = process.env.PORT || 5000;
 
