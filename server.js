@@ -21,7 +21,8 @@ import adminReviewRoutes from "./routes/admin/review.routes.js";
 import adminSearchRoutes from "./routes/admin/search.routes.js";
 import authRoutes from "./routes/auth.js";
 
-
+import adminHeroBannerRoutes from "./routes/admin/heroBanner.routes.js";
+import heroBannerRoutes from "./routes/heroBannerRoutes.js";
 
 import cartRoutes from "./routes/cartRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
@@ -121,6 +122,7 @@ app.use("/api/v1/newsLetter", newsLetterRoutes);
 app.use("/api/v1/site-settings", siteSettingsRoutes);
 app.use("/api/v1/cms", cmsRoutes);
 app.use("/api/v1/announcement", announcementRoutes);
+app.use("/api/v1/hero-banners", heroBannerRoutes);
 
 // admin
 app.use("/api/v1/admin/products", adminProductsRoutes);
@@ -137,6 +139,7 @@ app.use("/api/v1/admin/contacts", adminContactRoutes);
 app.use("/api/v1/admin/site-settings", adminSiteSettingsRoutes);
 app.use("/api/v1/admin/cms", adminCmsRoutes);
 app.use("/api/v1/admin/announcement", adminAnnouncementRoutes);
+app.use("/api/v1/admin/hero-banners", adminHeroBannerRoutes);
 
 const PORT = process.env.PORT || 5000;
 
