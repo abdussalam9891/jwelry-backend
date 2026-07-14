@@ -6,6 +6,7 @@ import { validateHeroBannerCreate } from "../../validators/heroBanner.validator.
 import {
   listAdminHeroBanners,
   createAdminHeroBanner,
+  updateAdminHeroBanner,
   deleteAdminHeroBanner,
 } from "../../controllers/admin/heroBanner.controller.js";
 
@@ -20,6 +21,18 @@ router.post(
   validateHeroBannerCreate,
   createAdminHeroBanner
 );
+
+router.patch(
+  "/:bannerId",
+  setUploadFolder("hero-banners"),
+  upload.fields([
+    { name: "desktopImage", maxCount: 1 },
+    { name: "mobileImage", maxCount: 1 },
+  ]),
+  updateAdminHeroBanner
+);
+
+
 router.delete("/:bannerId", deleteAdminHeroBanner);
 
 export default router;

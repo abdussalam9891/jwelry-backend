@@ -38,6 +38,47 @@ export async function addHeroBanner({ desktopImage, mobileImage, link }, userId)
   return updated.banners;
 }
 
+
+
+export async function updateHeroBanner(
+  bannerId,
+  { desktopImage, mobileImage, link },
+  userId
+) {
+  const doc = await HeroBannerSet.findOne(SINGLETON_FILTER);
+
+  if (!doc) {
+    const err = new Error("No hero banner set found.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const banner = doc.banners.id(bannerId);
+
+  if (!banner) {
+    const err = new Error("Hero banner not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (desktopImage) {
+    banner.desktopImage = desktopImage;
+  }
+
+  if (mobileImage) {
+    banner.mobileImage = mobileImage;
+  }
+
+  banner.link = link || "";
+  banner.updatedBy = userId;
+
+  await doc.save();
+
+  return doc.banners;
+}
+
+
+
 export async function deleteHeroBanner(bannerId) {
   const updated = await HeroBannerSet.findOneAndUpdate(
     SINGLETON_FILTER,
