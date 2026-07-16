@@ -1,5 +1,3 @@
-// controllers/admin/heroBanner.controller.js
-
 import { asyncHandler } from "../../middleware/asyncHandler.js";
 
 import {
@@ -19,16 +17,57 @@ export const listAdminHeroBanners = asyncHandler(async (req, res) => {
 });
 
 export const createAdminHeroBanner = asyncHandler(async (req, res) => {
-  const { link } = req.body;
+  const {
+    title,
+    navigationType,
+    navigationValue,
+    startDate,
+    endDate,
+    isActive,
+  } = req.body;
 
-  const desktopImage = req.files.desktopImage[0].path;
-  const mobileImage = req.files.mobileImage[0].path;
+  const desktopFile = req.files?.desktopImage?.[0];
+
+  if (!desktopFile) {
+    return res.status(400).json({
+      success: false,
+      message: "Desktop image is required.",
+    });
+  }
+
+  const mobileFile = req.files?.mobileImage?.[0];
+
+  const desktopImage = {
+    url: desktopFile.path,
+    publicId: desktopFile.filename,
+  };
+
+  const mobileImage = mobileFile
+    ? {
+        url: mobileFile.path,
+        publicId: mobileFile.filename,
+      }
+    : null;
 
   const banners = await addHeroBanner(
     {
+      title,
+
       desktopImage,
       mobileImage,
-      link,
+
+      navigationTarget: {
+        type: navigationType,
+        value: navigationValue,
+      },
+
+      startDate: startDate || null,
+      endDate: endDate || null,
+
+      isActive:
+        isActive === undefined
+          ? true
+          : isActive === "true",
     },
     req.user._id
   );
@@ -41,17 +80,56 @@ export const createAdminHeroBanner = asyncHandler(async (req, res) => {
 
 export const updateAdminHeroBanner = asyncHandler(async (req, res) => {
   const { bannerId } = req.params;
-  const { link } = req.body;
 
-  const desktopImage = req.files?.desktopImage?.[0]?.path;
-  const mobileImage = req.files?.mobileImage?.[0]?.path;
+  const {
+    title,
+    navigationType,
+    navigationValue,
+    startDate,
+    endDate,
+    isActive,
+  } = req.body;
+
+  const desktopFile = req.files?.desktopImage?.[0];
+  const mobileFile = req.files?.mobileImage?.[0];
+
+  const desktopImage = desktopFile
+    ? {
+        url: desktopFile.path,
+        publicId: desktopFile.filename,
+      }
+    : undefined;
+
+  const mobileImage = mobileFile
+    ? {
+        url: mobileFile.path,
+        publicId: mobileFile.filename,
+      }
+    : undefined;
 
   const banners = await updateHeroBanner(
     bannerId,
     {
+      title,
+
       desktopImage,
       mobileImage,
-      link,
+
+      navigationTarget:
+        navigationType && navigationValue
+          ? {
+              type: navigationType,
+              value: navigationValue,
+            }
+          : undefined,
+
+      startDate,
+      endDate,
+
+      isActive:
+        isActive === undefined
+          ? undefined
+          : isActive === "true",
     },
     req.user._id
   );

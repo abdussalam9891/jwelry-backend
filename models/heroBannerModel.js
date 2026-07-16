@@ -1,37 +1,115 @@
 import mongoose from "mongoose";
 
-const heroBannerSchema = new mongoose.Schema(
+const imageSchema = new mongoose.Schema(
   {
-    desktopImage: {
+    url: {
       type: String,
       required: true,
-    },
-    mobileImage: {
-      type: String,
-      required: true,
-    },
-    link: {
-      type: String,
-      default: "",
       trim: true,
     },
-    // Order is implicit: array position in the parent document, set once
-    // at creation, never modified. See HeroBannerSet below for why this
-    // lives as a subdocument array rather than its own top-level collection.
+
+    publicId: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+const navigationTargetSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: [
+        "page",
+        "category",
+        "collection",
+        "product",
+        "external",
+      ],
+      default: "page",
+    },
+
+    value: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+const heroBannerSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
+
+    image: {
+      desktop: {
+        type: imageSchema,
+        required: true,
+      },
+
+      mobile: {
+        type: imageSchema,
+        default: null,
+      },
+    },
+
+    navigationTarget: {
+      type: navigationTargetSchema,
+      required: true,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    startDate: {
+      type: Date,
+      default: null,
+    },
+
+    endDate: {
+      type: Date,
+      default: null,
+    },
+
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-// Singleton wrapper, same pattern as SiteSettings/AnnouncementBar — one
-// document holds the ordered list. This avoids needing a separate "order"
-// integer field with its own race conditions (two admins creating banners
-// at once could get the same order number with a flat collection approach;
-// array push order is atomic per-document and side-steps that entirely).
+heroBannerSchema.pre("validate", function () {
+  if (
+    this.startDate &&
+    this.endDate &&
+    this.endDate < this.startDate
+  ) {
+    return next(
+      new Error("End date cannot be before start date.")
+    );
+  }
+
+
+});
+
 const heroBannerSetSchema = new mongoose.Schema(
   {
     singletonKey: {
@@ -40,16 +118,24 @@ const heroBannerSetSchema = new mongoose.Schema(
       unique: true,
       immutable: true,
     },
+
     banners: {
       type: [heroBannerSchema],
       default: [],
       validate: {
-        validator: (arr) => arr.length <= 5,
-        message: "A maximum of 5 hero banners is allowed.",
+        validator(arr) {
+          return arr.length <= 10;
+        },
+        message: "Maximum 10 banners allowed.",
       },
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-export default mongoose.model("HeroBannerSet", heroBannerSetSchema);
+export default mongoose.model(
+  "HeroBannerSet",
+  heroBannerSetSchema
+);

@@ -1,26 +1,67 @@
 import HeroBannerSet from "../models/heroBannerModel.js";
 
-const SINGLETON_FILTER = { singletonKey: "HERO_BANNERS" };
+const SINGLETON_FILTER = {
+  singletonKey: "HERO_BANNERS",
+};
 
-// Public — storefront homepage calls this. No draft/published concept here
-// (unlike CMSPage) since there's no "half-written banner" risk — a banner
-// either has both images and exists, or it doesn't exist yet.
+const MAX_BANNERS = 10;
+
+function isBannerLive(banner) {
+  if (!banner.isActive) return false;
+
+  const now = new Date();
+
+  if (banner.startDate && banner.startDate > now) {
+    return false;
+  }
+
+  if (banner.endDate && banner.endDate < now) {
+    return false;
+  }
+
+  return true;
+}
+
+
+
 export async function getHeroBanners() {
   const doc = await HeroBannerSet.findOne(SINGLETON_FILTER);
-  return doc?.banners || [];
+
+  if (!doc) return [];
+
+  return doc.banners.filter(isBannerLive);
 }
+
+
 
 export async function getHeroBannersForAdmin() {
   const doc = await HeroBannerSet.findOne(SINGLETON_FILTER);
+
   return doc?.banners || [];
 }
 
-export async function addHeroBanner({ desktopImage, mobileImage, link }, userId) {
-  const doc = await HeroBannerSet.findOne(SINGLETON_FILTER);
-  const currentCount = doc?.banners?.length || 0;
+// ================= CREATE =================
 
-  if (currentCount >= 5) {
-    const err = new Error("Maximum of 5 hero banners already reached. Delete one before adding another.");
+export async function addHeroBanner(
+  {
+    title,
+    desktopImage,
+    mobileImage,
+    navigationTarget,
+    startDate,
+    endDate,
+    isActive,
+  },
+  userId
+) {
+  const doc = await HeroBannerSet.findOne(SINGLETON_FILTER);
+
+  const currentCount = doc?.banners.length || 0;
+
+  if (currentCount >= MAX_BANNERS) {
+    const err = new Error(
+      `Maximum ${MAX_BANNERS} hero banners allowed.`
+    );
     err.statusCode = 400;
     throw err;
   }
@@ -29,10 +70,34 @@ export async function addHeroBanner({ desktopImage, mobileImage, link }, userId)
     SINGLETON_FILTER,
     {
       $push: {
-        banners: { desktopImage, mobileImage, link: link || "", updatedBy: userId },
+        banners: {
+          title,
+
+          image: {
+            desktop: desktopImage,
+            mobile: mobileImage || null,
+          },
+
+          navigationTarget,
+
+          startDate: startDate || null,
+          endDate: endDate || null,
+
+          isActive:
+            typeof isActive === "boolean"
+              ? isActive
+              : true,
+
+          updatedBy: userId,
+        },
       },
     },
-    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    {
+      new: true,
+      upsert: true,
+      runValidators: true,
+      setDefaultsOnInsert: true,
+    }
   );
 
   return updated.banners;
@@ -42,13 +107,21 @@ export async function addHeroBanner({ desktopImage, mobileImage, link }, userId)
 
 export async function updateHeroBanner(
   bannerId,
-  { desktopImage, mobileImage, link },
+  {
+    title,
+    desktopImage,
+    mobileImage,
+    navigationTarget,
+    startDate,
+    endDate,
+    isActive,
+  },
   userId
 ) {
   const doc = await HeroBannerSet.findOne(SINGLETON_FILTER);
 
   if (!doc) {
-    const err = new Error("No hero banner set found.");
+    const err = new Error("Hero banner set not found.");
     err.statusCode = 404;
     throw err;
   }
@@ -61,15 +134,34 @@ export async function updateHeroBanner(
     throw err;
   }
 
+  if (title !== undefined) {
+    banner.title = title;
+  }
+
   if (desktopImage) {
-    banner.desktopImage = desktopImage;
+    banner.image.desktop = desktopImage;
   }
 
   if (mobileImage) {
-    banner.mobileImage = mobileImage;
+    banner.image.mobile = mobileImage;
   }
 
-  banner.link = link || "";
+  if (navigationTarget) {
+    banner.navigationTarget = navigationTarget;
+  }
+
+  if (startDate !== undefined) {
+    banner.startDate = startDate || null;
+  }
+
+  if (endDate !== undefined) {
+    banner.endDate = endDate || null;
+  }
+
+  if (typeof isActive === "boolean") {
+    banner.isActive = isActive;
+  }
+
   banner.updatedBy = userId;
 
   await doc.save();
@@ -82,12 +174,20 @@ export async function updateHeroBanner(
 export async function deleteHeroBanner(bannerId) {
   const updated = await HeroBannerSet.findOneAndUpdate(
     SINGLETON_FILTER,
-    { $pull: { banners: { _id: bannerId } } },
-    { new: true }
+    {
+      $pull: {
+        banners: {
+          _id: bannerId,
+        },
+      },
+    },
+    {
+      new: true,
+    }
   );
 
   if (!updated) {
-    const err = new Error("No hero banner set found.");
+    const err = new Error("Hero banner set not found.");
     err.statusCode = 404;
     throw err;
   }

@@ -42,6 +42,7 @@ import siteSettingsRoutes from "./routes/siteSettingsRoutes.js";
 import adminAnnouncementRoutes from "./routes/admin/announcement.routes.js";
 import adminCmsRoutes from "./routes/admin/cms.routes.js";
 import adminSiteSettingsRoutes from "./routes/admin/siteSettings.routes.js";
+import navigationRoutes from "./routes/admin/navigation.routes.js";
 
 dbConnection();
 
@@ -140,6 +141,7 @@ app.use("/api/v1/admin/site-settings", adminSiteSettingsRoutes);
 app.use("/api/v1/admin/cms", adminCmsRoutes);
 app.use("/api/v1/admin/announcement", adminAnnouncementRoutes);
 app.use("/api/v1/admin/hero-banners", adminHeroBannerRoutes);
+app.use("/api/v1/admin/navigation", navigationRoutes);
 
 const PORT = process.env.PORT || 5000;
 
