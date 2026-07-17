@@ -64,10 +64,10 @@ export const createAdminHeroBanner = asyncHandler(async (req, res) => {
       startDate: startDate || null,
       endDate: endDate || null,
 
-      isActive:
-        isActive === undefined
-          ? true
-          : isActive === "true",
+    isActive:
+  isActive === undefined
+    ? undefined
+    : Boolean(isActive === true || isActive === "true")
     },
     req.user._id
   );
@@ -127,9 +127,9 @@ export const updateAdminHeroBanner = asyncHandler(async (req, res) => {
       endDate,
 
       isActive:
-        isActive === undefined
-          ? undefined
-          : isActive === "true",
+  isActive === undefined
+    ? undefined
+    : Boolean(isActive === true || isActive === "true")
     },
     req.user._id
   );

@@ -102,12 +102,8 @@ heroBannerSchema.pre("validate", function () {
     this.endDate &&
     this.endDate < this.startDate
   ) {
-    return next(
-      new Error("End date cannot be before start date.")
-    );
+    throw new Error("End date cannot be before start date.");
   }
-
-
 });
 
 const heroBannerSetSchema = new mongoose.Schema(
