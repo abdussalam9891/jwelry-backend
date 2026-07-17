@@ -13,21 +13,23 @@ const formatLabel = (value = "") => {
     .join(" ");
 };
 
-export const getNavigationOptions = async (
-  req,
-  res,
-  next
-) => {
+export const getNavigationOptions = async (req, res, next) => {
   try {
-    const [categories, collections, products] =
-      await Promise.all([
-        Product.distinct("category"),
-        Product.distinct("styles"),
-        Product.find(
-          { status: "ACTIVE" },
-          "_id name slug"
-        ).sort({ name: 1 }),
-      ]);
+    const { search = "" } = req.query;
+
+    const [categories, collections, products] = await Promise.all([
+      Product.distinct("category"),
+      Product.distinct("styles"),
+      Product.find(
+        {
+          status: "ACTIVE",
+          ...(search && { name: { $regex: search, $options: "i" } }),
+        },
+        "_id name slug"
+      )
+        .sort({ name: 1 })
+        .limit(50), // never return an unbounded list
+    ]);
 
     res.status(200).json({
       success: true,
@@ -36,9 +38,7 @@ export const getNavigationOptions = async (
         pages: [
           { id: "home", name: "Home" },
           { id: "products", name: "Products" },
-          { id: "collections", name: "Collections" },
-          { id: "about", name: "About" },
-          { id: "contact", name: "Contact" },
+
         ],
 
         categories: categories

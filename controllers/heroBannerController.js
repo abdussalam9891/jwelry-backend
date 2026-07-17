@@ -1,4 +1,4 @@
-// controllers/heroBannerController.js
+ 
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { getHeroBanners } from "../service/heroBannerService.js";
 

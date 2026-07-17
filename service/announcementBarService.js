@@ -2,14 +2,30 @@ import AnnouncementBar from "../models/announcementBarModel.js";
 
 const SINGLETON_FILTER = { singletonKey: "ANNOUNCEMENT_BAR" };
 
-// Public read — storefront hits this on effectively every page load, so
-// keep it a single indexed findOne with no populate/joins. If this becomes
-// a caching target later (flagged in the original architecture review),
-// this is the one function that gets a cache wrapped around it.
+// Public read — called by the storefront.
+// Returns only active announcement data.
+// If there is no active announcement, returns null.
 export async function getAnnouncementBar() {
-  return AnnouncementBar.findOne(SINGLETON_FILTER);
+  const bar = await AnnouncementBar.findOne(
+    SINGLETON_FILTER,
+    {
+      message: 1,
+      link: 1,
+      enabled: 1,
+    }
+  ).lean();
+
+  if (!bar || !bar.enabled || !bar.message?.trim()) {
+    return null;
+  }
+
+  return {
+    message: bar.message,
+    link: bar.link,
+  };
 }
 
+// Admin read — returns the full document for the CMS.
 export async function getAnnouncementBarForAdmin() {
   return AnnouncementBar.findOne(SINGLETON_FILTER);
 }
@@ -17,15 +33,18 @@ export async function getAnnouncementBarForAdmin() {
 export async function updateAnnouncementBar(updates, userId) {
   const current = await AnnouncementBar.findOne(SINGLETON_FILTER);
 
-  // The stateful invariant deferred from the validator: figure out what
-  // the message will be AFTER this update is applied, using current state
-  // as the fallback for any field the admin didn't resend.
+  // Figure out what the final state will be after applying this update.
   const resultingEnabled =
-    updates.enabled !== undefined ? updates.enabled : current?.enabled ?? false;
-  const resultingMessage =
-    updates.message !== undefined ? updates.message : current?.message ?? "";
+    updates.enabled !== undefined
+      ? updates.enabled
+      : current?.enabled ?? false;
 
-  if (resultingEnabled === true && resultingMessage.trim() === "") {
+  const resultingMessage =
+    updates.message !== undefined
+      ? updates.message
+      : current?.message ?? "";
+
+  if (resultingEnabled && !resultingMessage.trim()) {
     const err = new Error(
       "Cannot enable the announcement bar without a message."
     );
@@ -33,7 +52,7 @@ export async function updateAnnouncementBar(updates, userId) {
     throw err;
   }
 
-  const updated = await AnnouncementBar.findOneAndUpdate(
+  return AnnouncementBar.findOneAndUpdate(
     SINGLETON_FILTER,
     {
       $set: {
@@ -48,6 +67,4 @@ export async function updateAnnouncementBar(updates, userId) {
       setDefaultsOnInsert: true,
     }
   );
-
-  return updated;
 }

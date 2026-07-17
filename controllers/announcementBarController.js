@@ -6,6 +6,6 @@ export const getPublicAnnouncementBar = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    data: bar || { message: "", link: "", enabled: false },
+    data: bar,
   });
 });
