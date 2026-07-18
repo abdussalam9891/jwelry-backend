@@ -5,6 +5,7 @@ import upload, { setUploadFolder } from "../../middleware/uploadMiddleware.js";
 import { validateHeroBannerCreate } from "../../validators/heroBanner.validator.js";
 import {
   listAdminHeroBanners,
+   getAdminHeroBanner,
   createAdminHeroBanner,
   updateAdminHeroBanner,
   deleteAdminHeroBanner,
@@ -13,7 +14,10 @@ import {
 const router = express.Router();
 router.use(protect, authorize("admin"));
 
+ 
 router.get("/", listAdminHeroBanners);
+
+router.get("/:bannerId", getAdminHeroBanner);
 router.post(
   "/",
   setUploadFolder("hero-banners"),

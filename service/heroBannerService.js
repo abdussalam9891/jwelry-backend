@@ -34,13 +34,143 @@ export async function getHeroBanners() {
 
 
 
-export async function getHeroBannersForAdmin() {
+export async function getHeroBannersForAdmin({
+  page = 1,
+  limit = 4,
+  search = "",
+  status = "all",
+  type = "all",
+  sort = "newest",
+}) {
   const doc = await HeroBannerSet.findOne(SINGLETON_FILTER);
 
-  return doc?.banners || [];
+  let banners = [...(doc?.banners || [])];
+
+  // -----------------------------
+  // Search
+  // -----------------------------
+  if (search.trim()) {
+    const keyword = search.trim().toLowerCase();
+
+    banners = banners.filter((banner) =>
+      banner.title.toLowerCase().includes(keyword)
+    );
+  }
+
+  // -----------------------------
+  // Status Filter
+  // -----------------------------
+  if (status !== "all") {
+    banners = banners.filter((banner) =>
+      status === "active"
+        ? banner.isActive
+        : !banner.isActive
+    );
+  }
+
+  // -----------------------------
+  // Navigation Type Filter
+  // -----------------------------
+  if (type !== "all") {
+    banners = banners.filter(
+      (banner) => banner.navigationTarget.type === type
+    );
+  }
+
+  // -----------------------------
+  // Sorting
+  // -----------------------------
+  switch (sort) {
+    case "oldest":
+      banners.sort(
+        (a, b) =>
+          new Date(a.createdAt) - new Date(b.createdAt)
+      );
+      break;
+
+    case "title-asc":
+      banners.sort((a, b) =>
+        a.title.localeCompare(b.title)
+      );
+      break;
+
+    case "title-desc":
+      banners.sort((a, b) =>
+        b.title.localeCompare(a.title)
+      );
+      break;
+
+    case "newest":
+    default:
+      banners.sort(
+        (a, b) =>
+          new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      break;
+  }
+
+  // -----------------------------
+  // Pagination
+  // -----------------------------
+
+  const limitNumber = Math.max(Number(limit) || 4, 1);
+
+const total = banners.length;
+
+const totalPages = Math.max(
+  Math.ceil(total / limitNumber),
+  1
+);
+
+const requestedPage = Math.max(Number(page) || 1, 1);
+
+const pageNumber = Math.min(
+  requestedPage,
+  totalPages
+);
+
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const paginatedBanners = banners.slice(
+    skip,
+    skip + limitNumber
+  );
+
+  return {
+    banners: paginatedBanners,
+
+    pagination: {
+      page: pageNumber,
+      limit: limitNumber,
+
+      total,
+      totalPages,
+
+      hasNext: pageNumber < totalPages,
+      hasPrev: pageNumber > 1,
+    },
+  };
 }
 
-// ================= CREATE =================
+export async function getHeroBannerById(bannerId) {
+  const doc = await HeroBannerSet.findOne(SINGLETON_FILTER);
+
+  if (!doc) {
+    const err = new Error("Hero banner set not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const banner = doc.banners.id(bannerId);
+
+  if (!banner) {
+    const err = new Error("Hero banner not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  return banner;
+}
 
 export async function addHeroBanner(
   {
@@ -66,41 +196,43 @@ export async function addHeroBanner(
     throw err;
   }
 
-  const updated = await HeroBannerSet.findOneAndUpdate(
-    SINGLETON_FILTER,
-    {
-      $push: {
-        banners: {
-          title,
+ const updated = await HeroBannerSet.findOneAndUpdate(
+  SINGLETON_FILTER,
+  {
+    $push: {
+      banners: {
+        title,
 
-          image: {
-            desktop: desktopImage,
-            mobile: mobileImage || null,
-          },
-
-          navigationTarget,
-
-          startDate: startDate || null,
-          endDate: endDate || null,
-
-          isActive:
-            typeof isActive === "boolean"
-              ? isActive
-              : true,
-
-          updatedBy: userId,
+        image: {
+          desktop: desktopImage,
+          mobile: mobileImage || null,
         },
+
+        navigationTarget,
+
+        startDate: startDate || null,
+        endDate: endDate || null,
+
+        isActive:
+          typeof isActive === "boolean"
+            ? isActive
+            : true,
+
+        updatedBy: userId,
       },
     },
-    {
-      new: true,
-      upsert: true,
-      runValidators: true,
-      setDefaultsOnInsert: true,
-    }
-  );
+  },
+  {
+    new: true,
+    upsert: true,
+    runValidators: true,
+    setDefaultsOnInsert: true,
+  }
+);
 
-  return updated.banners;
+const createdBanner = updated.banners.at(-1);
+
+return createdBanner;
 }
 
 
@@ -164,33 +296,34 @@ export async function updateHeroBanner(
 
   banner.updatedBy = userId;
 
-  await doc.save();
+ await doc.save();
 
-  return doc.banners;
+return banner;
 }
 
 
-
 export async function deleteHeroBanner(bannerId) {
-  const updated = await HeroBannerSet.findOneAndUpdate(
-    SINGLETON_FILTER,
-    {
-      $pull: {
-        banners: {
-          _id: bannerId,
-        },
-      },
-    },
-    {
-      new: true,
-    }
-  );
+  const doc = await HeroBannerSet.findOne(SINGLETON_FILTER);
 
-  if (!updated) {
+  if (!doc) {
     const err = new Error("Hero banner set not found.");
     err.statusCode = 404;
     throw err;
   }
 
-  return updated.banners;
+  const banner = doc.banners.id(bannerId);
+
+  if (!banner) {
+    const err = new Error("Hero banner not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  banner.deleteOne();
+
+  await doc.save();
+
+  return {
+    deletedId: bannerId,
+  };
 }

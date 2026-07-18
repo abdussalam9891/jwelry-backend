@@ -8,13 +8,44 @@ import {
 } from "../../service/heroBannerService.js";
 
 export const listAdminHeroBanners = asyncHandler(async (req, res) => {
-  const banners = await getHeroBannersForAdmin();
+  const {
+    page = 1,
+    limit = 10,
+    search = "",
+    status = "all",
+    type = "all",
+    sort = "newest",
+  } = req.query;
+
+  const result = await getHeroBannersForAdmin({
+    page,
+    limit,
+    search,
+    status,
+    type,
+    sort,
+  });
 
   res.status(200).json({
     success: true,
-    data: banners,
+    data: result,
   });
 });
+
+export async function getAdminHeroBanner(req, res, next) {
+  try {
+    const { bannerId } = req.params;
+
+    const banner = await getHeroBannerById(bannerId);
+
+    res.status(200).json({
+      success: true,
+      data: banner,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
 export const createAdminHeroBanner = asyncHandler(async (req, res) => {
   const {
@@ -136,17 +167,17 @@ export const updateAdminHeroBanner = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    data: banners,
+    data: banner,
   });
 });
 
 export const deleteAdminHeroBanner = asyncHandler(async (req, res) => {
   const { bannerId } = req.params;
 
-  const banners = await deleteHeroBanner(bannerId);
+ const result = await deleteHeroBanner(bannerId);
 
-  res.status(200).json({
-    success: true,
-    data: banners,
-  });
+res.status(200).json({
+  success: true,
+  data: result,
+});
 });

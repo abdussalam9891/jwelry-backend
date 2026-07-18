@@ -139,7 +139,7 @@ app.use("/api/v1/admin/coupons", adminCouponRoutes);
 app.use("/api/v1/admin/contacts", adminContactRoutes);
 app.use("/api/v1/admin/site-settings", adminSiteSettingsRoutes);
 app.use("/api/v1/admin/cms", adminCmsRoutes);
-app.use("/api/v1/admin/announcement", adminAnnouncementRoutes);
+app.use("/api/v1/admin/announcements", adminAnnouncementRoutes);
 app.use("/api/v1/admin/hero-banners", adminHeroBannerRoutes);
 app.use("/api/v1/admin/navigation", navigationRoutes);
 
