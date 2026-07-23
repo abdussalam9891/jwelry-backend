@@ -1,29 +1,14 @@
 import mongoose from "mongoose";
 
-// Locked to the exact slugs your lead approved. This enum is the actual
-// enforcement point — the controller/validator layer will also check
-// against this same list, but the schema-level enum is what stops a
-// direct DB write or a script from ever creating a stray slug.
-export const CMS_PAGE_SLUGS = [
-  "about-us",
-  "privacy-policy",
-  "terms-and-conditions",
-  "shipping-policy",
-  "return-policy",
-  "warranty-policy",
-];
-
-const cmsPageSchema = new mongoose.Schema(
+const sectionSchema = new mongoose.Schema(
   {
-    slug: {
+    title: {
       type: String,
       required: true,
-      unique: true,
-      enum: CMS_PAGE_SLUGS,
-      immutable: true, // a page's slug should never change after creation
+      trim: true,
     },
 
-    title: {
+    slug: {
       type: String,
       required: true,
       trim: true,
@@ -32,24 +17,95 @@ const cmsPageSchema = new mongoose.Schema(
     content: {
       type: String,
       default: "",
-      // NOTE: sanitized in the service layer before save (Step 3/2),
-      // not here — schema shouldn't own sanitization logic.
     },
-    images: {
-  type: [String],
-  default: [],
-  validate: {
-    validator: (arr) => arr.length <= 5,
-    message: "A page can have at most 5 images.",
+
+    order: {
+      type: Number,
+      default: 0,
+    },
+
+    isVisible: {
+      type: Boolean,
+      default: true,
+    },
   },
-},
+  {
+    _id: true,
+    timestamps: true,
+  }
+);
+
+const seoSchema = new mongoose.Schema(
+  {
+    metaTitle: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    metaDescription: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    keywords: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+  },
+  { _id: false }
+);
+
+const cmsPageSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    type: {
+      type: String,
+      enum: [
+        "policy",
+        "faq",
+        "page",
+        "legal",
+      ],
+      default: "page",
+    },
 
     status: {
       type: String,
-      enum: ["draft", "published"],
-      default: "draft",
-      index: true,
+      enum: [
+        "draft",
+        "published",
+      ],
+      default: "published",
     },
+
+    sections: {
+      type: [sectionSchema],
+      default: [],
+    },
+
+    seo: {
+      type: seoSchema,
+      default: () => ({}),
+    },
+
+    publishedAt: Date,
 
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -61,5 +117,7 @@ const cmsPageSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+cmsPageSchema.index({ slug: 1 });
 
 export default mongoose.model("CMSPage", cmsPageSchema);

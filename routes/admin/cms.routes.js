@@ -1,53 +1,60 @@
 import express from "express";
+
 import {
+  getAdminCMSPages,
   getAdminCMSPage,
-  listAdminCMSPages,
+  getPublicCMSPage,
+  createAdminCMSPage,
   updateAdminCMSPage,
-    deleteCMSPageImage,
-  uploadCMSPageImages,
+  deleteAdminCMSPage,
+  addCMSPageSection,
+  updateCMSPageSection,
+  deleteCMSPageSection,
+  reorderCMSPageSections,
 } from "../../controllers/admin/cms.controller.js";
-import { authorize, protect } from "../../middleware/authMiddleware.js";
-import {
-  validateCMSPageUpdate,
-  validateSlugParam,
-} from "../../validators/cmsPage.validator.js";
 
-
-import upload, { setUploadFolder } from "../../middleware/uploadMiddleware.js";
-import { validateImageUpload } from "../../validators/cmsPage.validator.js";
-
-
+import { protect, authorize } from "../../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.use(protect, authorize("admin"));
+/*
+|--------------------------------------------------------------------------
+| Public
+|--------------------------------------------------------------------------
+*/
 
-router.get("/", listAdminCMSPages);
-router.get("/:slug", validateSlugParam, getAdminCMSPage);
-router.put("/:slug", validateSlugParam, validateCMSPageUpdate, updateAdminCMSPage);
+router.get("/slug/:slug", getPublicCMSPage);
+
+/*
+|--------------------------------------------------------------------------
+| Admin
+|--------------------------------------------------------------------------
+*/
+
+router.use(protect);
+router.use(authorize("admin"));
+
+router
+  .route("/")
+  .get(getAdminCMSPages)
+  .post(createAdminCMSPage);
+
+router
+  .route("/:id")
+  .get(getAdminCMSPage)
+  .patch(updateAdminCMSPage)
+  .delete(deleteAdminCMSPage);
+
+router.post("/:id/sections", addCMSPageSection);
+
 router.patch(
-  "/:slug/images",
-  validateSlugParam,
-  setUploadFolder("cms"),
-  upload.array("images", 5),
-  validateImageUpload,
-  uploadCMSPageImages
+  "/:id/sections/reorder",
+  reorderCMSPageSections
 );
 
-router.delete(
-  "/:slug/images",
-  validateSlugParam,
-  deleteCMSPageImage
-);
+router
+  .route("/:id/sections/:sectionId")
+  .patch(updateCMSPageSection)
+  .delete(deleteCMSPageSection);
 
 export default router;
-
-
-
-
-
-
-
-
-
-

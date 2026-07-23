@@ -1,64 +1,155 @@
 import { asyncHandler } from "../../middleware/asyncHandler.js";
+
 import {
-  listPagesForAdmin,
-  getPageForAdmin,
-  updatePage,
-  addPageImages,
-  removePageImage,
+  getCMSPages,
+  getCMSPageById,
+  getCMSPageBySlug,
+  createCMSPage,
+  updateCMSPage,
+  deleteCMSPage,
+  addSection,
+  updateSection,
+  deleteSection,
+  reorderSections,
 } from "../../service/cmsPageService.js";
 
-export const listAdminCMSPages = asyncHandler(async (req, res) => {
-  const pages = await listPagesForAdmin();
-  res.status(200).json({ success: true, data: pages });
+/**
+ * Admin - Get all pages
+ */
+export const getAdminCMSPages = asyncHandler(async (req, res) => {
+  const pages = await getCMSPages(req.query);
+
+  res.status(200).json({
+    success: true,
+    data: pages,
+  });
 });
 
+/**
+ * Admin - Get page by ID
+ */
 export const getAdminCMSPage = asyncHandler(async (req, res) => {
-  const { slug } = req.params;
-  const page = await getPageForAdmin(slug);
+  const page = await getCMSPageById(req.params.id);
 
-  // A known slug (validated by validateSlugParam) with no document yet
-  // just means the admin hasn't saved it for the first time — return an
-  // empty draft shell rather than 404, so the edit form has something to render.
-  if (!page) {
-    return res.status(200).json({
-      success: true,
-      data: { slug, title: "", content: "", status: "draft" },
-    });
-  }
-
-  res.status(200).json({ success: true, data: page });
+  res.status(200).json({
+    success: true,
+    data: page,
+  });
 });
 
+/**
+ * Storefront - Get page by slug
+ */
+export const getPublicCMSPage = asyncHandler(async (req, res) => {
+  const page = await getCMSPageBySlug(req.params.slug);
+
+  res.status(200).json({
+    success: true,
+    data: page,
+  });
+});
+
+/**
+ * Create page
+ */
+export const createAdminCMSPage = asyncHandler(async (req, res) => {
+  const page = await createCMSPage(req.body, req.user._id);
+
+  res.status(201).json({
+    success: true,
+    data: page,
+  });
+});
+
+/**
+ * Update page
+ */
 export const updateAdminCMSPage = asyncHandler(async (req, res) => {
-  const { slug } = req.params;
-  const updated = await updatePage(slug, req.body, req.user._id);
-  res.status(200).json({ success: true, data: updated });
+  const page = await updateCMSPage(
+    req.params.id,
+    req.body,
+    req.user._id
+  );
+
+  res.status(200).json({
+    success: true,
+    data: page,
+  });
 });
 
+/**
+ * Delete page
+ */
+export const deleteAdminCMSPage = asyncHandler(async (req, res) => {
+  const result = await deleteCMSPage(req.params.id);
 
-
-
-
- 
-
-export const uploadCMSPageImages = asyncHandler(async (req, res) => {
-  const { slug } = req.params;
-  const imageUrls = req.files.map((file) => file.path); // Cloudinary URL via multer-storage-cloudinary
-  const updated = await addPageImages(slug, imageUrls, req.user._id);
-  res.status(200).json({ success: true, data: updated });
+  res.status(200).json({
+    success: true,
+    ...result,
+  });
 });
 
-export const deleteCMSPageImage = asyncHandler(async (req, res) => {
-  const { slug } = req.params;
-  const { imageUrl } = req.body;
+/**
+ * Add section
+ */
+export const addCMSPageSection = asyncHandler(async (req, res) => {
+  const page = await addSection(
+    req.params.id,
+    req.body,
+    req.user._id
+  );
 
-  if (!imageUrl) {
-    return res.status(400).json({
-      success: false,
-      message: "imageUrl is required.",
-    });
-  }
+  res.status(201).json({
+    success: true,
+    data: page,
+  });
+});
 
-  const updated = await removePageImage(slug, imageUrl, req.user._id);
-  res.status(200).json({ success: true, data: updated });
+/**
+ * Update section
+ */
+export const updateCMSPageSection = asyncHandler(async (req, res) => {
+  const page = await updateSection(
+    req.params.id,
+    req.params.sectionId,
+    req.body,
+    req.user._id
+  );
+
+  res.status(200).json({
+    success: true,
+    data: page,
+  });
+});
+
+/**
+ * Delete section
+ */
+export const deleteCMSPageSection = asyncHandler(async (req, res) => {
+  const page = await deleteSection(
+    req.params.id,
+    req.params.sectionId,
+    req.user._id
+  );
+
+  res.status(200).json({
+    success: true,
+    data: page,
+  });
+});
+
+/**
+ * Reorder sections
+ */
+export const reorderCMSPageSections = asyncHandler(async (req, res) => {
+  const page = await reorderSections(
+    req.params.id,
+    req.body.sectionIds,
+    req.user._id
+  );
+
+  res.status(200).json({
+    success: true,
+    data: page,
+  });
 });

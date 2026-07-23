@@ -2,6 +2,7 @@ import { asyncHandler } from "../../middleware/asyncHandler.js";
 
 import {
   getHeroBannersForAdmin,
+    getHeroBannerById,
   addHeroBanner,
   updateHeroBanner,
   deleteHeroBanner,
@@ -138,7 +139,7 @@ export const updateAdminHeroBanner = asyncHandler(async (req, res) => {
       }
     : undefined;
 
-  const banners = await updateHeroBanner(
+  const banner = await updateHeroBanner(
     bannerId,
     {
       title,
@@ -160,7 +161,7 @@ export const updateAdminHeroBanner = asyncHandler(async (req, res) => {
       isActive:
   isActive === undefined
     ? undefined
-    : Boolean(isActive === true || isActive === "true")
+    : isActive === "true"
     },
     req.user._id
   );
