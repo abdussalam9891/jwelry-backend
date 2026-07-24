@@ -7,10 +7,7 @@ import {
   createAdminCMSPage,
   updateAdminCMSPage,
   deleteAdminCMSPage,
-  addCMSPageSection,
-  updateCMSPageSection,
-  deleteCMSPageSection,
-  reorderCMSPageSections,
+
 } from "../../controllers/admin/cms.controller.js";
 
 import { protect, authorize } from "../../middleware/authMiddleware.js";
@@ -45,16 +42,6 @@ router
   .patch(updateAdminCMSPage)
   .delete(deleteAdminCMSPage);
 
-router.post("/:id/sections", addCMSPageSection);
-
-router.patch(
-  "/:id/sections/reorder",
-  reorderCMSPageSections
-);
-
-router
-  .route("/:id/sections/:sectionId")
-  .patch(updateCMSPageSection)
-  .delete(deleteCMSPageSection);
+ 
 
 export default router;

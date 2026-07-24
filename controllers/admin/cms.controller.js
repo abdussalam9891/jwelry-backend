@@ -7,10 +7,7 @@ import {
   createCMSPage,
   updateCMSPage,
   deleteCMSPage,
-  addSection,
-  updateSection,
-  deleteSection,
-  reorderSections,
+  
 } from "../../service/cmsPageService.js";
 
 /**
@@ -89,67 +86,7 @@ export const deleteAdminCMSPage = asyncHandler(async (req, res) => {
   });
 });
 
-/**
- * Add section
- */
-export const addCMSPageSection = asyncHandler(async (req, res) => {
-  const page = await addSection(
-    req.params.id,
-    req.body,
-    req.user._id
-  );
 
-  res.status(201).json({
-    success: true,
-    data: page,
-  });
-});
 
-/**
- * Update section
- */
-export const updateCMSPageSection = asyncHandler(async (req, res) => {
-  const page = await updateSection(
-    req.params.id,
-    req.params.sectionId,
-    req.body,
-    req.user._id
-  );
 
-  res.status(200).json({
-    success: true,
-    data: page,
-  });
-});
 
-/**
- * Delete section
- */
-export const deleteCMSPageSection = asyncHandler(async (req, res) => {
-  const page = await deleteSection(
-    req.params.id,
-    req.params.sectionId,
-    req.user._id
-  );
-
-  res.status(200).json({
-    success: true,
-    data: page,
-  });
-});
-
-/**
- * Reorder sections
- */
-export const reorderCMSPageSections = asyncHandler(async (req, res) => {
-  const page = await reorderSections(
-    req.params.id,
-    req.body.sectionIds,
-    req.user._id
-  );
-
-  res.status(200).json({
-    success: true,
-    data: page,
-  });
-});

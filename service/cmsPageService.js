@@ -86,7 +86,7 @@ export async function getCMSPages(filters = {}) {
 
   return CMSPage.find(query)
     .select(
-      "title slug type status sections updatedAt publishedAt createdAt"
+      "title slug type status sections seo updatedAt publishedAt createdAt updatedBy"
     )
     .sort({
       updatedAt: -1,
@@ -182,8 +182,8 @@ export async function createCMSPage(data, userId) {
 
 
 /**
- * Update page metadata.
- * Sections are managed via dedicated section APIs.
+ * Update CMS page.
+ * Basic info, SEO and sections are saved together.
  */
 export async function updateCMSPage(id, updates, userId) {
   const page = await CMSPage.findById(id);
@@ -236,6 +236,44 @@ export async function updateCMSPage(id, updates, userId) {
   }
 
   /**
+   * Sections
+   */
+  if (Array.isArray(updates.sections)) {
+    const usedSectionSlugs = new Set();
+
+    page.sections = updates.sections.map((section, index) => {
+      const title = (section.title || "").trim();
+
+      if (!title) {
+        throw new Error("Section title is required.");
+      }
+
+      const sectionSlug = slugify(section.slug || title);
+
+      if (usedSectionSlugs.has(sectionSlug)) {
+        throw new Error(
+          `Duplicate section slug "${sectionSlug}" found.`
+        );
+      }
+
+      usedSectionSlugs.add(sectionSlug);
+
+      return {
+        title,
+        slug: sectionSlug,
+        content: section.content || "",
+        order: index,
+        isVisible:
+          section.isVisible !== undefined
+            ? section.isVisible
+            : true,
+      };
+    });
+
+    page.sections = normalizeSectionOrders(page.sections);
+  }
+
+  /**
    * Track last editor.
    */
   page.updatedBy = userId;
@@ -249,6 +287,7 @@ export async function updateCMSPage(id, updates, userId) {
 
   return page;
 }
+
 
 
 
@@ -283,171 +322,4 @@ export async function deleteCMSPage(id) {
 
 
 
-/**
- * Add a new section to a page.
- */
-export async function addSection(pageId, sectionData, userId) {
-  const page = await CMSPage.findById(pageId);
 
-  if (!page) {
-    throw new Error("CMS page not found.");
-  }
-
-  const title = sectionData.title?.trim();
-
-  if (!title) {
-    throw new Error("Section title is required.");
-  }
-
-  const sectionSlug = slugify(sectionData.slug || title);
-
-  validateSectionSlug(page.sections, sectionSlug);
-
-  page.sections.push({
-    title,
-    slug: sectionSlug,
-    content: sectionData.content || "",
-    order: page.sections.length,
-    isVisible:
-      sectionData.isVisible !== undefined
-        ? sectionData.isVisible
-        : true,
-  });
-
-  page.sections = normalizeSectionOrders(page.sections);
-
-  page.updatedBy = userId;
-
-  await page.save();
-
-  return page;
-}
-
-/**
- * Update an existing section.
- */
-export async function updateSection(
-  pageId,
-  sectionId,
-  updates,
-  userId
-) {
-  const page = await CMSPage.findById(pageId);
-
-  if (!page) {
-    throw new Error("CMS page not found.");
-  }
-
-  const section = page.sections.id(sectionId);
-
-  if (!section) {
-    throw new Error("Section not found.");
-  }
-
-  if (typeof updates.title === "string") {
-    section.title = updates.title.trim();
-  }
-
-  if (typeof updates.slug === "string") {
-    const slug = slugify(updates.slug);
-
-    validateSectionSlug(
-      page.sections,
-      slug,
-      section._id
-    );
-
-    section.slug = slug;
-  }
-
-  if (typeof updates.content === "string") {
-    section.content = updates.content;
-  }
-
-  if (typeof updates.isVisible === "boolean") {
-    section.isVisible = updates.isVisible;
-  }
-
-  page.updatedBy = userId;
-
-  await page.save();
-
-  return page;
-}
-
-/**
- * Delete a section.
- */
-export async function deleteSection(
-  pageId,
-  sectionId,
-  userId
-) {
-  const page = await CMSPage.findById(pageId);
-
-  if (!page) {
-    throw new Error("CMS page not found.");
-  }
-
-  const section = page.sections.id(sectionId);
-
-  if (!section) {
-    throw new Error("Section not found.");
-  }
-
-  section.deleteOne();
-
-  page.sections = normalizeSectionOrders(page.sections);
-
-  page.updatedBy = userId;
-
-  await page.save();
-
-  return page;
-}
-
-/**
- * Reorder sections.
- *
- * orderedSectionIds = [
- *   sectionId1,
- *   sectionId2,
- *   sectionId3
- * ]
- */
-export async function reorderSections(
-  pageId,
-  orderedSectionIds,
-  userId
-) {
-  const page = await CMSPage.findById(pageId);
-
-  if (!page) {
-    throw new Error("CMS page not found.");
-  }
-
-  if (
-    !Array.isArray(orderedSectionIds) ||
-    orderedSectionIds.length !== page.sections.length
-  ) {
-    throw new Error("Invalid section order.");
-  }
-
-  orderedSectionIds.forEach((id, index) => {
-    const section = page.sections.id(id);
-
-    if (!section) {
-      throw new Error(`Section ${id} not found.`);
-    }
-
-    section.order = index;
-  });
-
-  page.sections = normalizeSectionOrders(page.sections);
-
-  page.updatedBy = userId;
-
-  await page.save();
-
-  return page;
-}
