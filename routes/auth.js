@@ -3,6 +3,7 @@ import express from "express";
 import passport from "../config/passport.js";
 
 import { protect } from "../middleware/authMiddleware.js";
+import { authLimiter } from "../middleware/rateLimiter.js";
 
 import {
   firebaseLogin,
@@ -24,11 +25,11 @@ import upload, { setUploadFolder } from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/verify-email-otp", verifyEmailOtp);
-router.post("/login", loginWithEmail);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
+router.post("/register", authLimiter, registerUser);
+router.post("/verify-email-otp", authLimiter, verifyEmailOtp);
+router.post("/login", authLimiter, loginWithEmail);
+router.post("/forgot-password", authLimiter, forgotPassword);
+router.post("/reset-password", authLimiter, resetPassword);
 // GOOGLE LOGIN
 router.get(
   "/google",
@@ -46,7 +47,7 @@ router.get(
   }),
   handleUserGoogleCallback,
 );
-router.post("/firebase-login", firebaseLogin);
+router.post("/firebase-login", authLimiter, firebaseLogin);
 // ADMIN LOGIN
 router.get(
   "/google/admin",

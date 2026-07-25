@@ -5,6 +5,7 @@ import {
   protect,
   authorize,
 } from "../../middleware/authMiddleware.js";
+import { searchLimiter } from "../../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -15,6 +16,7 @@ router.use(
 
 router.get(
   "/",
+  searchLimiter,
   globalSearch
 );
 
