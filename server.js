@@ -3,7 +3,7 @@ import "./config/env.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import session from "express-session";
+// import session from "express-session";
 import path from "path";
 import dbConnection from "./config/db.js";
 import passport from "./config/passport.js";
@@ -73,27 +73,27 @@ app.use(
 );
 
 app.set("trust proxy", 1);
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "gemora_secret",
+// app.use(
+//   session({
+//     secret: process.env.SESSION_SECRET || "gemora_secret",
 
-    resave: false,
-    saveUninitialized: false,
+//     resave: false,
+//     saveUninitialized: false,
 
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none", // important
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    },
-  }),
-);
+//     cookie: {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: "none", // important
+//       maxAge: 7 * 24 * 60 * 60 * 1000,
+//     },
+//   }),
+// );
 
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(passport.initialize());
-app.use(passport.session()); // missing
+// app.use(passport.initialize());
+// app.use(passport.session()); // missing
 
 app.get("/", (req, res) => {
   res.send("API running...");

@@ -646,33 +646,58 @@ export const updateAvatar = async (req, res) => {
 
 
 // LOGOUT
+// export const logoutUser = (req, res) => {
+//   req.session.destroy((err) => {
+//     if (err) {
+//       return res.status(500).json({
+//         message: "Logout failed",
+//       });
+//     }
+
+//     res.clearCookie("admin_token", {
+//       httpOnly: true,
+//       secure: true,
+//       sameSite: "none",
+//     });
+
+//     res.clearCookie("user_token", {
+//       httpOnly: true,
+//       secure: true,
+//       sameSite: "none",
+//     });
+
+//     res.clearCookie("connect.sid");
+
+//     return res.json({
+//       message: "Logged out successfully",
+//     });
+//   });
+// };
+
+
+
+
+
+// LOGOUT
 export const logoutUser = (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({
-        message: "Logout failed",
-      });
-    }
-
-    res.clearCookie("admin_token", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    });
-
-    res.clearCookie("user_token", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    });
-
-    res.clearCookie("connect.sid");
-
-    return res.json({
-      message: "Logged out successfully",
-    });
+  res.clearCookie("admin_token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
   });
+
+  res.clearCookie("user_token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+
+  res.status(200).json({ message: "Logged out" });
 };
+
+
+
+
 
 export const firebaseLogin = async (req, res) => {
   try {
@@ -778,7 +803,7 @@ export const notifyNewCustomer = async(user) => {
 
   if (!admin) return;
 
-   
+
 
 const provider =
   user.provider?.[0] || "unknown";

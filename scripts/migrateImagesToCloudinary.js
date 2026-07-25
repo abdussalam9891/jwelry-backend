@@ -6,9 +6,9 @@ import path from "path";
 
 import fs from "fs";
 
-import Product from "./models/productModel.js";
+import Product from "../models/productModel.js";
 
-import cloudinary from "./config/cloudinary.js";
+import cloudinary from "../config/cloudinary.js";
 
 dotenv.config();
 
