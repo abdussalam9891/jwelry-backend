@@ -31,3 +31,28 @@ export const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+
+
+
+// Moderate: coupon guessing / enumeration
+export const couponLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many coupon attempts. Try again later.",
+  },
+});
+
+// Loose-moderate: public forms with no auth wall (newsletter, contact)
+export const publicFormLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many submissions. Please try again later.",
+  },
+});

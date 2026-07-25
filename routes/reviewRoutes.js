@@ -2,6 +2,7 @@ import express from "express";
 
 import { getReviewsByProduct, createReview, getTestimonials, updateReview, deleteReview} from "../controllers/reviewController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { searchLimiter } from "../middleware/rateLimiter.js";
 import upload, {
   setUploadFolder,
 } from "../middleware/uploadMiddleware.js";
@@ -26,6 +27,8 @@ router.post(
 
   protect,
 
+  searchLimiter,
+
   setUploadFolder(
     "gemora/reviews"
   ),
@@ -42,6 +45,8 @@ router.patch(
   "/:reviewId",
 
   protect,
+
+  searchLimiter,
 
   setUploadFolder(
     "gemora/reviews"

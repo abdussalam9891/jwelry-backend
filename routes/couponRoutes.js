@@ -10,6 +10,8 @@ import {
   protect,
 } from "../middleware/authMiddleware.js";
 
+import { couponLimiter } from "../middleware/rateLimiter.js";
+
 const router =
   express.Router();
 
@@ -28,6 +30,7 @@ router.get(
 router.post(
   "/validate",
   protect,
+  couponLimiter,
   validateCoupon
 );
 
