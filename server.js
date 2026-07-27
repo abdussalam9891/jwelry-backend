@@ -4,6 +4,9 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 
+import helmet from "helmet";
+import compression from "compression";
+
 import path from "path";
 import dbConnection from "./config/db.js";
 import passport from "./config/passport.js";
@@ -44,6 +47,8 @@ import adminCmsRoutes from "./routes/admin/cms.routes.js";
 import adminSiteSettingsRoutes from "./routes/admin/siteSettings.routes.js";
 import navigationRoutes from "./routes/admin/navigation.routes.js";
 
+import { errorHandler } from "./middleware/errorHandler.js";
+
 dbConnection();
 
 const app = express();
@@ -71,6 +76,9 @@ app.use(
     credentials: true,
   }),
 );
+
+app.use(helmet());
+app.use(compression());
 
 app.set("trust proxy", 1);
 
@@ -133,6 +141,8 @@ app.use((req, res) => {
     message: "Route not found",
   });
 });
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`server running on ${PORT}`);

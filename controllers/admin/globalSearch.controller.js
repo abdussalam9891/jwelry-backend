@@ -2,6 +2,15 @@ import Order from "../../models/orderModel.js";
 import Product from "../../models/productModel.js";
 import User from "../../models/UserModel.js";
 
+
+// Escapes regex special characters so user input is treated as a
+// literal string to search for, never as regex syntax
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+
+
 export const globalSearch = async (
   req,
   res
@@ -19,9 +28,10 @@ export const globalSearch = async (
       });
     }
 
+      const safeQuery = q.slice(0, 100);
     const regex =
       new RegExp(
-        q,
+        escapeRegex(safeQuery),
         "i"
       );
 
