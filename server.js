@@ -35,6 +35,7 @@ import newsLetterRoutes from "./routes/newsLetterRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import recentlyViewedRoutes from "./routes/recentlyViewedRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 
@@ -97,10 +98,11 @@ app.use(
   }),
 );
 
-// public
+// Customer APIs
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/wishlist", wishlistRoutes);
+app.use("/api/v1/recently-viewed", recentlyViewedRoutes);
 app.use("/api/v1/cart", cartRoutes);
 
 app.use("/api/v1/reviews", reviewRoutes);
