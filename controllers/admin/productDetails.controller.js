@@ -156,14 +156,16 @@ product.lowStockThreshold
 
       */
 
-    const recentOrders = orders.slice(0, 5).map((order) => ({
+    const isDemo = req.user?.role === "demo";
+
+    const recentOrders = orders.slice(0, 5).map((order, i) => ({
       _id: order._id,
 
       orderNumber: order.orderNumber,
 
-      customerName: order.customerName,
+      customerName: isDemo ? `Customer ${i + 1}` : order.customerName,
 
-      customerEmail: order.customerEmail,
+      customerEmail: isDemo ? "demo@example.com" : order.customerEmail,
 
       totalPrice: order.totalPrice,
 

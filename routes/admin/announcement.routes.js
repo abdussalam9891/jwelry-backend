@@ -12,18 +12,18 @@ import { validateAnnouncementBarUpdate } from "../../validators/announcementBar.
 
 const router = express.Router();
 
-router.use(protect, authorize("admin"));
+router.use(protect, authorize("admin", "demo"));
 
 router.get("/", getAdminAnnouncements);
 
 router.get("/:id", getAdminAnnouncementById);
 
-router.post("/", createAdminAnnouncement);
+router.post("/", authorize("admin"), createAdminAnnouncement);
 
-router.patch("/:id", updateAdminAnnouncement);
+router.patch("/:id", authorize("admin"), updateAdminAnnouncement);
 
-router.delete("/:id", deleteAdminAnnouncement);
+router.delete("/:id", authorize("admin"), deleteAdminAnnouncement);
 
-router.post("/:id/duplicate", duplicateAdminAnnouncement);
+router.post("/:id/duplicate", authorize("admin"), duplicateAdminAnnouncement);
 
 export default router;

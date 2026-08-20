@@ -289,6 +289,26 @@ const formattedRevenueChart =
 
     /* RESPONSE */
 
+    // demo role: mask real customer identity in preview widgets
+    const isDemo = req.user?.role === "demo";
+
+    const safeRecentOrders = isDemo
+      ? recentOrders.map((order, i) => ({
+          ...(order.toObject ? order.toObject() : order),
+          customerName: `Customer ${i + 1}`,
+          customerEmail: "demo@example.com",
+        }))
+      : recentOrders;
+
+    const safeRecentCustomers = isDemo
+      ? recentCustomers.map((customer, i) => ({
+          ...(customer.toObject ? customer.toObject() : customer),
+          name: `Customer ${i + 1}`,
+          email: "demo@example.com",
+          avatar: null,
+        }))
+      : recentCustomers;
+
     res.json({
       metrics: {
         totalRevenue,
@@ -307,9 +327,9 @@ const formattedRevenueChart =
 
       lowStockProducts,
 
-      recentOrders,
+      recentOrders: safeRecentOrders,
 
-      recentCustomers,
+      recentCustomers: safeRecentCustomers,
        revenueChart: formattedRevenueChart
     });
   } catch (error) {

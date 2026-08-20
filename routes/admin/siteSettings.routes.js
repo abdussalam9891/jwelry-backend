@@ -8,9 +8,9 @@ import { validateSiteSettingsUpdate } from "../../validators/siteSettings.valida
 
 const router = express.Router();
 
-router.use(protect, authorize("admin"));
+router.use(protect, authorize("admin", "demo"));
 
 router.get("/", getAdminSiteSettings);
-router.put("/", validateSiteSettingsUpdate, updateAdminSiteSettings);
+router.put("/", authorize("admin"), validateSiteSettingsUpdate, updateAdminSiteSettings);
 
 export default router;

@@ -12,14 +12,15 @@ import {
 } from "../../controllers/admin/heroBanner.controller.js";
 
 const router = express.Router();
-router.use(protect, authorize("admin"));
+router.use(protect, authorize("admin", "demo"));
 
- 
+
 router.get("/", listAdminHeroBanners);
 
 router.get("/:bannerId", getAdminHeroBanner);
 router.post(
   "/",
+  authorize("admin"),
   setUploadFolder("hero-banners"),
   upload.fields([{ name: "desktopImage", maxCount: 1 }, { name: "mobileImage", maxCount: 1 }]),
   validateHeroBannerCreate,
@@ -28,6 +29,7 @@ router.post(
 
 router.patch(
   "/:bannerId",
+  authorize("admin"),
   setUploadFolder("hero-banners"),
   upload.fields([
     { name: "desktopImage", maxCount: 1 },
@@ -37,6 +39,6 @@ router.patch(
 );
 
 
-router.delete("/:bannerId", deleteAdminHeroBanner);
+router.delete("/:bannerId", authorize("admin"), deleteAdminHeroBanner);
 
 export default router;

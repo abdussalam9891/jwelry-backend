@@ -60,9 +60,10 @@ isPhoneVerified: {
     },
 
     // ROLE (CRITICAL)
+    // "demo" = read-only/limited showcase admin (see middleware/authMiddleware.js)
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "demo"],
       default: "user",
       index: true,
     },

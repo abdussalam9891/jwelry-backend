@@ -11,6 +11,14 @@ import { getCategoryAnalytics } from "../../service/analytics/categoryAnalytics.
 
 import { parseDateRange } from "../../utils/admin/analytics/parseDateRange.js";
 
+// demo role: mask real customer identity before it leaves the server
+const redactRecentCustomers = (list = []) =>
+  list.map((customer, i) => ({
+    ...(customer.toObject ? customer.toObject() : customer),
+    customerName: `Customer ${i + 1}`,
+    customerEmail: "demo@example.com",
+  }));
+
 /* ---------------- DASHBOARD ---------------- */
 export const getDashboardData =
   async (req, res) => {
@@ -28,6 +36,12 @@ export const getDashboardData =
           startDate,
           endDate
         );
+
+      if (req.user?.role === "demo" && data.customerAnalytics) {
+        data.customerAnalytics.recentCustomers = redactRecentCustomers(
+          data.customerAnalytics.recentCustomers
+        );
+      }
 
       res.json({
         success: true,
@@ -266,6 +280,10 @@ export const getCustomersData =
           startDate,
           endDate
         );
+
+      if (req.user?.role === "demo") {
+        data.recentCustomers = redactRecentCustomers(data.recentCustomers);
+      }
 
       res.json({
         success: true,

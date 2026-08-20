@@ -29,18 +29,18 @@ router.get("/slug/:slug", getPublicCMSPage);
 */
 
 router.use(protect);
-router.use(authorize("admin"));
+router.use(authorize("admin", "demo"));
 
 router
   .route("/")
   .get(getAdminCMSPages)
-  .post(createAdminCMSPage);
+  .post(authorize("admin"), createAdminCMSPage);
 
 router
   .route("/:id")
   .get(getAdminCMSPage)
-  .patch(updateAdminCMSPage)
-  .delete(deleteAdminCMSPage);
+  .patch(authorize("admin"), updateAdminCMSPage)
+  .delete(authorize("admin"), deleteAdminCMSPage);
 
  
 

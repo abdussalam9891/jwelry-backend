@@ -14,6 +14,9 @@ import Wishlist from "../models/wishlistModel.js";
 import Order from "../models/orderModel.js";
 import { createNotification } from "../utils/admin/createNotification.js";
 
+// "demo" shares the dashboard session cookie with "admin" (read-only/limited role)
+const isDashboardRole = (role) => role === "admin" || role === "demo";
+
 export const registerUser = async (req, res) => {
   try {
     const name = req.body.name?.trim();
@@ -157,12 +160,12 @@ export const verifyEmailOtp = async (req, res) => {
     /* NOW LOGIN */
     const token = generateToken(user);
 
-    const cookieName = user.role === "admin" ? "admin_token" : "user_token";
+    const cookieName = isDashboardRole(user.role) ? "admin_token" : "user_token";
 
     res.cookie(
       cookieName,
       token,
-      user.role === "admin" ? ADMIN_COOKIE : USER_COOKIE,
+      isDashboardRole(user.role) ? ADMIN_COOKIE : USER_COOKIE,
     );
 
     const userResponse = user.toObject();
@@ -222,12 +225,12 @@ export const loginWithEmail = async (req, res) => {
 
     const token = generateToken(user);
 
-    const cookieName = user.role === "admin" ? "admin_token" : "user_token";
+    const cookieName = isDashboardRole(user.role) ? "admin_token" : "user_token";
 
     res.cookie(
       cookieName,
       token,
-      user.role === "admin" ? ADMIN_COOKIE : USER_COOKIE,
+      isDashboardRole(user.role) ? ADMIN_COOKIE : USER_COOKIE,
     );
 
     const userResponse = user.toObject();
@@ -375,9 +378,9 @@ export const googleAuthSuccess = (req, res, redirectUrl) => {
 
   const token = generateToken(user);
 
-  const cookieName = user.role === "admin" ? "admin_token" : "user_token";
+  const cookieName = isDashboardRole(user.role) ? "admin_token" : "user_token";
 
-  const cookieOptions = user.role === "admin" ? ADMIN_COOKIE : USER_COOKIE;
+  const cookieOptions = isDashboardRole(user.role) ? ADMIN_COOKIE : USER_COOKIE;
 
   // set jwt
   res.cookie(cookieName, token, cookieOptions);
@@ -423,50 +426,6 @@ export const handleUserGoogleCallback = (req, res) => {
     `${process.env.CLIENT_URL}/pages/auth.html`,
   );
 };
-
-// CURRENT USER
-// export const getCurrentUser = async (req, res) => {
-//   try {
-//     let token = req.cookies?.admin_token || req.cookies?.user_token;
-
-//     if (!token) {
-//       return res.status(401).json({
-//         loggedIn: false,
-//       });
-//     }
-
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-//     const user = await User.findById(decoded.id);
-
-//     if (!user) {
-//       return res.status(401).json({
-//         loggedIn: false,
-//       });
-//     }
-
-//     return res.json({
-//       loggedIn: true,
-//       user: {
-//         id: user._id,
-//         name: user.name,
-//         email: user.email,
-//         avatar: user.avatar,
-//         role: user.role,
-//         phone: user.phone,
-//         createdAt: user.createdAt,
-//         lastLoginAt: user.lastLoginAt,
-//       },
-//     });
-//   } catch (err) {
-//     console.error("getCurrentUser error:", err);
-
-//     return res.status(401).json({
-//       loggedIn: false,
-//       error: err.message,
-//     });
-//   }
-// };
 
 
 
@@ -644,36 +603,7 @@ export const updateAvatar = async (req, res) => {
 };
 
 
-
-// LOGOUT
-// export const logoutUser = (req, res) => {
-//   req.session.destroy((err) => {
-//     if (err) {
-//       return res.status(500).json({
-//         message: "Logout failed",
-//       });
-//     }
-
-//     res.clearCookie("admin_token", {
-//       httpOnly: true,
-//       secure: true,
-//       sameSite: "none",
-//     });
-
-//     res.clearCookie("user_token", {
-//       httpOnly: true,
-//       secure: true,
-//       sameSite: "none",
-//     });
-
-//     res.clearCookie("connect.sid");
-
-//     return res.json({
-//       message: "Logged out successfully",
-//     });
-//   });
-// };
-
+ 
 
 
 

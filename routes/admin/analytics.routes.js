@@ -18,7 +18,7 @@ import { authorize, protect } from "../../middleware/authMiddleware.js";
 const router = express.Router();
 
 /* ---------------- GLOBAL PROTECTION ---------------- */
-router.use(protect, authorize("admin"));
+router.use(protect, authorize("admin", "demo"));
 
 router.get("/dashboard", getDashboardData);
 router.get("/revenue", getRevenueData);
