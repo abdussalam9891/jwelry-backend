@@ -1,4 +1,5 @@
 import CMSPage from "../models/cmsPageModel.js";
+import { sanitizeCmsContent } from "../utils/sanitizeContent.js";
 
 /**
  * Converts a string into a URL-friendly slug.
@@ -104,10 +105,20 @@ export async function getCMSPageById(id) {
  * Storefront page.
  */
 export async function getCMSPageBySlug(slug) {
-  return CMSPage.findOne({
+  const page = await CMSPage.findOne({
     slug,
     status: "published",
   });
+
+  if (!page) return page;
+
+  // Also sanitise on the way out so content saved before sanitisation was
+  // added (or written straight to the database) is safe to render.
+  page.sections.forEach((section) => {
+    section.content = sanitizeCmsContent(section.content);
+  });
+
+  return page;
 }
 
 /**
@@ -158,7 +169,7 @@ export async function createCMSPage(data, userId) {
       return {
         title,
         slug: sectionSlug,
-        content: section.content || "",
+        content: sanitizeCmsContent(section.content),
         order: index,
         isVisible:
           section.isVisible !== undefined
@@ -261,7 +272,7 @@ export async function updateCMSPage(id, updates, userId) {
       return {
         title,
         slug: sectionSlug,
-        content: section.content || "",
+        content: sanitizeCmsContent(section.content),
         order: index,
         isVisible:
           section.isVisible !== undefined
